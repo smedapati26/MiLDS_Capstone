@@ -1,0 +1,15 @@
+{# templates/Milds_App/aircraft_confirm_delete.html #}
+{% extends "Milds_App/base.html" %}
+
+{% block title %}Confirm Delete Aircraft{% endblock %}
+
+{% block content %}
+  <h1>Confirm Delete</h1>
+  <p>Are you sure you want to delete aircraft: <strong>{{ aircraft.model_name }}</strong>?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Yes, delete</button>
+    <a href="{% url 'list_aircraft' %}">Cancel</a>
+  </form>
+{% endblock %}
