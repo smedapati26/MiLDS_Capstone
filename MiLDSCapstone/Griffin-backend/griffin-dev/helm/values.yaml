@@ -1,0 +1,107 @@
+# Default values for tesseract.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+ltac:
+  baseImage:
+    repository: nexus.eitccorp.com/ltac-base-image
+    pullPolicy: IfNotPresent
+    tag: 5.0.0-RC4-5-SNAPSHOT
+
+system_certs:
+  ca: {}
+  citadel: {}
+  keycloak: {}
+  proxy: {}
+
+image:
+  repository: nexus.eitccorp.com/griffin-ai
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+
+imageProxy:
+  repository: nexus.eitccorp.com/griffin-ai-proxy
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+
+contextPath: /griffin-ai
+
+
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  automountServiceAccountToken: false
+
+podAnnotations: {}
+
+podSecurityContext:
+
+  # fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  # gunicorn needs a writable location in /tmp
+  # TODO: Mount a volume for this
+  readOnlyRootFilesystem: false
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+#
+# TODO: Make default.conf a ConfigMap
+#
+service:
+  type: ClusterIP
+  port: 443
+
+management:
+  port: 8080
+
+ssl:
+  # Valid Options for Client-Auth are: need, want, false
+  clientAuth: need
+  enabled: true
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

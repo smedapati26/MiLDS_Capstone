@@ -1,0 +1,42 @@
+variables:
+  SonarQubeUrl: "https://sonarqube.dse.futures.army.mil"
+  SonarQubeProject: "ai2c_pmx_griffin-ai_AYrO9MrQEQwxreF72Z9r"
+
+
+stages:
+  - test
+  - scan
+
+
+test:
+  stage: test
+  image: cazw0cuaadsepacr01.azurecr.us/rstudio/connect-runtime:jammy-20240111-20240301-2155
+  tags:
+    - kubernetes
+  before_script:
+    - export PATH=/opt/python/3.10.12/bin:$PATH
+    - pip install -r griffin_ai/requirements.txt
+    - pip install coverage --index-url https://rspm.dse.futures.army.mil/pypi-dse/latest/simple --trusted-host rspm.dse.futures.army.mil
+  script:
+    - cd griffin_ai
+    - coverage run manage.py test --settings=griffin_ai.settings.dev.local
+    - coverage xml
+    - coverage report -m
+  artifacts:
+    paths:
+      - griffin_ai/coverage.xml
+
+
+perform-code-scan:
+  image: cazw0cuaadsepacr01.azurecr.us/sonar-scanner-cli:5-CERT
+  tags:
+   - kubernetes
+  stage: scan
+  script:
+    - >
+      sonar-scanner -Dsonar.projectKey=$SonarQubeProject \
+                    -Dsonar.login=$SonarQubeToken \
+                    -Dsonar.host.url=$SonarQubeUrl \
+                    -Dsonar.qualitygate.wait=true \
+                    -X
+  allow_failure: true

@@ -1,0 +1,97 @@
+[
+  {
+    "model": "aircraft.Aircraft",
+    "pk": 427011,
+    "fields": {
+      "model": "UH-60L",
+      "status": "FMC",
+      "rtl": "RTL",
+      "current_unit": "WDDRA0",
+      "total_airframe_hours": 5964.1,
+      "flight_hours": 0.0,
+      "hours_to_phase": 124.1,
+      "location": 1,
+      "remarks": "",
+      "date_down": null,
+      "ecd": null,
+      "last_sync_time": "2023-09-26T04:08:10Z",
+      "last_export_upload_time": "2024-12-03T13:52:33Z",
+      "last_update_time": "2024-12-04T13:46:49Z"
+    }
+  },
+  {
+    "model": "aircraft.Aircraft",
+    "pk": 456789,
+    "fields": {
+      "model": "UH-60L",
+      "status": "FMC",
+      "rtl": "RTL",
+      "current_unit": "WDDRA0",
+      "total_airframe_hours": 2160.0,
+      "flight_hours": 11.0,
+      "hours_to_phase": 327.3,
+      "location": 1,
+      "remarks": "",
+      "date_down": "2024-12-03",
+      "ecd": "2024-12-05",
+      "last_sync_time": "2024-06-18T03:13:57Z",
+      "last_export_upload_time": "2024-12-03T13:52:33Z",
+      "last_update_time": "2024-12-03T21:23:40Z"
+    }
+  },
+  {
+    "model": "aircraft.Aircraft",
+    "pk": 555555,
+    "fields": {
+      "model": "UH-60L",
+      "status": "FMC",
+      "rtl": "RTL",
+      "current_unit": "WDDRA0",
+      "total_airframe_hours": 2160.0,
+      "flight_hours": 11.0,
+      "hours_to_phase": 327.3,
+      "location": 1,
+      "remarks": "",
+      "date_down": "2024-12-03",
+      "ecd": "2024-12-05",
+      "last_sync_time": "2024-06-18T03:13:57Z",
+      "last_export_upload_time": "2024-12-03T13:52:33Z",
+      "last_update_time": "2024-12-03T21:23:40Z"
+    }
+  },
+  {
+    "model": "auto_dsr.location",
+    "pk": 1,
+    "fields": {
+      "name": "SAAF",
+      "alternate_name": "South African Air Force",
+      "short_name": "SAAF",
+      "abbreviation": "SAAF",
+      "code": "SAAF001",
+      "mgrs": "34SNC0000000000",
+      "latitude": -30.5595,
+      "longitude": 22.9375
+    }
+  },
+  {
+    "model": "auto_dsr.unit",
+    "pk": "WDDRA0",
+    "fields": {
+      "uic": "WDDRA0",
+      "short_name": "3bat82nd",
+      "display_name": "3rd Battalion, 82nd Aviation Brigade",
+      "logo": null,
+      "slogan": null,
+      "nick_name": null,
+      "echelon": "1234",
+      "parent_uic": null,
+      "parent_uics": [],
+      "child_uics": [
+        "WDDRA1"
+      ],
+      "subordinate_uics": [
+        "WDDRA2"
+      ]
+    }
+  }
+]

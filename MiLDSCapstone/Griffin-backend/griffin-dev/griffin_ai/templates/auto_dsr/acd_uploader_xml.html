@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="utf-8">
+        <title>griffin.ai - ACD Export Uploader</title>
+        <link rel="icon" href="static/auto_dsr/img/griffin-ai-beak.png" />
+        <link rel="stylesheet" href="static/auto_dsr/css/acd-export-style.css" />
+    </head>
+    <body>
+        <div class="content">
+            <h1>Welcome, {{ user }}</h1>
+            <p>You can use this page to upload an XML ACD export file to Griffin.</p>
+            <p>Instructions to generate the export can be found here: <a href="https://armyeitaas.sharepoint-mil.us/:p:/t/AI2CGriffinCustomerSupport/EejE9q_CFphHlnHS1hrDGUoBwsdRq7ncHCD5BU8qcCMs_w?e=yKrx03">PowerPoint</a></p>
+            <form method="POST" action="{% url 'acd_xml_upload' %}" enctype="multipart/form-data">
+                <label for="unit">Select Unit</label>
+                <select id="unit" name="unit">
+                    {% for uic, name in units %}
+                        <option value="{{ uic }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <label for="acd_export">Browse for an ACD 1352 XMLExport</label>
+                <input type="file" id="acd_export" name="acd_export" accept=".xml">
+                <br>
+                <button class="upload-button">Upload</button>
+            </form>
+        </div>  
+    </body>
+</html>

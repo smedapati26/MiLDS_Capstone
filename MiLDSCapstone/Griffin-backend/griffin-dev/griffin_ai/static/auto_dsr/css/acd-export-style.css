@@ -1,0 +1,33 @@
+/*!
+ * griffin.ai
+ * author: Andre Michell
+ * organization: AI2C - Sustainment
+ */
+
+@import "griffin-style.css";
+
+/* general page styling */
+body {
+    background: var(--gray);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.content {
+    text-align: center;
+}
+
+form {
+    margin-top: 20px; /* Adjust margin-top as needed */
+}
+
+form > * {
+    margin-bottom: 10px;
+}
+
+select, input[type="file"] {
+    margin-top: 10px;
+}

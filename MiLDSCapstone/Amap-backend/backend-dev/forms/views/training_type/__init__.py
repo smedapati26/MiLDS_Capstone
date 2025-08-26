@@ -1,0 +1,3 @@
+# TrainingType Request Handler and Views
+from .training_type_request_handler import TrainingType_NO_ID_RequestHandler
+from .list_training_type import list_training_type

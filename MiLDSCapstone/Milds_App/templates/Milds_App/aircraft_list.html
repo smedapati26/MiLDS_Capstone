@@ -1,0 +1,42 @@
+{# templates/Milds_App/aircraft_list.html #}
+{% extends "Milds_App/base.html" %}
+
+{% block title %}Aircraft List{% endblock %}
+
+{% block content %}
+  <h1>Aircraft</h1>
+
+  {% if aircrafts %}
+    <table>
+      <thead>
+        <tr>
+          <th>Serial Number</th>
+          <th>Model</th>
+          <th>Status</th>
+          <th>RTL</th>
+          <th>Current Unit</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for aircraft in aircrafts %}
+          <tr>
+            <td>{{ aircraft.aircraft_pk }}</td>
+            <td>{{ aircraft.model_name }}</td>
+            <td>{{ aircraft.status }}</td>
+            <td>{{ aircraft.rtl }}</td>
+            <td>{{ aircraft.current_unit }}</td>
+            <td>
+              <a href="{% url 'update_aircraft' aircraft.pk %}">Edit</a> |
+              <a href="{% url 'delete_aircraft' aircraft.pk %}">Delete</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No aircraft records found.</p>
+  {% endif %}
+
+  <p><a href="{% url 'create_aircraft' %}">Add New Aircraft</a></p>
+{% endblock %}

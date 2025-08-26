@@ -1,0 +1,4 @@
+1. The application can be access by navigating to
+https://localhost:30000{{ .Values.contextPath }}/
+2. List all resources associated with these commands
+kubectl get all -l "app.kubernetes.io/name=={{ include "webapp.name" . }}"

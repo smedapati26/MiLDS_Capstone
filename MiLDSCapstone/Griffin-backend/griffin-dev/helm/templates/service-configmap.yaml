@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "webapp.fullname" . }}-configmap
+  labels:
+    {{- include "webapp.labels" . | nindent 4 }}
+data:
+  #
+  # The init containers for the service will handle generating the PKCS12
+  # keystore, and truststore so the locations of these files will not change.
+  #
+  application.properties: |
+    server.port={{ .Values.service.port }}
+    server.servlet.context-path={{ .Values.contextPath }}
+    server.ssl.enabled={{ .Values.ssl.enabled | default true }}
+    server.ssl.client-auth={{ .Values.ssl.clientAuth | default "need" }}
+    server.ssl.key-store=/etc/pki/java/keystore.p12
+    server.ssl.key-store-password=changeit
+    server.ssl.key-password=changeit
+    server.ssl.key-store-type=PKCS12
+    server.ssl.trust-store=/etc/pki/java/truststore.p12
+    server.ssl.trust-store-password=changeit
+    server.ssl.trust-store-type=PKCS12
+    citadel.signature.symmetrickey.publickey=/etc/pki/citadel/citadel.pub
+    management.server.ssl.enabled=false
+    management.server.port={{ .Values.management.port }}
+    management.health.defaults.enabled=true
+    management.endpoint.health.show-details=always
+    management.security.enabled=false
+    management.ssl.enabled=false
+

@@ -1,0 +1,28 @@
+{# templates/Milds_App/aircraft_form.html #}
+{% extends "Milds_App/base.html" %}
+
+{% block title %} 
+  {% if form.instance.pk %}
+    Edit Aircraft
+  {% else %}
+    New Aircraft Entry
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <h1>
+    {% if form.instance.pk %}
+      Edit Aircraft
+    {% else %}
+      New Aircraft Entry
+    {% endif %}
+  </h1>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+  </form>
+
+  <p><a href="{% url 'list_aircraft' %}">Back to list</a></p>
+{% endblock %}

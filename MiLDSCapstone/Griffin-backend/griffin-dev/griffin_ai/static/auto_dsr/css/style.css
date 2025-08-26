@@ -1,0 +1,583 @@
+/*!
+ * griffin.ai
+ * author: Taylor Michell
+ * organization: AI2C - Sustainment
+ */
+
+@import "griffin-style.css";
+
+/* general page styling */
+body {
+    background: var(--gray);
+    margin: 0;
+}
+
+/* page header styles */
+header.pageHeader {
+    padding: 0.75rem 2rem;
+    display: flex;
+    flex-direction: row;
+    background: rgb(34, 64, 96);
+    background: linear-gradient(180deg, rgb(34, 64, 96) 0%, rgb(17, 45, 81) 50%, rgb(17, 35, 55) 100%);
+    align-items: center;
+    color: var(--white);
+}
+
+header.secondaryHeader {
+    padding: 0.75rem 2rem;
+    display: flex;
+    background: var(--white);
+    align-items: center;
+    font-weight: 700;
+}
+
+header.secondaryHeader .unit-name {
+    border: 2px solid var(--gray-1);
+    padding: 10px;
+    flex: auto;
+    justify-content: center;
+    text-align: center;
+    color: var(--gray-5);
+    
+}
+
+header.pageHeader > #user-greeting {
+    flex: auto;
+    text-align: right;
+    color: var(--white);
+}
+
+header.pageHeader > #user-greeting > span {
+    text-decoration: underline;
+    color: var(--white);
+}
+
+header.pageHeader img.logo {
+    flex: initial;
+    margin: 0rem 0.25rem;
+    height: 3rem;
+}
+
+header.pageHeader a {
+    color: var(--white);
+}
+
+header.secondaryHeader img.secondaryLogo {
+    margin: 0.25rem 0.25rem;
+    height: 2rem;
+}
+
+/* modal styling */
+.modal-window {
+    position: fixed;
+    background: var(--gray-t);
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 999;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 250ms ease;
+}
+
+.modal-window:target {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-window > div {
+    width: 800px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 2em;
+    background: white;
+}
+
+.modal-window header {
+    font-weight: bold;
+}
+
+.modal-window h1 {
+    font-size: 150%;
+    margin: 0 0 15px;
+}
+
+.modal-close {
+    color: #aaa;
+    line-height: 50px;
+    font-size: 80%;
+    position: absolute;
+    right: 0;
+    text-align: center;
+    top: 0;
+    width: 70px;
+    text-decoration: none;
+}
+
+.modal-close:hover {
+    color: black;
+}
+
+/*table styling for unit selection*/
+table.unit-selection {
+    display: block;
+    height: 200px;
+    overflow-y: scroll;
+}
+
+table.unit-selection th, td {
+    padding: 15px;
+}
+
+button.report-export {
+    background-color: var(--dark-blue);
+    color: var(--white);
+    padding: 5px;
+    font-size: 15px;
+    margin-right: 2rem;
+}
+
+button.report-export:hover {
+    cursor: pointer;
+    background: var(--white);
+    color: var(--dark-blue);
+}
+
+
+/* General app styling */
+.app {
+    padding: 0 1rem;
+}
+
+/* Status Card styling */
+.status-card {
+    display: flex;
+    flex-direction: row;
+    margin: 0.5rem;
+}
+
+.status-card-summary {
+    width: 7rem;
+    min-width: 7rem;
+    border: 1px solid var(--gray-1);
+}
+
+.card-img-wrapper {
+    background: var(--gray);
+}
+
+.card-helo-img {
+    width: 95%;
+    background: var(--gray);
+    align-self: center;
+    padding: 0.25rem 0;
+    margin-left: 2px;
+}
+
+.card-list {
+    text-align: center;
+    padding: 0.25rem 0;
+}
+
+.card-list-item {
+    position: relative;
+    display: block;
+    padding: 0.1rem 0;
+    text-decoration: none;
+}
+
+/* Status Card Detail styling */
+.card-detail {
+    display: flex;
+    flex-direction: row;
+    column-gap: 2rem;
+    padding: 0.5rem;
+    border: 1px solid var(--gray-1);
+    border-left: none;
+    background: var(--white);
+    
+}
+
+.card-detail>*:last-child {
+    align-self: baseline;
+    flex: 1 1 auto;
+}
+
+/*
+The Status Details card is arranged into 4 columns and 3 rows
+* All of Column 1 is the remarks section; this is an optional column depending on if there are remarks to populate or not
+* Column 2 / rows 1-3 are Hrs until Inspection, Location, and Flying Hours (respectively)
+* Column 3 is hourly inspections (50/120/200 hour inspections in each row) -- TODO: Link to database
+* Column 4 is optional; if Aircraft is down, display Date down in row 1, Days down in row 2, and ECD in row 3
+* Column 4 is has the "edit" button to click on
+*/
+
+.details-column {
+    display: flex;
+    flex-direction: column;
+    width: 75px;
+}
+
+.card-detail-icon {
+    color: var(--medium-blue);
+    width: 2rem;
+}
+
+.detail-title {
+    font-weight: bolder;
+    font-size: 0.75rem;
+}
+
+.detail-data {
+    font-size: 0.75rem;
+}
+
+/* Unit Card styling */
+.unit-card {
+    margin: 1rem;
+    border: 2px solid var(--gray-1);
+}
+
+.unit-summary-card {
+    margin: 0 1rem 1rem 1rem;
+    border: 2px solid var(--gray-1);
+}
+
+.unit-card-body {
+    display: flex;
+    flex-direction: row;
+    margin: 0.5rem;
+    overflow: auto;
+}
+
+.card-status-footer {
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+    font-size: 1rem;
+}
+
+/* UnitCard header formatting */
+.unit-card-header {
+    display: flex;
+    flex-direction: row;
+    align-content: center;
+    padding: 0.75rem;
+    background: var(--dark-blue);
+}
+
+.unit-card-title {
+    align-self: center;
+    color: var(--white);
+    margin: 0 1rem;
+}
+
+.aircraft-count {
+    align-self: center;
+    padding: 0 1rem;
+    color: var(--white);
+}
+
+/* UnitCard header show details button */
+button.show-all-details {
+    border: 1px solid var(--white);
+    background: transparent;
+    color: var(--white);
+    font-family: "Open Sans";
+    font-size: 0.85rem;
+    justify-self: flex-end;
+    margin-left: 2rem;
+}
+
+button.show-all-details:hover {
+    cursor: pointer;
+    background: var(--white);
+    color: var(--dark-blue);
+}
+
+/* unit summary card styling */
+.unit-summary-body {
+    display: flex;
+    flex-direction: row;
+    padding-left: 0.5rem;
+    overflow: auto;
+}
+
+.model-count {
+    display: flex;
+    flex-direction: row;
+    border: 2px solid var(--gray-1);
+    margin: 0.5rem;
+    justify-self: start;
+    min-width: 8rem;
+    max-width: 8rem;
+}
+
+.model-img {
+    background: var(--gray);
+    justify-self: start;
+    width: 70%;
+    padding: 0.5rem;
+}
+
+.model-count-num {
+    font-size: 0.85rem;
+    justify-self: end;
+    align-self: center;
+    margin: 0.45rem;
+}
+
+/* Status Summary card styling */
+.summary-card {
+    margin: 0.5rem;
+    border: transparent;
+    width: 7rem;
+    min-width: 7rem;
+    min-height: 9.75rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-tag {
+    flex: auto;
+    justify-content: center;
+    display: flex;
+    flex-direction: row;
+}
+
+.status-summary {
+    display: flex;
+    flex-direction: row;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    justify-content: center;
+}
+
+.status-summary-tag {
+    width: 50px;
+    text-align: center;
+    font-size: 0.8rem;
+    padding: 0.25rem;
+    margin-right: 2px;
+    align-self: center;
+}
+
+.status-summary-count {
+    width: 50px;
+    justify-content: center;
+    text-align: center;
+    font-size: 0.8rem;
+    padding: 0.25rem;
+    margin-left: 2px;
+    align-self: center;
+}
+
+/* Module styling */
+.ui-container{
+    width: 100%
+}
+
+.module {
+    margin: 1rem;
+    background: var(--white);
+    border: 2px solid var(--gray-1);
+}
+
+.module-header {
+    display: flex;
+    flex-direction: row;
+    padding: 0.75rem;
+}
+
+.module-title {
+    flex: auto;
+    margin: 0 0.5rem;
+    align-self: center;
+}
+
+.module-filters {
+    vertical-align: middle;
+    /* justify-self: center; */
+    margin: 0.5rem 1rem;
+}
+
+/* Module level Filter button styling */
+.filter-button {
+    font-family: 'Open Sans';
+    font-weight: 500;
+    flex: 1;
+    justify-self: right;
+    margin: 0 0.5rem;
+    padding: 0.25rem;
+    background: transparent;
+    border-width: 3px;
+    max-width: 75px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.fmc-button {
+    border-color: var(--dark-blue);
+}
+
+.fmc-button:hover {
+    background: var(--dark-blue);
+    color: var(--white);
+}
+
+.fmc-button.selected {
+    background: var(--dark-blue);
+    color: var(--white);
+}
+
+.pmc-button {
+    border-color: var(--warning-gold);
+}
+
+.pmc-button:hover {
+    background: var(--warning-gold);
+    color: var(--white);
+}
+
+.pmc-button.selected {
+    background: var(--warning-gold);
+    color: var(--white);
+}
+
+.nmc-button {
+    border-color: var(--warning-red);
+}
+
+.nmc-button:hover {
+    background: var(--warning-red);
+    color: var(--white);
+}
+
+.nmc-button.selected {
+    background: var(--warning-red);
+    color: var(--white);
+}
+
+.rtl-button {
+    border-color: var(--confirmation-green);
+}
+
+.rtl-button:hover {
+    background: var(--confirmation-green);
+    color: var(--white);
+}
+
+.rtl-button.selected {
+    background: var(--confirmation-green);
+    color: var(--white);
+}
+
+.nrtl-button {
+    border-color: var(--graph-orange);
+}
+
+.nrtl-button:hover {
+    background: var(--graph-orange);
+    color: var(--white);
+}
+
+.nrtl-button.selected {
+    background: var(--graph-orange);
+    color: var(--white);
+}
+
+.clear-button {
+    border-color: var(--gray-5);
+}
+
+.clear-button:hover {
+    background: var(--gray-5);
+    color: var(--white);
+}
+
+/* Dividers */
+.divider-white {
+    border-left: 2px solid var(--white);
+}
+
+.unit-summary-divider {
+    border-left: 2px solid var(--gray-2);
+    margin: 0.5rem;
+}
+
+.global-filter-divider {
+    border-left: 2px solid var(--gray-2);
+    margin: 0 0.5rem;
+}
+
+/* aircraft tag colors and styles */
+.status-tag {
+    padding: 0.25rem 0;
+    flex: 1;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-size: 0.85rem;
+}
+
+.acft-status-tag {
+    margin-right: 2px;
+}
+
+.acft-rtl-tag {
+    margin-left: 2px;
+}
+
+.fmc-bg {
+    background: var(--dark-blue);
+    color: var(--white);
+}
+
+.fmc-count-bg {
+    background: #102B433F;
+}
+
+.pmc-bg {
+    background: var(--warning-gold);
+    color: var(--white);
+}
+
+.pmc-count-bg {
+    background: #DAB3343F;
+}
+
+.nmc-bg {
+    background: var(--warning-red);
+    color: var(--white);
+}
+
+.nmc-count-bg {
+    background: #AC02003F;
+}
+
+.rtl-bg {
+    background: var(--confirmation-green);
+    color: var(--white);
+}
+
+.rtl-count-bg {
+    background: #006B003F;
+}
+
+.nrtl-bg {
+    background: var(--graph-orange);
+    color: var(--white);
+}
+
+.nrtl-count-bg {
+    background: #DC6A003F;
+}
+
+.tag-unavailable {
+    opacity: .4;
+}

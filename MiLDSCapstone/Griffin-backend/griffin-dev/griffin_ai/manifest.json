@@ -1,0 +1,1590 @@
+{
+  "version": 1,
+  "locale": "en_US.UTF-8",
+  "metadata": {
+    "appmode": "python-api",
+    "entrypoint": "griffin_ai.wsgi:application"
+  },
+  "python": {
+    "version": "3.10.12",
+    "package_manager": {
+      "name": "pip",
+      "version": "24.0",
+      "package_file": "requirements.txt"
+    }
+  },
+  "environment": {
+    "image": "cazw0cuaadsepacr01.azurecr.us/rstudio/connect-runtime:jammy-20240427-20240617-1450"
+  },
+  "files": {
+    "requirements.txt": {
+      "checksum": "8404a8cf9020cbc6620db00283f56449"
+    },
+    ".coverage": {
+      "checksum": "16968b50b71457fe0a09675f1f0ed59a"
+    },
+    "agse/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "agse/admin.py": {
+      "checksum": "0a41870fbd8498b3cd7edfe07fb4f039"
+    },
+    "agse/apps.py": {
+      "checksum": "6ec9e1cdeea1406e6c31fb973998920a"
+    },
+    "agse/model_utils/__init__.py": {
+      "checksum": "6d0854880af8b63e9532c5d0acb24171"
+    },
+    "agse/model_utils/agse_edits_lock_type.py": {
+      "checksum": "e307e076736f21cfa4bd8d4cdced832e"
+    },
+    "agse/model_utils/agse_statuses.py": {
+      "checksum": "fd675108fc4799f1e92b7ebb35f0a4bd"
+    },
+    "agse/models.py": {
+      "checksum": "f0696a20e9aafb54d7563d416133ac1c"
+    },
+    "agse/urls.py": {
+      "checksum": "99d0750dd6e09cc0109ac1ca61cfef8c"
+    },
+    "agse/views/__init__.py": {
+      "checksum": "f9a59408dea0a8d80d7185e080b7e7a9"
+    },
+    "agse/views/add_agse_to_taskforce.py": {
+      "checksum": "6b949e69406b7f7520cd650ea13739f5"
+    },
+    "agse/views/crud/__init__.py": {
+      "checksum": "c14d16dc1cd1a63912ec05a16531bce2"
+    },
+    "agse/views/crud/agseEdits_read.py": {
+      "checksum": "af4fef25692e2e6a57e4ddbf26f6ffaf"
+    },
+    "agse/views/crud/agse_update.py": {
+      "checksum": "e49a9ce79e7fb6fab614f471fc5548b8"
+    },
+    "agse/views/remove_agse_from_taskforce.py": {
+      "checksum": "6ed7f3aac8820b1b4958aabcba086b6b"
+    },
+    "agse/views/shiny_get_agse.py": {
+      "checksum": "407da24325e2b5b37c941aa8e4ac3dbe"
+    },
+    "agse/views/transforms/__init__.py": {
+      "checksum": "d1f50e30880e39d87ac6b7ae2628d530"
+    },
+    "agse/views/transforms/transform_agse.py": {
+      "checksum": "7eb89f6bbebe1fe2c0f336a39ac92c9a"
+    },
+    "aircraft/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "aircraft/admin.py": {
+      "checksum": "27c8b402e9051fcd291b5b965e349d16"
+    },
+    "aircraft/apps.py": {
+      "checksum": "af81176a2160096ab01c2c2f8d983199"
+    },
+    "aircraft/model_utils/__init__.py": {
+      "checksum": "f0cd44582b8c1806ea50d95d787477ce"
+    },
+    "aircraft/model_utils/aircraft_statuses.py": {
+      "checksum": "baf665fe9ea11c6484c55ba99f3e2f00"
+    },
+    "aircraft/model_utils/equipment_statuses.py": {
+      "checksum": "258a1cd137783d3f1e55883a2e7625c0"
+    },
+    "aircraft/model_utils/equipment_value_codes.py": {
+      "checksum": "37b5e03dea4e92fb43f0953c35d9eb0e"
+    },
+    "aircraft/model_utils/fault_severities.py": {
+      "checksum": "a257465e92b02e6784b696d6d3527397"
+    },
+    "aircraft/model_utils/inspection_frequency_types.py": {
+      "checksum": "80524fe15b922c859eefc37c7596559e"
+    },
+    "aircraft/model_utils/message_classifications.py": {
+      "checksum": "d05422d12101edddbacd43ff9d5c3656"
+    },
+    "aircraft/model_utils/message_compliance_statuses.py": {
+      "checksum": "cef029c9edc4ac246ce696b68efca762"
+    },
+    "aircraft/model_utils/message_types.py": {
+      "checksum": "81fbdf5fac9b69a0bb4dcfcae65103ca"
+    },
+    "aircraft/model_utils/modification_types.py": {
+      "checksum": "eefe5a2f9b11d7c7b87c7effd5f4e8e3"
+    },
+    "aircraft/model_utils/phase_types.py": {
+      "checksum": "5e447278a94f1a7015500ad2f54fcc27"
+    },
+    "aircraft/models.py": {
+      "checksum": "a84ba3c66940aa66b118e7205170ebc4"
+    },
+    "aircraft/urls.py": {
+      "checksum": "ba7cc1a00ed39a463fef6b469d4f92fb"
+    },
+    "aircraft/utils/__init__.py": {
+      "checksum": "c84a82d6838e1be841caf181774a2b29"
+    },
+    "aircraft/utils/applied_modification_data_check.py": {
+      "checksum": "893bfbbcfe925a378ee8f1d53958d2da"
+    },
+    "aircraft/utils/phase_interval.py": {
+      "checksum": "7cedab6e7de7c450bad8d6ba28d325e3"
+    },
+    "aircraft/views/__init__.py": {
+      "checksum": "d4dc75e07deb45bae8f4f1c7f581644a"
+    },
+    "aircraft/views/add_aircraft_to_taskforce.py": {
+      "checksum": "1901647e5ab638d90a7c48eed048d87a"
+    },
+    "aircraft/views/crud/__init__.py": {
+      "checksum": "543548036c82fc301aff5e142fd4e15a"
+    },
+    "aircraft/views/crud/aircraftTransferLog_create.py": {
+      "checksum": "f66852458498fad1ae6aea312a6024f5"
+    },
+    "aircraft/views/crud/aircraftTransferLog_delete.py": {
+      "checksum": "7f47f6d910fde0d499e57382a1027ccc"
+    },
+    "aircraft/views/crud/aircraftTransferLog_read.py": {
+      "checksum": "8cc18490cf32c0c6de67e023e09f0324"
+    },
+    "aircraft/views/crud/aircraftTransferLog_update.py": {
+      "checksum": "e772db42c193247cb8e99ace57e07108"
+    },
+    "aircraft/views/crud/aircraftTransferRequest_create.py": {
+      "checksum": "6b5be4caf0d3b347377667231bffb556"
+    },
+    "aircraft/views/crud/aircraftTransferRequest_delete.py": {
+      "checksum": "ac1b2790ac975f3a6f378f47e207f2b7"
+    },
+    "aircraft/views/crud/aircraftTransferRequest_read.py": {
+      "checksum": "f47b7bb814c7b3ae598e5bee151a1533"
+    },
+    "aircraft/views/crud/aircraftTransferRequest_update.py": {
+      "checksum": "3744a5b6cefe1a821a22fbe77b1661ff"
+    },
+    "aircraft/views/crud/aircraft_update.py": {
+      "checksum": "e1b8fc20d1550dc3b88757ec8491082e"
+    },
+    "aircraft/views/crud/applied_modification_create.py": {
+      "checksum": "31a57091c21f20adf6aa9c345168c8bd"
+    },
+    "aircraft/views/crud/applied_modification_delete.py": {
+      "checksum": "e5afc1bdfa8b35c286ed2f762b3cb135"
+    },
+    "aircraft/views/crud/applied_modification_read.py": {
+      "checksum": "6307ac4dffd70ea260a0962010cbadcf"
+    },
+    "aircraft/views/crud/applied_modification_update.py": {
+      "checksum": "a1bc20c3beb31119e9a3b91b121ea829"
+    },
+    "aircraft/views/crud/equipment_create.py": {
+      "checksum": "6d9696155228bdbc6430e1dac2ada01d"
+    },
+    "aircraft/views/crud/equipment_delete.py": {
+      "checksum": "4812661717ced673e56a38dd9fc90d53"
+    },
+    "aircraft/views/crud/equipment_read.py": {
+      "checksum": "29951c1cbfac13439b6fd26d0ee81221"
+    },
+    "aircraft/views/crud/equipment_update.py": {
+      "checksum": "7da3cf5916f32985e32371d373086ac3"
+    },
+    "aircraft/views/crud/messageCompliance_create.py": {
+      "checksum": "882787a19a52b9168376098681bc1fd5"
+    },
+    "aircraft/views/crud/messageCompliance_delete.py": {
+      "checksum": "cb57f06727008dc779a8b7564a0633de"
+    },
+    "aircraft/views/crud/messageCompliance_read.py": {
+      "checksum": "f96643bc31e17d3d5979bd2eaf11690a"
+    },
+    "aircraft/views/crud/messageCompliance_update.py": {
+      "checksum": "3aaa9df5ae687e24684cacb5398aad6a"
+    },
+    "aircraft/views/crud/message_create.py": {
+      "checksum": "09523175df188ec84edf43f668092990"
+    },
+    "aircraft/views/crud/message_delete.py": {
+      "checksum": "6b69a802e973d7cf1031380fdd89433c"
+    },
+    "aircraft/views/crud/message_read.py": {
+      "checksum": "6ac5aab52078e812f4375f847b97060d"
+    },
+    "aircraft/views/crud/message_update.py": {
+      "checksum": "ba31c4fb5bd88a51d36c0b1567888c4a"
+    },
+    "aircraft/views/crud/modificationCategory_create.py": {
+      "checksum": "cd239c9528dd9edc397bed79acf4c9ca"
+    },
+    "aircraft/views/crud/modificationCategory_delete.py": {
+      "checksum": "38ef4ae5024154881b6d396f8218be4b"
+    },
+    "aircraft/views/crud/modificationCategory_read.py": {
+      "checksum": "dd2d3e7140af10a16eed62e01ab562a3"
+    },
+    "aircraft/views/crud/modificationCategory_update.py": {
+      "checksum": "0c9cc573913d348afd2fe72ca0daa0e6"
+    },
+    "aircraft/views/crud/modification_create.py": {
+      "checksum": "be558fa6dab3849e6f8801ecd5eb9e52"
+    },
+    "aircraft/views/crud/modification_delete.py": {
+      "checksum": "67b8478e9565eaf66cf32112540e8ab6"
+    },
+    "aircraft/views/crud/modification_read.py": {
+      "checksum": "7e9d45526400cddbe993bfe4359b7d0c"
+    },
+    "aircraft/views/crud/modification_update.py": {
+      "checksum": "6fa4a78d34dab8d1bd5a23d9803f4335"
+    },
+    "aircraft/views/get_aircraft.py": {
+      "checksum": "a83da53b4fdac6d2b0ae4ce1da082094"
+    },
+    "aircraft/views/get_all_messages.py": {
+      "checksum": "ae09cb302b8cd2a1b842f59511156db3"
+    },
+    "aircraft/views/get_all_modifications.py": {
+      "checksum": "b0dcde6c736681fdf9569261a062e1ce"
+    },
+    "aircraft/views/get_message_system.py": {
+      "checksum": "98f29ffb642c32f14791c9c804df698c"
+    },
+    "aircraft/views/get_modification_categories.py": {
+      "checksum": "a1250c48f08ef0a091c551834f18b3d9"
+    },
+    "aircraft/views/get_modification_system.py": {
+      "checksum": "45f98de0653cf8cddfe3e2250bdeac2f"
+    },
+    "aircraft/views/get_raw_1352.py": {
+      "checksum": "0ffa8e22f6f6b178264a7afa9d73854c"
+    },
+    "aircraft/views/get_unit_aircraft_transfer_logs.py": {
+      "checksum": "9f4481e5f93a0e124959f8064e32a381"
+    },
+    "aircraft/views/get_unit_aircraft_transfer_requests.py": {
+      "checksum": "f60f9995e06fa93ddf84217595ec5d4a"
+    },
+    "aircraft/views/get_unit_equipment.py": {
+      "checksum": "808884fc9087fbbad6593e49bf8de7fe"
+    },
+    "aircraft/views/get_unit_message_compliances.py": {
+      "checksum": "d7165fabdc82343490e08ec979902619"
+    },
+    "aircraft/views/get_unit_messages.py": {
+      "checksum": "f953dd4e28a967ffd213ff8e0aa49533"
+    },
+    "aircraft/views/mass_updates.py": {
+      "checksum": "352b1fcae243854b018fe185514c0a74"
+    },
+    "aircraft/views/remove_aircraft_from_taskforce.py": {
+      "checksum": "00b018fcffd5a8fe46ebfa260654f937"
+    },
+    "aircraft/views/shiny_aircraft_dsr.py": {
+      "checksum": "756721b862582a90692c529065c5fd19"
+    },
+    "aircraft/views/transfer_aircraft.py": {
+      "checksum": "c9fd5fb6aec78a3defc88573a6f543bc"
+    },
+    "aircraft/views/transfer_aircraft_adjudication.py": {
+      "checksum": "c4ae3ae411376e037ea3008ea246da81"
+    },
+    "aircraft/views/transforms/__init__.py": {
+      "checksum": "fb2573d769005ce392bce0ba16d6ef7c"
+    },
+    "aircraft/views/transforms/transform_aircraft.py": {
+      "checksum": "a94b7eabe92e5aaff6bc9e8c8bc4a083"
+    },
+    "aircraft/views/transforms/update_aircraft.py": {
+      "checksum": "963bd0bcbbaa049f85b578af4d3d6bca"
+    },
+    "aircraft/views/transforms/update_aircraft_location.py": {
+      "checksum": "420cd66aeae8e3145825f02be0d75a11"
+    },
+    "aircraft/views/transforms/update_flight_hours.py": {
+      "checksum": "ec374a9035ac63a52a12632fef1af704"
+    },
+    "aircraft/views/transforms/update_inspections.py": {
+      "checksum": "a1e2237276159c6d1c264b2d25fef04e"
+    },
+    "aircraft/views/transforms/update_phase.py": {
+      "checksum": "631d0a6d745ce4374fb5ddca2a53a3db"
+    },
+    "auto_dsr/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "auto_dsr/admin.py": {
+      "checksum": "0b60e088bdcf07e106d196d2ccbf8e57"
+    },
+    "auto_dsr/apps.py": {
+      "checksum": "138fc7a928866ec7d78fadcc9b427b5b"
+    },
+    "auto_dsr/model_utils/__init__.py": {
+      "checksum": "805a3ab07f858118969bc9514d0cb7f9"
+    },
+    "auto_dsr/model_utils/acd_export_upload.py": {
+      "checksum": "262f04f3c1049ca62cf31b0c09b3ad2e"
+    },
+    "auto_dsr/model_utils/unit_echelon.py": {
+      "checksum": "8c9d7cf06ea8590d116ac8ce5cfd2167"
+    },
+    "auto_dsr/model_utils/user_rank.py": {
+      "checksum": "d5878e59deb1d1510650155b1e55c3a1"
+    },
+    "auto_dsr/model_utils/user_role_access_level.py": {
+      "checksum": "035922cb619f0100cb96c9ebfca62888"
+    },
+    "auto_dsr/models.py": {
+      "checksum": "ef453e924a98dc4db47ccc89e0e76a21"
+    },
+    "auto_dsr/serializers.py": {
+      "checksum": "972c7a88b673e3fe76f7274ab85f1f34"
+    },
+    "auto_dsr/urls.py": {
+      "checksum": "f249b1213d220a6ecdb6a3f6e7489e97"
+    },
+    "auto_dsr/utils/__init__.py": {
+      "checksum": "eae768b53ed484f0f4149e67e3b13edc"
+    },
+    "auto_dsr/utils/acd_export/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "auto_dsr/utils/acd_export/calculate_ch_inspections.py": {
+      "checksum": "bd1ceab2fa27c432a2a2f9a4169200cd"
+    },
+    "auto_dsr/utils/acd_export/update_aircraft.py": {
+      "checksum": "2c6d304ea6c78cdcc1bf3edde3d923b2"
+    },
+    "auto_dsr/utils/acd_export/update_item.py": {
+      "checksum": "71cf372ee23613925962242fde26a5b3"
+    },
+    "auto_dsr/utils/acd_export/update_uas.py": {
+      "checksum": "17d6d5ef9168761661a186646564a4e3"
+    },
+    "auto_dsr/utils/acd_export/upsert_aircraft_inspections.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "auto_dsr/utils/acd_export/upsert_inspections.py": {
+      "checksum": "46dbabe4e52ffdfa82479f41ff48d734"
+    },
+    "auto_dsr/utils/acd_export/upsert_phase.py": {
+      "checksum": "fcd70bb32c7a56b674d7898f69618281"
+    },
+    "auto_dsr/utils/generate_all_location_short_names_and_abbreviations.py": {
+      "checksum": "99444c37847a9c8dd71aeb7130a97e11"
+    },
+    "auto_dsr/utils/create_location_fields.py": {
+      "checksum": "5e1164e54dfdcbd8585e12cb3476349e"
+    },
+    "auto_dsr/utils/generate_tf_uic.py": {
+      "checksum": "a7b1e10fd8ff2d12885443f140ace791"
+    },
+    "auto_dsr/utils/unit.py": {
+      "checksum": "210f4cb5fc0a4d67890f05733529d6f7"
+    },
+    "auto_dsr/utils/user_permission_check.py": {
+      "checksum": "2e99d69527a2a6300e707a502eca0240"
+    },
+    "auto_dsr/views/__init__.py": {
+      "checksum": "b8828ecf112b9590c432f5d5bb406409"
+    },
+    "auto_dsr/views/acd_export_page.py": {
+      "checksum": "d8221af9ef754f1939fbedc492689f83"
+    },
+    "auto_dsr/views/acd_export_upload.py": {
+      "checksum": "1d26c9b42fac513df888eccdb4e54987"
+    },
+    "auto_dsr/views/aircraft_module.py": {
+      "checksum": "5dc6d014b4755ba73e38a79b88653db2"
+    },
+    "auto_dsr/views/crud/UserSetting_create.py": {
+      "checksum": "68eacb1615dca6838d62bc48dfeaeb03"
+    },
+    "auto_dsr/views/crud/UserSetting_delete.py": {
+      "checksum": "9dfb874c6f28ec4a34f692d62d8a97c3"
+    },
+    "auto_dsr/views/crud/UserSetting_read.py": {
+      "checksum": "cbcd9ef0a5b0974db3f08121d7294dd0"
+    },
+    "auto_dsr/views/crud/UserSetting_update.py": {
+      "checksum": "e2712915be51660f1fe7d8a126dc31a0"
+    },
+    "auto_dsr/views/crud/__init__.py": {
+      "checksum": "d3fbc8fbfa1bd87eba76f430b0dd93dd"
+    },
+    "auto_dsr/views/crud/location_create.py": {
+      "checksum": "85f388c2e3a0f02a3b33810c23a4786e"
+    },
+    "auto_dsr/views/crud/location_delete.py": {
+      "checksum": "c33198c104cdc83de0a1753d71fde40f"
+    },
+    "auto_dsr/views/crud/location_read.py": {
+      "checksum": "0be4b752983204b7529634cd08ff635e"
+    },
+    "auto_dsr/views/crud/location_update.py": {
+      "checksum": "9aaef6a0fd001b2e3cbc04544d4aa814"
+    },
+    "auto_dsr/views/crud/unit_create.py": {
+      "checksum": "feffad64b4d8dee9b12f183399c78e1f"
+    },
+    "auto_dsr/views/crud/unit_read.py": {
+      "checksum": "a21506699b5ddabbbea984e3cc0fbddb"
+    },
+    "auto_dsr/views/crud/unit_update.py": {
+      "checksum": "c5ad19b7d8f004711883f9fc2b554128"
+    },
+    "auto_dsr/views/crud/userRequest_create.py": {
+      "checksum": "52ced573bdcdc57c1584d94f40fa52db"
+    },
+    "auto_dsr/views/crud/userRequest_read.py": {
+      "checksum": "76696416bc6a5b0a50ee891eb13805f2"
+    },
+    "auto_dsr/views/crud/userRequest_update.py": {
+      "checksum": "415625e433de274dace06c9d15a907ce"
+    },
+    "auto_dsr/views/crud/userRole_create.py": {
+      "checksum": "df33c7d9259ab5bdfd716fd10d4034f6"
+    },
+    "auto_dsr/views/crud/userRole_delete.py": {
+      "checksum": "1508f51bf3d4de511e4a92c3f22f912d"
+    },
+    "auto_dsr/views/crud/userRole_read.py": {
+      "checksum": "5bfb3daa3935379de4362c008be5c2fd"
+    },
+    "auto_dsr/views/crud/user_create.py": {
+      "checksum": "3f4f81bd1cb6daef55a53b441f6afcf2"
+    },
+    "auto_dsr/views/crud/user_read.py": {
+      "checksum": "55d3436018cd969382eb18979001b389"
+    },
+    "auto_dsr/views/crud/user_update.py": {
+      "checksum": "bab22f60ca37c58eb3cfc745f78d4e79"
+    },
+    "auto_dsr/views/get_all_elevated_roles.py": {
+      "checksum": "20a03ecee964eb28e3a73ca0a7f6a805"
+    },
+    "auto_dsr/views/get_all_locations.py": {
+      "checksum": "36b774a704ac68b49635cb09dc68b314"
+    },
+    "auto_dsr/views/get_all_units.py": {
+      "checksum": "19ca58a7aba0e73480fd73cb883b5565"
+    },
+    "auto_dsr/views/get_all_users.py": {
+      "checksum": "627e5a7e76c704a19bcd14c612fc8f7e"
+    },
+    "auto_dsr/views/get_sub_units.py": {
+      "checksum": "547b224e96b641d42b400817be7daa18"
+    },
+    "auto_dsr/views/index.py": {
+      "checksum": "2be0c49a04064996a9cdd3ce4cec1dc2"
+    },
+    "auto_dsr/views/list_task_force_uics.py": {
+      "checksum": "a896829b7c5f5ed8b68aef88e9dcd7ba"
+    },
+    "auto_dsr/views/list_task_forces.py": {
+      "checksum": "3a34fbffdc464d7db58bfbaa819ffc0f"
+    },
+    "auto_dsr/views/manual_phase_order.py": {
+      "checksum": "647c699915061c619e6a10f7c1f38e15"
+    },
+    "auto_dsr/views/record_login.py": {
+      "checksum": "869a66252f50b52f406ebb151f25e4ba"
+    },
+    "auto_dsr/views/unit_view_set.py": {
+      "checksum": "adcab75f11b77914f77fd05c526cc993"
+    },
+    "auto_dsr/views/user_role_views.py": {
+      "checksum": "511fe8edf8b1a443295a9aadab313b14"
+    },
+    "auto_dsr/views/user_setting_bulk_create.py": {
+      "checksum": "4d87430c49e17342a942ecfa0139cbdb"
+    },
+    "create_manifest.sh": {
+      "checksum": "b535598336f4eb4717c9a899692785c3"
+    },
+    "db.sqlite3": {
+      "checksum": "f1e0c5555ec29f1d6c0208c6e4e5f95d"
+    },
+    "deploy_test.sh": {
+      "checksum": "24305b185d612667fc974b7a0fbbaf0a"
+    },
+    "fhp/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "fhp/admin.py": {
+      "checksum": "c8015bf4c01cd11124810474c1db2ed8"
+    },
+    "fhp/apps.py": {
+      "checksum": "483776192a97ccf3c19ab37fc1cfa738"
+    },
+    "fhp/models.py": {
+      "checksum": "d9568924940ff70f94fd7be284e9a699"
+    },
+    "fhp/urls.py": {
+      "checksum": "b982de3c59b8a6da15960b35e7ea5a96"
+    },
+    "fhp/views/__init__.py": {
+      "checksum": "03248d9bdaa96acb61740fcfcd27f7c4"
+    },
+    "fhp/views/crud/__init__.py": {
+      "checksum": "3ef12348b29a5efd690a297c7f941f11"
+    },
+    "fhp/views/crud/monthlypredictions_read.py": {
+      "checksum": "cef00119a3d1bce80ef5c5a66ed40b57"
+    },
+    "fhp/views/crud/monthlyprojections_read.py": {
+      "checksum": "4bdff47e513fc01ecb02b83eeaa7101b"
+    },
+    "fhp/views/ingest_fy_predictions.py": {
+      "checksum": "67cb54e0c203fc53cf3e68c8ffaa9e97"
+    },
+    "fhp/views/store_predictions.py": {
+      "checksum": "61dc55f6cd570f071be970938162c98a"
+    },
+    "fhp/views/transforms/__init__.py": {
+      "checksum": "1b467a599dc3e17e37a5f4d6ff6438da"
+    },
+    "fhp/views/transforms/transform_projections.py": {
+      "checksum": "cb993a6a8627719e03af1e3045812be1"
+    },
+    "griffin_ai/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "griffin_ai/asgi.py": {
+      "checksum": "77c9d116facea516ff41004a4ef4b6d6"
+    },
+    "griffin_ai/settings/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "griffin_ai/settings/base.py": {
+      "checksum": "a1e53e7859e5b24c8aaa21e407f2a2b7"
+    },
+    "griffin_ai/settings/dev/.env": {
+      "checksum": "465889d05754e85e7255a69bb307075c"
+    },
+    "griffin_ai/settings/dev/dse.py": {
+      "checksum": "3468afca7605b9727f1bd393ee61463a"
+    },
+    "griffin_ai/settings/dev/local.py": {
+      "checksum": "d3e67e0c9a256450cc51e5c0ecd15fbb"
+    },
+    "griffin_ai/settings/prod/.env": {
+      "checksum": "41038b92dc32f99aec913a243a1766db"
+    },
+    "griffin_ai/settings/prod/dse.py": {
+      "checksum": "7ad093ad58e48b2f615ae239d19057d3"
+    },
+    "griffin_ai/settings/prod/ltac.py": {
+      "checksum": "ed3973b59f9b24f09320af4baa8614a6"
+    },
+    "griffin_ai/settings/test/.env": {
+      "checksum": "12073f2c8f037c0a86cfb1d4020ed28d"
+    },
+    "griffin_ai/settings/test/dse.py": {
+      "checksum": "4f67517e4dafa113028b45aa14fb0944"
+    },
+    "griffin_ai/urls.py": {
+      "checksum": "78d2c248ae756c8688da4d988cae3a63"
+    },
+    "griffin_ai/wsgi.py": {
+      "checksum": "b6113fe7be576bcff67f83d64d41b21e"
+    },
+    "manage.py": {
+      "checksum": "29cee7fcf337ace9c30c2dba34cc724e"
+    },
+    "middleware/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "middleware/servestatic.py": {
+      "checksum": "9229d6aa3955867771f781d838b5834e"
+    },
+    "phase_sched/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "phase_sched/admin.py": {
+      "checksum": "4684940861af301029efbb0f9fa61274"
+    },
+    "phase_sched/apps.py": {
+      "checksum": "802675e66894c3cbb70aec7f5f8cc70b"
+    },
+    "phase_sched/model_utils/__init__.py": {
+      "checksum": "83a0929242629d13fabc8c7d9e7483d1"
+    },
+    "phase_sched/model_utils/phase_types.py": {
+      "checksum": "0dce9049e5cb2ba6c9ceff61e85acea1"
+    },
+    "phase_sched/models.py": {
+      "checksum": "5bbbffd9923b1b203b61dd9806a3986b"
+    },
+    "phase_sched/urls.py": {
+      "checksum": "2ac81dab661874f1e98a8252c059b257"
+    },
+    "phase_sched/views/__init__.py": {
+      "checksum": "797973458a0b975d503f4ac33c6f5c48"
+    },
+    "phase_sched/views/crud/__init__.py": {
+      "checksum": "17508d75a7b1876f1b7f18b3ce2fd7a5"
+    },
+    "phase_sched/views/crud/phase_lane_create.py": {
+      "checksum": "1d65512eff834d79405f77e599aacd67"
+    },
+    "phase_sched/views/crud/planned_phase_create.py": {
+      "checksum": "16f2c69edbdd0bff7146b3cb6a833e99"
+    },
+    "phase_sched/views/crud/planned_phase_delete.py": {
+      "checksum": "2906a96912917555428ef5c7e1e3d3e8"
+    },
+    "phase_sched/views/crud/planned_phase_update.py": {
+      "checksum": "efaefb6dfb51435eb8cdde62008795a6"
+    },
+    "phase_sched/views/get_aircraft_inspections.py": {
+      "checksum": "5ec66112eb84ccefeb98f42ecdd21a42"
+    },
+    "phase_sched/views/get_lanes.py": {
+      "checksum": "b12e8b4f7da69ddd7d90d136f29cf3a7"
+    },
+    "phase_sched/views/get_phases.py": {
+      "checksum": "c4c56bfe38214bc68c5559731a348988"
+    },
+    "raw_schema/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "raw_schema/apps.py": {
+      "checksum": "57bd6a1f41edd9e0e2675f66b36ea75f"
+    },
+    "raw_schema/models.py": {
+      "checksum": "ec244c376877ce6c493e0f7b10727869"
+    },
+    "raw_schema/urls.py": {
+      "checksum": "9ee83ce209c4555af7a4800bfee100b2"
+    },
+    "raw_schema/views.py": {
+      "checksum": "b7d955e1b60e009f9fc8d9558ed5db8e"
+    },
+    "reports/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "reports/admin.py": {
+      "checksum": "b87fdc1b58e609a63e1de0c74d4dcf24"
+    },
+    "reports/apps.py": {
+      "checksum": "563d46967a5c6351e641aea42bfbaad1"
+    },
+    "reports/flowables/__init__.py": {
+      "checksum": "ac643feda21a111487bf27b27d5ff0e7"
+    },
+    "reports/flowables/rotated_text.py": {
+      "checksum": "0eae29638ae5411d50feaf514a62eba5"
+    },
+    "reports/generator/__init__.py": {
+      "checksum": "0ba06eeb324ea40f86724a7a6becfc61"
+    },
+    "reports/generator/constants.py": {
+      "checksum": "4bceac461872ed99de82bdcd96511287"
+    },
+    "reports/generator/data/__init__.py": {
+      "checksum": "418cd965ce64a957eae5772240cdcaea"
+    },
+    "reports/generator/data/csv_unit_dsr.py": {
+      "checksum": "10fee3cdcb4770ccffcfa1061199b3ba"
+    },
+    "reports/generator/data/unit_dsr.py": {
+      "checksum": "c52ee69bc37273c0501cad66b5ab6a3f"
+    },
+    "reports/generator/data/unit_slant.py": {
+      "checksum": "83fb978c048f1c4d32123271343961f5"
+    },
+    "reports/generator/draw/__init__.py": {
+      "checksum": "50c32dff1fcd58358de07641bc8cfed0"
+    },
+    "reports/generator/draw/footer.py": {
+      "checksum": "d75ed30003767244e93e1575bfaef3a9"
+    },
+    "reports/generator/draw/header.py": {
+      "checksum": "d319d3535fb37fd91b773e6041b2660c"
+    },
+    "reports/generator/draw/unit_details_dsr_table.py": {
+      "checksum": "be946d4095703bd2ce991aa81dfd4bc5"
+    },
+    "reports/generator/draw/unit_details_page.py": {
+      "checksum": "58dd043a89276adde4079e625bd4611e"
+    },
+    "reports/generator/draw/unit_details_slant_bank_time.py": {
+      "checksum": "04c09da0b340302f0825575512946260"
+    },
+    "reports/generator/draw/unit_details_slant_flight_hours.py": {
+      "checksum": "787553611a96fc6efff44698a3dce696"
+    },
+    "reports/generator/draw/unit_details_slant_rtl.py": {
+      "checksum": "876e5aaf723b88bf43a4d1111601f21a"
+    },
+    "reports/generator/draw/unit_details_slant_section.py": {
+      "checksum": "b7d5cf698baf0023cb04f15adb8085eb"
+    },
+    "reports/generator/draw/unit_details_slant_uas_status.py": {
+      "checksum": "ca8a2fbb3ba662fe9993f67e5d77905f"
+    },
+    "reports/generator/draw/unit_summary_page.py": {
+      "checksum": "ce46453749db1b799690daae08c048c3"
+    },
+    "reports/generator/draw/unit_summary_rtl.py": {
+      "checksum": "26fdb26d7a9c0b4a91b28e653e4806ea"
+    },
+    "reports/generator/draw/unit_summary_slant.py": {
+      "checksum": "f4f35d92b0a3964081229b9c28cdfb4c"
+    },
+    "reports/generator/generate_csv_dsr.py": {
+      "checksum": "a20a4434b8a201291071eba4cf813c39"
+    },
+    "reports/generator/generate_dsr.py": {
+      "checksum": "25eae49dbb58e3feb51eb63cf381fefe"
+    },
+    "reports/generator/register_document.py": {
+      "checksum": "6b9e0be4cd2c049fb2a8e09dfe23ae25"
+    },
+    "reports/generator/reportlab_setup.py": {
+      "checksum": "94097a2ac2d7d91d8dea18e198703bb9"
+    },
+    "reports/generator/utils/__init__.py": {
+      "checksum": "bbe04dd9497a52055ec6b62fd52723a5"
+    },
+    "reports/generator/utils/classify_mds.py": {
+      "checksum": "653ace7a14526cb2de4aa8878327f8ff"
+    },
+    "reports/generator/utils/formatting.py": {
+      "checksum": "c882cdd9d6cfdef8e5af751736ea06ac"
+    },
+    "reports/generator/utils/sort_column_names.py": {
+      "checksum": "a12b70a26106cf4fbf0aebd958966f08"
+    },
+    "reports/model_utils/__init__.py": {
+      "checksum": "0102d520611a0344ca20f0822c45fd0f"
+    },
+    "reports/model_utils/dsr_upload.py": {
+      "checksum": "3286a902babfc234ee41bad1179333ec"
+    },
+    "reports/models.py": {
+      "checksum": "b513524d34824ec546450793f75b4b6b"
+    },
+    "reports/urls.py": {
+      "checksum": "b025a30eec644cac1ea2ae803f4518ae"
+    },
+    "reports/views/__init__.py": {
+      "checksum": "95873dc317f900c7cc1498839db03fe5"
+    },
+    "reports/views/create_csv_dsr.py": {
+      "checksum": "611936b2176f51f857ae0fb9a7895b12"
+    },
+    "reports/views/create_dsr.py": {
+      "checksum": "127221cdbe90172ffea467b8f4932e45"
+    },
+    "static/admin/css/autocomplete.css": {
+      "checksum": "4a81fc4242d08519b3beaaf169b86896"
+    },
+    "static/admin/css/base.css": {
+      "checksum": "13c39e9755026f98ca4e985f12172d2e"
+    },
+    "static/admin/css/changelists.css": {
+      "checksum": "f4631a29abadb51e7877bc86c4cf6d94"
+    },
+    "static/admin/css/dark_mode.css": {
+      "checksum": "ef27a31af3009f5b5569c539fa62c9a6"
+    },
+    "static/admin/css/dashboard.css": {
+      "checksum": "e90f2068217be708abb6f94e4f86226c"
+    },
+    "static/admin/css/forms.css": {
+      "checksum": "4f3d3b0c6528f387b7d75785e7292f56"
+    },
+    "static/admin/css/login.css": {
+      "checksum": "586129c60a93bae20284d1502b46e41e"
+    },
+    "static/admin/css/nav_sidebar.css": {
+      "checksum": "269a1bd446270dd6992d07267e10271c"
+    },
+    "static/admin/css/responsive.css": {
+      "checksum": "107cd26903112ac32579e86a45771493"
+    },
+    "static/admin/css/responsive_rtl.css": {
+      "checksum": "97b066429fd85d78680b4c9f7a8ab5db"
+    },
+    "static/admin/css/rtl.css": {
+      "checksum": "de2df5c35d8f93fcb880f73381c0ede1"
+    },
+    "static/admin/css/vendor/select2/LICENSE-SELECT2.md": {
+      "checksum": "f94142512c911b193a09e603fb0db26a"
+    },
+    "static/admin/css/vendor/select2/select2.css": {
+      "checksum": "a2194c2626489df39c3906f8d27ecbcb"
+    },
+    "static/admin/css/vendor/select2/select2.min.css": {
+      "checksum": "9f54e6414f87e0d14b9e966f19a174f9"
+    },
+    "static/admin/css/widgets.css": {
+      "checksum": "752d2304e605a547855c2590b1aac53a"
+    },
+    "static/admin/img/LICENSE": {
+      "checksum": "2c54f4e1ca1cba30bbad4175130cc5a1"
+    },
+    "static/admin/img/README.txt": {
+      "checksum": "a70711a38d870ceaa34ce048b7b04feb"
+    },
+    "static/admin/img/calendar-icons.svg": {
+      "checksum": "39b290681a8b7334038ba7c8ad29a33f"
+    },
+    "static/admin/img/gis/move_vertex_off.svg": {
+      "checksum": "7a23bf31ef8a19d7dd379faf0c3614b6"
+    },
+    "static/admin/img/gis/move_vertex_on.svg": {
+      "checksum": "0047eba25b67010b656b157e0a37caeb"
+    },
+    "static/admin/img/icon-addlink.svg": {
+      "checksum": "d519b3bab011f1ab11b5e34d5f20fcf0"
+    },
+    "static/admin/img/icon-alert.svg": {
+      "checksum": "034cc7d8a67fe3cccc5597bfc81af52e"
+    },
+    "static/admin/img/icon-calendar.svg": {
+      "checksum": "ac7aea671bea256b3f2e4a9ce4881b74"
+    },
+    "static/admin/img/icon-changelink.svg": {
+      "checksum": "18d2fd706348e40383d061cad38c395b"
+    },
+    "static/admin/img/icon-clock.svg": {
+      "checksum": "e1d4dfac3f2b2898feff2542006446a4"
+    },
+    "static/admin/img/icon-deletelink.svg": {
+      "checksum": "564ef9dc3854d9501d3a11593914b5d6"
+    },
+    "static/admin/img/icon-no.svg": {
+      "checksum": "439e821418cd2138c89ea9603338889b"
+    },
+    "static/admin/img/icon-unknown-alt.svg": {
+      "checksum": "81536e128bb6294146d8d8e404761a3e"
+    },
+    "static/admin/img/icon-unknown.svg": {
+      "checksum": "a18cb4398978296b9825b8eeab3cc23e"
+    },
+    "static/admin/img/icon-viewlink.svg": {
+      "checksum": "41eb31f7826e25beebc67aa793bdef4e"
+    },
+    "static/admin/img/icon-yes.svg": {
+      "checksum": "d2f9f035226a83b0ca98a4adfa318a12"
+    },
+    "static/admin/img/inline-delete.svg": {
+      "checksum": "fec1b761f25409936cf06e71676e6703"
+    },
+    "static/admin/img/search.svg": {
+      "checksum": "7cf54ff789c655cab6b4971cc239fcbf"
+    },
+    "static/admin/img/selector-icons.svg": {
+      "checksum": "b4555096cea28edf305031f89402f8d6"
+    },
+    "static/admin/img/sorting-icons.svg": {
+      "checksum": "3a097b59f104e9e56500eb385808bd72"
+    },
+    "static/admin/img/tooltag-add.svg": {
+      "checksum": "e59d620a97425b0b1d5c01e0e1711295"
+    },
+    "static/admin/img/tooltag-arrowright.svg": {
+      "checksum": "bbfb788a849ee115c109b1224a67832b"
+    },
+    "static/admin/js/SelectBox.js": {
+      "checksum": "7d3ce5a9800705ffbd8e6eaa2009fb09"
+    },
+    "static/admin/js/SelectFilter2.js": {
+      "checksum": "bdb8d0cc579e82d60a5aba2fd8754a2e"
+    },
+    "static/admin/js/actions.js": {
+      "checksum": "eac7e34415746bd353da875ba38e7029"
+    },
+    "static/admin/js/admin/DateTimeShortcuts.js": {
+      "checksum": "9f6e209cebcafd8430ddb01e9b68b977"
+    },
+    "static/admin/js/admin/RelatedObjectLookups.js": {
+      "checksum": "8609f99b9ab2eea58c98726056f7e2db"
+    },
+    "static/admin/js/autocomplete.js": {
+      "checksum": "01591ab27be76a799fe8051c4e81ab91"
+    },
+    "static/admin/js/calendar.js": {
+      "checksum": "f8a5d055eb3343757b5a40e1acabcd56"
+    },
+    "static/admin/js/cancel.js": {
+      "checksum": "ecc4c5ca7b320db9ec67785d7ab4bc65"
+    },
+    "static/admin/js/change_form.js": {
+      "checksum": "9d8ca4f96b75fc3c53e3f05c5a7bfb4e"
+    },
+    "static/admin/js/collapse.js": {
+      "checksum": "f84e7410290f8f194f2cb9b51586f6b6"
+    },
+    "static/admin/js/core.js": {
+      "checksum": "cf103cd04ebfe03c537f36f1900967c2"
+    },
+    "static/admin/js/filters.js": {
+      "checksum": "0e360b7a9f80ef8889781e59bc828e65"
+    },
+    "static/admin/js/inlines.js": {
+      "checksum": "22d4d93c00b44a1b2b145334583879d0"
+    },
+    "static/admin/js/jquery.init.js": {
+      "checksum": "b7781a0897fc89389201ee3da15e900f"
+    },
+    "static/admin/js/nav_sidebar.js": {
+      "checksum": "3b9190d420b144427a4d38346e7c6506"
+    },
+    "static/admin/js/popup_response.js": {
+      "checksum": "c6cc78ea555158ea1177ca7e6c9e5329"
+    },
+    "static/admin/js/prepopulate.js": {
+      "checksum": "bd2361dfd64d2183823dc84b0d82801c"
+    },
+    "static/admin/js/prepopulate_init.js": {
+      "checksum": "6cac7f3105b86816ad13714ca1a2f79e"
+    },
+    "static/admin/js/theme.js": {
+      "checksum": "ab270f56bb9c43b88cadf98dce18d360"
+    },
+    "static/admin/js/urlify.js": {
+      "checksum": "ae970a8202121d365888c4fb110e3564"
+    },
+    "static/admin/js/vendor/jquery/LICENSE.txt": {
+      "checksum": "de877aa6d744cc160ff41c26a8e4811f"
+    },
+    "static/admin/js/vendor/jquery/jquery.js": {
+      "checksum": "0208b96062ba59d07c4495115d2b42ce"
+    },
+    "static/admin/js/vendor/jquery/jquery.min.js": {
+      "checksum": "641dd14370106e992d352166f5a07e99"
+    },
+    "static/admin/js/vendor/select2/LICENSE.md": {
+      "checksum": "f94142512c911b193a09e603fb0db26a"
+    },
+    "static/admin/js/vendor/select2/i18n/af.js": {
+      "checksum": "4f6fcd73488ce79fae1b7a90aceaecde"
+    },
+    "static/admin/js/vendor/select2/i18n/ar.js": {
+      "checksum": "65aa8e36bf5da57ff4e3f22a835ab035"
+    },
+    "static/admin/js/vendor/select2/i18n/az.js": {
+      "checksum": "270c257daf8140a0cf23ad5de6f8ed1b"
+    },
+    "static/admin/js/vendor/select2/i18n/bg.js": {
+      "checksum": "39b8be30d4f06779839cfaaa415d0690"
+    },
+    "static/admin/js/vendor/select2/i18n/bn.js": {
+      "checksum": "6d42b4dd5665d0fa28f06994eedb4899"
+    },
+    "static/admin/js/vendor/select2/i18n/bs.js": {
+      "checksum": "91624382358e95086b80f00fa0bd6955"
+    },
+    "static/admin/js/vendor/select2/i18n/ca.js": {
+      "checksum": "a166b745933a48ce3d0580a74210617d"
+    },
+    "static/admin/js/vendor/select2/i18n/cs.js": {
+      "checksum": "4f43e8e7d33aa1e6aadf3286c7e379e9"
+    },
+    "static/admin/js/vendor/select2/i18n/da.js": {
+      "checksum": "766346afe4dd72c003242cfb1cbe2617"
+    },
+    "static/admin/js/vendor/select2/i18n/de.js": {
+      "checksum": "8a1c222b0204c8faaf6d3c07c961d8aa"
+    },
+    "static/admin/js/vendor/select2/i18n/dsb.js": {
+      "checksum": "56372c92d2f1bcb2b8e382981dca0546"
+    },
+    "static/admin/js/vendor/select2/i18n/el.js": {
+      "checksum": "27097f071856a0f4e82298fe407d1eac"
+    },
+    "static/admin/js/vendor/select2/i18n/en.js": {
+      "checksum": "cf932ba09a98fe11bde8e1f3dd5e2cfa"
+    },
+    "static/admin/js/vendor/select2/i18n/es.js": {
+      "checksum": "66dbc2652fb1b769bf29058e707b43c8"
+    },
+    "static/admin/js/vendor/select2/i18n/et.js": {
+      "checksum": "2b96fd98289dc3fc5e61f21e6e1a7d52"
+    },
+    "static/admin/js/vendor/select2/i18n/eu.js": {
+      "checksum": "adfe5c97b72c20bb0afbc0968b440e50"
+    },
+    "static/admin/js/vendor/select2/i18n/fa.js": {
+      "checksum": "3b5bd1961cfd0a6f96ac4cd2ea16c243"
+    },
+    "static/admin/js/vendor/select2/i18n/fi.js": {
+      "checksum": "614ec42aa9baaf687ab9ff44705dfd2e"
+    },
+    "static/admin/js/vendor/select2/i18n/fr.js": {
+      "checksum": "05e0542fcfe6df5ab074a377dc1a5a9b"
+    },
+    "static/admin/js/vendor/select2/i18n/gl.js": {
+      "checksum": "d99b1fedaa86d011818cfbab11dd355c"
+    },
+    "static/admin/js/vendor/select2/i18n/he.js": {
+      "checksum": "e420ff6cd3ed77ab9271c9b3d441442c"
+    },
+    "static/admin/js/vendor/select2/i18n/hi.js": {
+      "checksum": "70640d41628f36284af78b22ea8b283b"
+    },
+    "static/admin/js/vendor/select2/i18n/hr.js": {
+      "checksum": "a2b092cc1147f07b978145d407c67fa1"
+    },
+    "static/admin/js/vendor/select2/i18n/hsb.js": {
+      "checksum": "fa3b55265efe8f4182d5e65a1a506252"
+    },
+    "static/admin/js/vendor/select2/i18n/hu.js": {
+      "checksum": "6ec6039cb8a354e2bc6a1794f729caae"
+    },
+    "static/admin/js/vendor/select2/i18n/hy.js": {
+      "checksum": "c7babaeef5a625566434ea79b19d4c7e"
+    },
+    "static/admin/js/vendor/select2/i18n/id.js": {
+      "checksum": "04debded514d3962bb74f05532e793d4"
+    },
+    "static/admin/js/vendor/select2/i18n/is.js": {
+      "checksum": "3ddd9a6a97e93e1910210c9eefc1bca1"
+    },
+    "static/admin/js/vendor/select2/i18n/it.js": {
+      "checksum": "be4fe8d365b5916432504d1f98e2e0af"
+    },
+    "static/admin/js/vendor/select2/i18n/ja.js": {
+      "checksum": "170ae885d74f1634271e1eb470cb4621"
+    },
+    "static/admin/js/vendor/select2/i18n/ka.js": {
+      "checksum": "2083264a54f0873f55468affa796d61e"
+    },
+    "static/admin/js/vendor/select2/i18n/km.js": {
+      "checksum": "c23089cb06ca871153ba9bfe8458a378"
+    },
+    "static/admin/js/vendor/select2/i18n/ko.js": {
+      "checksum": "e7be6c20e67393698a0f05971e9720c1"
+    },
+    "static/admin/js/vendor/select2/i18n/lt.js": {
+      "checksum": "23c7ce903300fc118947994b9cdd16cb"
+    },
+    "static/admin/js/vendor/select2/i18n/lv.js": {
+      "checksum": "08e62128eac1d0e8ac32cfaf75f2ec9f"
+    },
+    "static/admin/js/vendor/select2/i18n/mk.js": {
+      "checksum": "dabbb90871300ce3a295969bc0260420"
+    },
+    "static/admin/js/vendor/select2/i18n/ms.js": {
+      "checksum": "4ba82c9a51ce975fe0e4eff5f6eece65"
+    },
+    "static/admin/js/vendor/select2/i18n/nb.js": {
+      "checksum": "da2fce143f2794208e36dc8520e4c36a"
+    },
+    "static/admin/js/vendor/select2/i18n/ne.js": {
+      "checksum": "3d79fd3f08dbfd0973cf91dd6a62bccd"
+    },
+    "static/admin/js/vendor/select2/i18n/nl.js": {
+      "checksum": "997868a37ed89062ad7b19c9a88f1bb0"
+    },
+    "static/admin/js/vendor/select2/i18n/pl.js": {
+      "checksum": "6031b4f164521f58dfec7d1e46238861"
+    },
+    "static/admin/js/vendor/select2/i18n/ps.js": {
+      "checksum": "38dfa47af9e086eece5a333d711abc79"
+    },
+    "static/admin/js/vendor/select2/i18n/pt-BR.js": {
+      "checksum": "e1b294433e7fc3175842ce37b9f15014"
+    },
+    "static/admin/js/vendor/select2/i18n/pt.js": {
+      "checksum": "33b4a3b44d437614b83497e36c138ca9"
+    },
+    "static/admin/js/vendor/select2/i18n/ro.js": {
+      "checksum": "f75cb460ec3b98b4b9017e9513ca20cf"
+    },
+    "static/admin/js/vendor/select2/i18n/ru.js": {
+      "checksum": "934aa95f5b5f32c72c80857bb2622074"
+    },
+    "static/admin/js/vendor/select2/i18n/sk.js": {
+      "checksum": "33d02cef8d110f358acd1624f7f79ffe"
+    },
+    "static/admin/js/vendor/select2/i18n/sl.js": {
+      "checksum": "131a78bc075237a13750ead3807683d2"
+    },
+    "static/admin/js/vendor/select2/i18n/sq.js": {
+      "checksum": "5636b60d29c9bdd55f18a4585746b6d1"
+    },
+    "static/admin/js/vendor/select2/i18n/sr-Cyrl.js": {
+      "checksum": "f254bb8c4c7ce00d9d17e9e91945ad9b"
+    },
+    "static/admin/js/vendor/select2/i18n/sr.js": {
+      "checksum": "5ed85a48f483d17a7ad102832cb11ea1"
+    },
+    "static/admin/js/vendor/select2/i18n/sv.js": {
+      "checksum": "7a9c2f71e7779a263b2cf3520b1aa611"
+    },
+    "static/admin/js/vendor/select2/i18n/th.js": {
+      "checksum": "f38c20b0221b68924d6c8f0773cb252d"
+    },
+    "static/admin/js/vendor/select2/i18n/tk.js": {
+      "checksum": "7c572a68c78fb798f11f7d8c78ebb9d6"
+    },
+    "static/admin/js/vendor/select2/i18n/tr.js": {
+      "checksum": "b5a0643d1545f4a3e1622e65e46ddc7c"
+    },
+    "static/admin/js/vendor/select2/i18n/uk.js": {
+      "checksum": "8cede7f4803c7dbd1e8261bfa1932b7c"
+    },
+    "static/admin/js/vendor/select2/i18n/vi.js": {
+      "checksum": "097a5b75b3e146e2d94ab8e1510be607"
+    },
+    "static/admin/js/vendor/select2/i18n/zh-CN.js": {
+      "checksum": "2cff662ec5f972b4613566cf5988cda2"
+    },
+    "static/admin/js/vendor/select2/i18n/zh-TW.js": {
+      "checksum": "04554a227c2ba0f3bb6ca3d2e01e5440"
+    },
+    "static/admin/js/vendor/select2/select2.full.js": {
+      "checksum": "c2afdeda30583c460d6db9778ba92cde"
+    },
+    "static/admin/js/vendor/select2/select2.full.min.js": {
+      "checksum": "fcd7500d8e13d2b2aae5d3956dc3e21d"
+    },
+    "static/admin/js/vendor/xregexp/LICENSE.txt": {
+      "checksum": "bf79e414957a6625ef109c2c16be1462"
+    },
+    "static/admin/js/vendor/xregexp/xregexp.js": {
+      "checksum": "efda034b953739111c7e06101843860a"
+    },
+    "static/admin/js/vendor/xregexp/xregexp.min.js": {
+      "checksum": "b0439563a5d3ea2d52435768fd01238e"
+    },
+    "static/auto_dsr/css/acd-export-style.css": {
+      "checksum": "953c9604f69d7913e1d687fc26d65a57"
+    },
+    "static/auto_dsr/css/griffin-style.css": {
+      "checksum": "4efac9b9f9cdcb3271eb78a3386beb26"
+    },
+    "static/auto_dsr/css/style.css": {
+      "checksum": "944e54dc0e5d508223d26e152e0b8842"
+    },
+    "static/auto_dsr/fonts/OpenSans/OFL.txt": {
+      "checksum": "d2d4ea6f98e75683476642029336d0ac"
+    },
+    "static/auto_dsr/fonts/OpenSans/OpenSans-Bold.ttf": {
+      "checksum": "8ff9b5735ccb338267f0034d83fe8214"
+    },
+    "static/auto_dsr/fonts/OpenSans/OpenSans-Regular.ttf": {
+      "checksum": "22ab03a6b890f2f142a137a38bf1d4ae"
+    },
+    "static/auto_dsr/fonts/OpenSans/OpenSans-SemiBold.ttf": {
+      "checksum": "c35a5d833fe9bc6cc802a275fd612137"
+    },
+    "static/auto_dsr/fonts/OpenSans/OpenSans-VarFont.ttf": {
+      "checksum": "996d0154a25c63500dee2ae91e4f2ea7"
+    },
+    "static/auto_dsr/fonts/OpenSans/README.txt": {
+      "checksum": "7e8cd0c0df2ceb42e5881031329a7de5"
+    },
+    "static/auto_dsr/fonts/Roboto/LICENSE.txt": {
+      "checksum": "3b83ef96387f14655fc854ddc3c6bd57"
+    },
+    "static/auto_dsr/fonts/Roboto/Roboto-Bold.ttf": {
+      "checksum": "b8e42971dec8d49207a8c8e2b919a6ac"
+    },
+    "static/auto_dsr/fonts/Roboto/Roboto-BoldItalic.ttf": {
+      "checksum": "fd6e9700781c4aaae877999d09db9e09"
+    },
+    "static/auto_dsr/fonts/Roboto/Roboto-Italic.ttf": {
+      "checksum": "cebd892d1acfcc455f5e52d4104f2719"
+    },
+    "static/auto_dsr/fonts/Roboto/Roboto-Regular.ttf": {
+      "checksum": "8a36205bd9b83e03af0591a004bc97f4"
+    },
+    "static/auto_dsr/img/AH64.png": {
+      "checksum": "1d8e2728c4b644da3cb6ce34d02811ab"
+    },
+    "static/auto_dsr/img/AH64_fcr.png": {
+      "checksum": "3363ad87b61f61a7e05e293020871aad"
+    },
+    "static/auto_dsr/img/CH47.png": {
+      "checksum": "b1d7dc8e9419c33aa68f399baddbcaa3"
+    },
+    "static/auto_dsr/img/EH60.png": {
+      "checksum": "b5e69ab273681c03d657de0d12326878"
+    },
+    "static/auto_dsr/img/HH60.png": {
+      "checksum": "bbf3e79d1a377951fd3bfe13952f4ebe"
+    },
+    "static/auto_dsr/img/III_Armored_Corps_Insignia.png": {
+      "checksum": "33b4285eed19547af86efe5741a5fc60"
+    },
+    "static/auto_dsr/img/MH47.png": {
+      "checksum": "e9227794c332ff5c239ecfea3f8c4b00"
+    },
+    "static/auto_dsr/img/MH60.png": {
+      "checksum": "dc4f91b016c13946805212e93d0d924a"
+    },
+    "static/auto_dsr/img/MH6M.png": {
+      "checksum": "4b558ff73b48f9160c61b44b8eca602b"
+    },
+    "static/auto_dsr/img/UH60.png": {
+      "checksum": "ad81504e8003122915c25e508faeb904"
+    },
+    "static/auto_dsr/img/UH72.png": {
+      "checksum": "8d7110578c6c8a4e4d5f2f333454e802"
+    },
+    "static/auto_dsr/img/griffin-ai-beak.png": {
+      "checksum": "d47ab11d16229064b75ee0801d2f93ec"
+    },
+    "static/auto_dsr/img/griffin-logo.png": {
+      "checksum": "050c270ab04ad6f2e5f9ce83183b661f"
+    },
+    "static/auto_dsr/img/unit_logos/AFC.png": {
+      "checksum": "df39cab46a171ca8b92dd2bf90625cbb"
+    },
+    "static/auto_dsr/img/unit_logos/WAA5AA.png": {
+      "checksum": "5da9941217b220a78490aa0f7bfa63e6"
+    },
+    "static/auto_dsr/img/unit_logos/WAQLAA.png": {
+      "checksum": "306099c9282dddccebc9a144640cc98f"
+    },
+    "static/auto_dsr/img/unit_logos/WAX1AA.png": {
+      "checksum": "b24de226cad93ea8e2d2b33a528733eb"
+    },
+    "static/auto_dsr/img/unit_logos/WAX2AA.png": {
+      "checksum": "128be2ad4f40feb656608c92287a9d62"
+    },
+    "static/auto_dsr/img/unit_logos/WAYPAA.png": {
+      "checksum": "04ab82a8813f3d699b20256e8f315c24"
+    },
+    "static/auto_dsr/img/unit_logos/WC08AA.png": {
+      "checksum": "2ce247adfd4d26dfacb8177ffdf5371d"
+    },
+    "static/auto_dsr/img/unit_logos/WC44AA.png": {
+      "checksum": "5f3c5c8320a4d6993daa7ba099535a1e"
+    },
+    "static/auto_dsr/img/unit_logos/WCEZFF.png": {
+      "checksum": "fdac9199147b1b71654a2a174dbf7d5e"
+    },
+    "static/auto_dsr/img/unit_logos/WCYMAA.png": {
+      "checksum": "a37462f9171e1890365c29ffc753a483"
+    },
+    "static/auto_dsr/img/unit_logos/WDDRAA.png": {
+      "checksum": "bef78d76c9953eca3d8281b160ae0fe2"
+    },
+    "static/auto_dsr/img/unit_logos/WDJXAA.png": {
+      "checksum": "bbbe68ba72eade987923955ca3e87bca"
+    },
+    "static/auto_dsr/img/unit_logos/WDMGAA.png": {
+      "checksum": "2efe43f0e50fe1b045f4506b97ce5afe"
+    },
+    "static/auto_dsr/img/unit_logos/WDU4AA.png": {
+      "checksum": "af829c7f249e1b629fb6e0b3b5fff24d"
+    },
+    "static/auto_dsr/img/unit_logos/WDX9AA.png": {
+      "checksum": "28dc81af82c41ec3ba121cccc8fccbe2"
+    },
+    "static/auto_dsr/img/unit_logos/WE7VAA.png": {
+      "checksum": "18420c0d00fa643d3a6016062180cfa6"
+    },
+    "static/auto_dsr/img/unit_logos/WE7VFF.png": {
+      "checksum": "35f58903406495ed4a95b3970a97c082"
+    },
+    "static/auto_dsr/img/unit_logos/WEPQFF.png": {
+      "checksum": "d1eeed1cc25cbd3dd8b0ba1fdb9bda16"
+    },
+    "static/auto_dsr/img/unit_logos/WFAJAA.png": {
+      "checksum": "bb5dab041faac553f2d3c1705040247f"
+    },
+    "static/auto_dsr/img/unit_logos/WFPTAA.png": {
+      "checksum": "f7411553cd2d847100bc96d65a266071"
+    },
+    "static/auto_dsr/img/unit_logos/WGDPFF.png": {
+      "checksum": "545e918b2216b9b653332c7643cc29f3"
+    },
+    "static/auto_dsr/img/unit_logos/WGDQAA.png": {
+      "checksum": "9c47fbbc1e3e80d85f69744d542dcdb1"
+    },
+    "static/auto_dsr/img/unit_logos/WHNRAA.png": {
+      "checksum": "6d6eb4380acb5f0c02a22febe0f18767"
+    },
+    "static/auto_dsr/img/unit_logos/WHZZAA.png": {
+      "checksum": "7c4cf28173248447ec89c6be91cae48d"
+    },
+    "static/auto_dsr/img/unit_logos/WJFKAA.png": {
+      "checksum": "04e4e7b7a5a50e40360e314cb91738fb"
+    },
+    "static/auto_dsr/img/unit_logos/ai2c.png": {
+      "checksum": "5e7086b29e572406936e9a6e24338605"
+    },
+    "static/auto_dsr/img/unit_logos/army.png": {
+      "checksum": "6fc6664f883a730dc7170438df00853a"
+    },
+    "static/auto_dsr/js/auto_dsr_bundle.js": {
+      "checksum": "0a7afefb917f7f51614d3a4d8f5062b2"
+    },
+    "static/auto_dsr/js/data_quality_bundle.js": {
+      "checksum": "782584bb4e005ef429c481a6da78c3fb"
+    },
+    "static/rest_framework/css/bootstrap-theme.min.css": {
+      "checksum": "2010fa9fb07541adc78a1ec0a8a4fbbf"
+    },
+    "static/rest_framework/css/bootstrap-theme.min.css.map": {
+      "checksum": "51806092cc05e7bc9346ad6fc7c04026"
+    },
+    "static/rest_framework/css/bootstrap-tweaks.css": {
+      "checksum": "b78ca7b14c5733207a4e7fbc33bc2f93"
+    },
+    "static/rest_framework/css/bootstrap.min.css": {
+      "checksum": "7f89537eaf606bff49f5cc1a7c24dbca"
+    },
+    "static/rest_framework/css/bootstrap.min.css.map": {
+      "checksum": "cafbda9c0e9efee534aa054eb53510f3"
+    },
+    "static/rest_framework/css/default.css": {
+      "checksum": "789dfb5732d749df399d46f0b0dc3391"
+    },
+    "static/rest_framework/css/font-awesome-4.0.3.css": {
+      "checksum": "1f9e9d1a5a1d347d945ef4b7727f2ea0"
+    },
+    "static/rest_framework/css/prettify.css": {
+      "checksum": "a987f72342eeaece278982a377eca816"
+    },
+    "static/rest_framework/docs/css/base.css": {
+      "checksum": "e630f8f4990edefc2542d1c11d1d2391"
+    },
+    "static/rest_framework/docs/css/highlight.css": {
+      "checksum": "e0e4d973c6d7833a91f6ce8f7a8edb56"
+    },
+    "static/rest_framework/docs/css/jquery.json-view.min.css": {
+      "checksum": "a2e6beeb6710c987b1c056fbfd9fb64a"
+    },
+    "static/rest_framework/docs/img/favicon.ico": {
+      "checksum": "5195b4d0f3eb2a2039e57fb670cb1a33"
+    },
+    "static/rest_framework/docs/img/grid.png": {
+      "checksum": "a4b938cf382b8f5b60d69ee68d214c37"
+    },
+    "static/rest_framework/docs/js/api.js": {
+      "checksum": "18a5ba8a1bd81abd7530260a5046265e"
+    },
+    "static/rest_framework/docs/js/highlight.pack.js": {
+      "checksum": "479b5f21dcba4eb5cc16d2d0e0a6ae7d"
+    },
+    "static/rest_framework/docs/js/jquery.json-view.min.js": {
+      "checksum": "b7c2d6981377a15eb3a4bf1f3cde5792"
+    },
+    "static/rest_framework/fonts/fontawesome-webfont.eot": {
+      "checksum": "8b27bc96115c2d24350f0d09e6a9433f"
+    },
+    "static/rest_framework/fonts/fontawesome-webfont.svg": {
+      "checksum": "83e37a11f9d75c3790bbf73dabd39b8a"
+    },
+    "static/rest_framework/fonts/fontawesome-webfont.ttf": {
+      "checksum": "dcb26c7239d850266941e80370e207c1"
+    },
+    "static/rest_framework/fonts/fontawesome-webfont.woff": {
+      "checksum": "3293616ec0c605c7c2db25829a0a509e"
+    },
+    "static/rest_framework/fonts/glyphicons-halflings-regular.eot": {
+      "checksum": "f4769f9bdb7466be65088239c12046d1"
+    },
+    "static/rest_framework/fonts/glyphicons-halflings-regular.svg": {
+      "checksum": "08eda92397aee9e52a40d431c3a28e5c"
+    },
+    "static/rest_framework/fonts/glyphicons-halflings-regular.ttf": {
+      "checksum": "e18bbf611f2a2e43afc071aa2f4e1512"
+    },
+    "static/rest_framework/fonts/glyphicons-halflings-regular.woff": {
+      "checksum": "fa2772327f55d8198301fdb8bcfc8158"
+    },
+    "static/rest_framework/fonts/glyphicons-halflings-regular.woff2": {
+      "checksum": "448c34a56d699c29117adc64c43affeb"
+    },
+    "static/rest_framework/img/glyphicons-halflings-white.png": {
+      "checksum": "9bbc6e9602998a385c2ea13df56470fd"
+    },
+    "static/rest_framework/img/glyphicons-halflings.png": {
+      "checksum": "90233c9067e91fc860cacaa1e5e2b696"
+    },
+    "static/rest_framework/img/grid.png": {
+      "checksum": "a4b938cf382b8f5b60d69ee68d214c37"
+    },
+    "static/rest_framework/js/ajax-form.js": {
+      "checksum": "0ea6e6052ab5256f90eb26c02913bd88"
+    },
+    "static/rest_framework/js/bootstrap.min.js": {
+      "checksum": "2f34b630ffe30ba2ff2b91e3f3c322a1"
+    },
+    "static/rest_framework/js/coreapi-0.1.1.js": {
+      "checksum": "8851fb9336c9b9ee637787adda1895f5"
+    },
+    "static/rest_framework/js/csrf.js": {
+      "checksum": "969930007329ede1d1a07866a898588b"
+    },
+    "static/rest_framework/js/default.js": {
+      "checksum": "5b08897dbdc375ba9fa9088bcfc88b97"
+    },
+    "static/rest_framework/js/jquery-3.5.1.min.js": {
+      "checksum": "dc5e7f18c8d36ac1d3d4753a87c98d0a"
+    },
+    "static/rest_framework/js/prettify-min.js": {
+      "checksum": "709bfcc456c694bfe8ee86d184a1c360"
+    },
+    "supply/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "supply/admin.py": {
+      "checksum": "ec31f4545a2a570a46a9ac61040bef07"
+    },
+    "supply/apps.py": {
+      "checksum": "bbac7c0ab5274108dbda7d508f602e32"
+    },
+    "supply/models.py": {
+      "checksum": "eaefdeffe32de9550dcaa8476757dce8"
+    },
+    "supply/urls.py": {
+      "checksum": "fbd96bab61677441444bd1df15689f23"
+    },
+    "supply/views/__init__.py": {
+      "checksum": "83d233954d2677564920f36c5679282d"
+    },
+    "supply/views/add_parts_order.py": {
+      "checksum": "088576f5c1cdef740e3206b80d592eac"
+    },
+    "supply/views/delete_parts_on_order.py": {
+      "checksum": "a70b20a670d24c130de21fa5ecddb517"
+    },
+    "supply/views/list_parts_on_order.py": {
+      "checksum": "75cf739b3e887d383d018c4f0eae3a97"
+    },
+    "supply/views/update_parts_order.py": {
+      "checksum": "ab42b90478a0e1836febfb94cff9d36d"
+    },
+    "templates/auto_dsr/acd_uploader.html": {
+      "checksum": "08e1ce55c4840c25fd72eaf6929b79c8"
+    },
+    "templates/auto_dsr/index.html": {
+      "checksum": "1cec21caadfa1f08f8d3836a1746d5ea"
+    },
+    "templates/auto_dsr/invalid_permissions.html": {
+      "checksum": "efa4a6fa1d8baa29f0a0190c1b037b41"
+    },
+    "uas/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "uas/admin.py": {
+      "checksum": "6ba38f9ebde46a719bc8015c4e78e738"
+    },
+    "uas/apps.py": {
+      "checksum": "76ab11ccd5bac2b99f0aa02f352ce524"
+    },
+    "uas/model_utils/__init__.py": {
+      "checksum": "aeae040de3fae08550263d8ef5bd50d1"
+    },
+    "uas/model_utils/uas_statuses.py": {
+      "checksum": "06aced79a90ccaeef5cc9829b58f25aa"
+    },
+    "uas/models.py": {
+      "checksum": "f321643be3a6335b7c216c08fe9910fb"
+    },
+    "uas/urls.py": {
+      "checksum": "e2232908e0a804486ae4a39439761ca6"
+    },
+    "uas/views/__init__.py": {
+      "checksum": "3116a9a440bc211743bb6d28d1577c21"
+    },
+    "uas/views/crud/__init__.py": {
+      "checksum": "07eaf61aefce444dba24d941b2a8bb49"
+    },
+    "uas/views/crud/uac_create.py": {
+      "checksum": "3ba55c8b7550666c4ab3b8f80ea30d28"
+    },
+    "uas/views/crud/uac_delete.py": {
+      "checksum": "484cbe43420d99f6beebd7fb85b1a99d"
+    },
+    "uas/views/crud/uac_read.py": {
+      "checksum": "c0777a4172ec82583edfc4627759aa4b"
+    },
+    "uas/views/crud/uac_update.py": {
+      "checksum": "f18906936a0f4ddb323496497186d662"
+    },
+    "uas/views/crud/uav_create.py": {
+      "checksum": "e3d32342cd8990fa76d2fabe4b583c4c"
+    },
+    "uas/views/crud/uav_delete.py": {
+      "checksum": "f1a6a6a1a4b6c870427315321f4d14bd"
+    },
+    "uas/views/crud/uav_read.py": {
+      "checksum": "b83a0a7afd3915c457ea8086e4896efc"
+    },
+    "uas/views/crud/uav_update.py": {
+      "checksum": "fb4cc1aad9c7511a74f3737674b44256"
+    },
+    "uas/views/shiny_uas_dsr.py": {
+      "checksum": "1d3b9998eb044a4df12f8e11f044f8d8"
+    },
+    "uas/views/transforms/__init__.py": {
+      "checksum": "386d5013fc4db0642c82daded219f0ba"
+    },
+    "uas/views/transforms/transform_uac.py": {
+      "checksum": "e835476a4d3313b76586f69376933c1d"
+    },
+    "uas/views/transforms/transform_uav.py": {
+      "checksum": "983d312fe02bacf660a626a263656103"
+    },
+    "uas/views/transforms/update_uac.py": {
+      "checksum": "216da0cdcc6bf2b0beebd1d56aa60b22"
+    },
+    "uas/views/transforms/update_uav.py": {
+      "checksum": "1afb2106a9e05571a930db62c1371fa3"
+    },
+    "utils/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "utils/data/__init__.py": {
+      "checksum": "fcc9b86d97191945795b5d377372c5f3"
+    },
+    "utils/data/constants.py": {
+      "checksum": "290dae5b8643cdb4421428ca322ae3c7"
+    },
+    "utils/http/__init__.py": {
+      "checksum": "c35294b594711c81c25fa1e1661201a9"
+    },
+    "utils/http/constants.py": {
+      "checksum": "799108203c89ad731e11c73e3899ab52"
+    },
+    "utils/http/user_id.py": {
+      "checksum": "be60f4728ddcf66bdef9bec1bb666a2b"
+    },
+    "utils/storage/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "utils/storage/azure/__init__.py": {
+      "checksum": "19c6ecabc2911d928ea187bcb49d290f"
+    },
+    "utils/storage/azure/carmy_azure_storage.py": {
+      "checksum": "2a5ac3438d0c9d461f1a4295368a2601"
+    },
+    "utils/tests/data/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "utils/tests/data/monthly_predictions.csv": {
+      "checksum": "839ec22fe5e7b53522fef21d5f0e0b6e"
+    },
+    "utils/tests/data/monthly_predictions_mixed_dtypes.csv": {
+      "checksum": "53f48b27a83c15a75e21fdfe68b5cacf"
+    },
+    "utils/tests/data/monthly_predictions_scrambled_date.csv": {
+      "checksum": "7199d9552826d0fffadd9155e317137a"
+    },
+    "utils/tests/data/monthly_predictions_with_duplicates.csv": {
+      "checksum": "87f417caa6e0501afd96c3419afb0854"
+    },
+    "utils/time/__init__.py": {
+      "checksum": "c217b8d1f4bf042f562757817d39dabd"
+    },
+    "utils/time/reporting_periods.py": {
+      "checksum": "9018049a118a2b2b6bf7ae4ec9c040f2"
+    },
+    "utils/time/safe_date_comparisons.py": {
+      "checksum": "fffd49b6f3adef24035703c612404673"
+    }
+  }
+}

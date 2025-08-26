@@ -1,0 +1,46 @@
+# Python
+.venv
+__pycache__
+
+# Environment Variables (python-dotenv)
+.env
+
+# Javascript
+node_modules
+
+# Jest Code Coverage
+coverage
+.coverage
+htmlcov
+
+# Compressed Docker Images
+*.tar.gz
+
+# Local files
+secrets
+
+# Local DB
+*db.sqlite3
+
+# Mac Files
+.DS_Store
+
+# Local Posit Connect Deployment files
+**/rsconnect-python/*
+
+# Django local db
+*db.sqlite3
+
+# VS Code
+.vscode*
+**.code-workspace
+
+# local temp data files
+**/scripts/**/*.txt
+**/scripts/**/*.csv
+*.pdf
+
+# Test outputs
+counselings
+unit_tasks
+1234567890

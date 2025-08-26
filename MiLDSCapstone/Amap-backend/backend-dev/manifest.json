@@ -1,0 +1,939 @@
+{
+  "version": 1,
+  "locale": "en_US.UTF-8",
+  "metadata": {
+    "appmode": "python-api",
+    "entrypoint": "amap.wsgi:application"
+  },
+  "environment": {
+    "image": "cazw0cuaadsepacr01.azurecr.us/rstudio/connect-runtime:jammy-20240427-20240617-1450"
+  },
+  "python": {
+    "version": "3.10.12",
+    "package_manager": {
+      "name": "pip",
+      "version": "24.0",
+      "package_file": "requirements.txt"
+    }
+  },
+  "files": {
+    "requirements.txt": {
+      "checksum": "f83096640c80884e11b7781d369b1617"
+    },
+    ".gitignore": {
+      "checksum": "1aea11412ad1c7cef627e36169ece8e3"
+    },
+    ".gitlab-ci.yml": {
+      "checksum": "a55a9e576bb6b112c91358ae43222153"
+    },
+    "README.md": {
+      "checksum": "1b5dfd82835bb31a102f873e90003c67"
+    },
+    "amap/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "amap/rsconnect-python/amap.json": {
+      "checksum": "25f28fd143def526ac41ddb8781c70a0"
+    },
+    "amap/settings/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "amap/settings/base.py": {
+      "checksum": "58fe1ba94a7581a279693c6fbfc9cfa4"
+    },
+    "amap/settings/demo/.env": {
+      "checksum": "38ab0b6b3b385acd6c18b736e6efe65c"
+    },
+    "amap/settings/demo/dse.py": {
+      "checksum": "c49872eb03b4af434e441d890f58a1b1"
+    },
+    "amap/settings/dev/.env": {
+      "checksum": "074b82c1cf0300542ccd0e3df114c4e7"
+    },
+    "amap/settings/dev/dse.py": {
+      "checksum": "df97ec2eeedbf4fc3d532062af15076f"
+    },
+    "amap/settings/dev/local.py": {
+      "checksum": "53bdfe7c1240e87fb2e07b01e9e31d64"
+    },
+    "amap/settings/prod/.env": {
+      "checksum": "194dc50848be301480dd69f66916a9b4"
+    },
+    "amap/settings/prod/dse.py": {
+      "checksum": "133eaded443ab398013a4ef98e353bb4"
+    },
+    "amap/settings/test/.env": {
+      "checksum": "6355dc53b9b694b208f3e297cf14b7c2"
+    },
+    "amap/settings/test/dse.py": {
+      "checksum": "207bf97751811fea0cf0f1a2fce3bcd5"
+    },
+    "amap/urls.py": {
+      "checksum": "2113c517ff403b9bd0614c8aadbc57cf"
+    },
+    "amap/wsgi.py": {
+      "checksum": "b268aac80cc82bc2c6dc19f8621fb5c1"
+    },
+    "create_manifest.sh": {
+      "checksum": "c4aaa9db8299fd7d11a6cc41431b3ab9"
+    },
+    "forms/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "forms/admin.py": {
+      "checksum": "b39603dbbbbc59796cd2231bd8238110"
+    },
+    "forms/apps.py": {
+      "checksum": "b8d5827f05b2625a5b9c2cd977f20a44"
+    },
+    "forms/model_utils/AwardType.py": {
+      "checksum": "5f73b28d609d3ec014bf7aa6179cae88"
+    },
+    "forms/model_utils/EvaluationResult.py": {
+      "checksum": "36a05e34e2c60d3f89cb8f0e0b2b6a20"
+    },
+    "forms/model_utils/EvaluationType.py": {
+      "checksum": "cd51f5553cc05130a27b4c836df856bb"
+    },
+    "forms/model_utils/EventType.py": {
+      "checksum": "7721eda2013f52c7b7fdd93087e5ca7a"
+    },
+    "forms/model_utils/TCS_Locations.py": {
+      "checksum": "04aeb5953cf431c669cb9bf0ddf9e475"
+    },
+    "forms/model_utils/TrainingType.py": {
+      "checksum": "4c68082f9ee69e43d754e955f957bb35"
+    },
+    "forms/model_utils/__init__.py": {
+      "checksum": "d3115f6f40905ff696c84c4a785edc3c"
+    },
+    "forms/model_utils/counseling_upload_to.py": {
+      "checksum": "594d1fbc5413af8a6091b4106e9fb75b"
+    },
+    "forms/model_utils/supporting_document_upload_to.py": {
+      "checksum": "8c2785173e3a3320747248c246e70c80"
+    },
+    "forms/models.py": {
+      "checksum": "f73a4b4f102c436e4307b7fb0178b508"
+    },
+    "forms/tests/award_type/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "forms/tests/award_type/test_list_award_type.py": {
+      "checksum": "02dc005006da5caccc0e778928a8d783"
+    },
+    "forms/tests/evaluation_type/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "forms/tests/evaluation_type/test_list_evaluation_type.py": {
+      "checksum": "2ab289837566645722e1d8db909f645c"
+    },
+    "forms/tests/event_type/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "forms/tests/event_type/test_list_event_type.py": {
+      "checksum": "91536302f1e7005e95460989aa3921eb"
+    },
+    "forms/tests/tcs_location/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "forms/tests/tcs_location/test_list_tcs_location.py": {
+      "checksum": "b4f2a87dde4275c66a54a5f8c4cd490a"
+    },
+    "forms/tests/training_type/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "forms/tests/training_type/test_list_training_type.py": {
+      "checksum": "c997d5f1d9651a50d3a716af2a82a0cc"
+    },
+    "forms/urls.py": {
+      "checksum": "1b0f5043501420c1e53fb46ee7ec7e9a"
+    },
+    "forms/views/__init__.py": {
+      "checksum": "019ff4dccf76ef4bdc043265c95c8870"
+    },
+    "forms/views/award_type/__init__.py": {
+      "checksum": "182f4cf08436f92c1f27ab4e7b2f053f"
+    },
+    "forms/views/award_type/award_type_request_handler.py": {
+      "checksum": "effc13ddf55ef6aaba25909d4ac459c3"
+    },
+    "forms/views/award_type/list_award_type.py": {
+      "checksum": "354739b5b7a978b83560bfdde2d117ea"
+    },
+    "forms/views/crud/__init__.py": {
+      "checksum": "668e77248ea6fa8e55d17e24e67d6d6a"
+    },
+    "forms/views/crud/da_4856_read_document.py": {
+      "checksum": "98f1cb88258547f0d32f75515083ea2b"
+    },
+    "forms/views/crud/shiny_add_4856.py": {
+      "checksum": "e2ccd90721fd368f533a2d54d5dc50ee"
+    },
+    "forms/views/crud/shiny_add_7817.py": {
+      "checksum": "f72a52eeb03a28d75653b7a7483fe5c3"
+    },
+    "forms/views/crud/shiny_add_supporting_document.py": {
+      "checksum": "bc638ffc667ecf817214d6d4f94d978b"
+    },
+    "forms/views/crud/shiny_delete_4856.py": {
+      "checksum": "4778622cc6adbcdc0612d819983b9363"
+    },
+    "forms/views/crud/shiny_delete_7817.py": {
+      "checksum": "c5bf9d5d6eb296850bbfadb3d53cb4a6"
+    },
+    "forms/views/crud/shiny_delete_supporting_document.py": {
+      "checksum": "edbd7350c901ae1d208a5cc9174ff583"
+    },
+    "forms/views/crud/shiny_edit_7817.py": {
+      "checksum": "04449dac81f0d7010bc7897279d2f46e"
+    },
+    "forms/views/crud/shiny_read_supporting_document.py": {
+      "checksum": "700d89e8bc78aced0e264f50932b780d"
+    },
+    "forms/views/crud/shiny_update_4856.py": {
+      "checksum": "a0da43a4efd66e0fe891e4dd39a5e458"
+    },
+    "forms/views/crud/shiny_update_supporting_document.py": {
+      "checksum": "8609ace870c7c4b5caf99dd347c5079c"
+    },
+    "forms/views/evaluation_type/__init__.py": {
+      "checksum": "6b7b5a55048d6f0c3774531185247c2d"
+    },
+    "forms/views/evaluation_type/evaluation_type_request_handler.py": {
+      "checksum": "d7f20c42e5531cf0d90458a9644b5b0b"
+    },
+    "forms/views/evaluation_type/list_evaluation_type.py": {
+      "checksum": "3909faf6dd02ee194c4e4c3d9f6d7c96"
+    },
+    "forms/views/event_type/__init__.py": {
+      "checksum": "d89c196f03070414c3e56df170006e0b"
+    },
+    "forms/views/event_type/event_type_request_handler.py": {
+      "checksum": "e2107cb9e62994fc57416d215b46429a"
+    },
+    "forms/views/event_type/list_event_type.py": {
+      "checksum": "c87283bbf961f0d87efc954ee3554f40"
+    },
+    "forms/views/get_all_supporting_document_types.py": {
+      "checksum": "e0a81aafd1ba0bedea50a1acb4ea0379"
+    },
+    "forms/views/index.py": {
+      "checksum": "22c428d1c243357c9de2308b126c2eed"
+    },
+    "forms/views/shiny_amap_packet.py": {
+      "checksum": "d5113a923299de9e7810d3e23f7f9c40"
+    },
+    "forms/views/shiny_export_7817_xml.py": {
+      "checksum": "e96f38b66ea08aad665fba1e0924dc60"
+    },
+    "forms/views/shiny_get_7817_associated_data.py": {
+      "checksum": "f3daada1168445b6f82d8d6f455ede23"
+    },
+    "forms/views/shiny_get_event_occurences.py": {
+      "checksum": "ff629ea4ec4d18e47d3e1eb6ae8da8a7"
+    },
+    "forms/views/shiny_get_unit_tracker_data.py": {
+      "checksum": "3869f442b9075085c27187ca62df4064"
+    },
+    "forms/views/shiny_ingest_7817_xml.py": {
+      "checksum": "96d2833b8567e5930023496c837190f6"
+    },
+    "forms/views/tcs_location/__init__.py": {
+      "checksum": "0cb45a306d9a8190e728a24522e83b71"
+    },
+    "forms/views/tcs_location/list_tcs_location.py": {
+      "checksum": "9b2933f7d772ca5e95bda8635339ebc8"
+    },
+    "forms/views/tcs_location/tcs_location_request_handler.py": {
+      "checksum": "5ef51743a781ec002874d9de8e397875"
+    },
+    "forms/views/training_type/__init__.py": {
+      "checksum": "0905d6e0b6427b2de75c36b4b2cad5fb"
+    },
+    "forms/views/training_type/list_training_type.py": {
+      "checksum": "582b14c961bc75ed1964df6fb16de20c"
+    },
+    "forms/views/training_type/training_type_request_handler.py": {
+      "checksum": "6fdef333c33f50541f82d441a3c57f62"
+    },
+    "manage.py": {
+      "checksum": "500030a8bddba9f7f6882a4136c4c900"
+    },
+    "personnel/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "personnel/admin.py": {
+      "checksum": "570f2ada872e6440142fc7c9c3eca79c"
+    },
+    "personnel/apps.py": {
+      "checksum": "640ae77740f5b02ffa8b8b39472a8b44"
+    },
+    "personnel/model_utils/AdminFlagOptions.py": {
+      "checksum": "9686b6aa41055b32c3e29a028e0efbf4"
+    },
+    "personnel/model_utils/Echelon.py": {
+      "checksum": "63f078cca5dc5e4a2c32609480ec9a0b"
+    },
+    "personnel/model_utils/MaintenanceLevel.py": {
+      "checksum": "12935f2ef9fa3cf5d147a921f32352b6"
+    },
+    "personnel/model_utils/Months.py": {
+      "checksum": "4c706e473acbc08ac3ecfda9ebf1e328"
+    },
+    "personnel/model_utils/MosCode.py": {
+      "checksum": "d56a54f025a3f4c61153808276210f6e"
+    },
+    "personnel/model_utils/MxAvailability.py": {
+      "checksum": "797fce178fdec83d5a626e84eb6794f3"
+    },
+    "personnel/model_utils/ProfileFlagOptions.py": {
+      "checksum": "949c7b090480c28831e1cde93055adaa"
+    },
+    "personnel/model_utils/Rank.py": {
+      "checksum": "7acb81b3b770d082287f4240cdbf6300"
+    },
+    "personnel/model_utils/SoldierFlagType.py": {
+      "checksum": "b00a36cc1495807515926b8f5a043c8d"
+    },
+    "personnel/model_utils/TaskingFlagOptions.py": {
+      "checksum": "9c85ac22be653c5a3d132b0c4e1d984e"
+    },
+    "personnel/model_utils/UnitPositionFlagOptions.py": {
+      "checksum": "b7f3595a02fe55beecfa8c50c985d03d"
+    },
+    "personnel/model_utils/UserRole.py": {
+      "checksum": "b8a7aa061a215ed0600f25db7724f198"
+    },
+    "personnel/model_utils/__init__.py": {
+      "checksum": "e8958bbe037edadcbbe4ffa955de9d8e"
+    },
+    "personnel/models.py": {
+      "checksum": "198888127e0bebed6f01d6dee0f5820f"
+    },
+    "personnel/tests/mos_code/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "personnel/tests/mos_code/test_list_mos_code.py": {
+      "checksum": "9451eaeef6a4de08a68096272ec01873"
+    },
+    "personnel/urls.py": {
+      "checksum": "e0ba1a3ca6c48f0ef3ecb31d991dfd3c"
+    },
+    "personnel/utils/__init__.py": {
+      "checksum": "cd138b5525ff827a7ca46b79e142fbc9"
+    },
+    "personnel/utils/get_soldier_mos_ml_dict.py": {
+      "checksum": "1001f0c3fb6d0f949246e141e693f958"
+    },
+    "personnel/utils/get_soldier_uctl_ictl_df.py": {
+      "checksum": "ccdeefd2c05882bd277b7acffa6a2fb0"
+    },
+    "personnel/utils/single_soldier_availability.py": {
+      "checksum": "6410d563fabdbb9ce633b74802fddc79"
+    },
+    "personnel/utils/unit_maintenance_availability.py": {
+      "checksum": "8bad23aef8c3ec0570a6eca7ac61ddca"
+    },
+    "personnel/views/__init__.py": {
+      "checksum": "6201250a791fa33054b19715b2d888ae"
+    },
+    "personnel/views/get_all_elevated_roles.py": {
+      "checksum": "dd5a961c763e24c9ab5d970e8007e96c"
+    },
+    "personnel/views/get_soldier_mx_availability.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "personnel/views/mos_code/__init__.py": {
+      "checksum": "ecfc4a857e91ac2321d7ec1bf54a3c04"
+    },
+    "personnel/views/mos_code/list_mos_code.py": {
+      "checksum": "661be70ab567116687a8cf4995336b27"
+    },
+    "personnel/views/mos_code/mos_code_request_handler.py": {
+      "checksum": "4c17d17e105d662ae3a660f91c320859"
+    },
+    "personnel/views/record_login.py": {
+      "checksum": "31bd6e08ed5fda20d4065bb8f2f5b852"
+    },
+    "personnel/views/shiny_adjudicate_transfer_request.py": {
+      "checksum": "5b858a3614c673764ff9b5e597829025"
+    },
+    "personnel/views/shiny_create_soldier_flag.py": {
+      "checksum": "f7b19842c0c1e69be2c9f9046319ca20"
+    },
+    "personnel/views/shiny_create_transfer_request.py": {
+      "checksum": "4e8ef3db231e32a28e4d2e1c07e394a7"
+    },
+    "personnel/views/shiny_delete_soldier_flag.py": {
+      "checksum": "02d7695946e51aa61ef9e8bb74be325a"
+    },
+    "personnel/views/shiny_export_unit_summary.py": {
+      "checksum": "6595fc148e11cf46d71baa8e86eac44b"
+    },
+    "personnel/views/shiny_get_all_soldiers.py": {
+      "checksum": "1171d368108e6f6d6ca14aac4cfe4ff2"
+    },
+    "personnel/views/shiny_get_all_units.py": {
+      "checksum": "71dbcc4620fe69061f2a55eba300ff02"
+    },
+    "personnel/views/shiny_get_soldier_da_4856s.py": {
+      "checksum": "e4cb91b3a74dba69881662e8337c6615"
+    },
+    "personnel/views/shiny_get_soldier_da_7817s.py": {
+      "checksum": "73f60e3752f29452d2799be61bcc72e7"
+    },
+    "personnel/views/shiny_get_soldier_flags.py": {
+      "checksum": "144f90262f029309f9104b38c5706437"
+    },
+    "personnel/views/shiny_get_soldier_supporting_documents.py": {
+      "checksum": "a9bf0d67e7d1f91a23ed5e0f5d8e86a2"
+    },
+    "personnel/views/shiny_get_soldier_task_completion.py": {
+      "checksum": "7d5e2c5731bfd14cb127a180852f4394"
+    },
+    "personnel/views/shiny_get_transfer_requests.py": {
+      "checksum": "83e83bf5c4b934e5a1eaa879a3dd0b78"
+    },
+    "personnel/views/shiny_get_unit_roster.py": {
+      "checksum": "57a8c7f6083b73f5686fd5fecd692217"
+    },
+    "personnel/views/shiny_get_unit_soldiers.py": {
+      "checksum": "fae60764f6649c8352b3a3a12cc75509"
+    },
+    "personnel/views/shiny_get_unit_summary.py": {
+      "checksum": "19d1baf77e84ee18bf4d812aef29da08"
+    },
+    "personnel/views/shiny_import_soldier_info.py": {
+      "checksum": "47f6a851486433dbcc29a0be8fc0dd6d"
+    },
+    "personnel/views/shiny_update_soldier_flag.py": {
+      "checksum": "0d73e707298f16ef1d02d308e498cd65"
+    },
+    "personnel/views/shiny_update_soldier_info.py": {
+      "checksum": "a4854a91ab9ff9fb53bed5e1dd22dcea"
+    },
+    "personnel/views/user_request_views.py": {
+      "checksum": "893c36697a20acb82991e9a0e3cc5b4f"
+    },
+    "personnel/views/user_role_views.py": {
+      "checksum": "a41a358f8d42231cd77c35dfe5daf56a"
+    },
+    "personnel/views/user_views.py": {
+      "checksum": "104ee0e46b9ba2eda7049b1784845dbc"
+    },
+    "pyproject.toml": {
+      "checksum": "9dfc755d45cd0e7d06b846e2c15032aa"
+    },
+    "sonar-project.properties": {
+      "checksum": "b8fcabba7c45f4e56075c8526e6d47b2"
+    },
+    "static/admin/css/autocomplete.css": {
+      "checksum": "4a81fc4242d08519b3beaaf169b86896"
+    },
+    "static/admin/css/base.css": {
+      "checksum": "35bdba8a9c662a6a89069148d1c1c89b"
+    },
+    "static/admin/css/changelists.css": {
+      "checksum": "47cb433b29d4d167e297d3d09a91858c"
+    },
+    "static/admin/css/dark_mode.css": {
+      "checksum": "e18e9a052429cf12db9156326cbf2d11"
+    },
+    "static/admin/css/dashboard.css": {
+      "checksum": "e90f2068217be708abb6f94e4f86226c"
+    },
+    "static/admin/css/forms.css": {
+      "checksum": "49f73f5b2ce6e89d2106fce3a8ab6006"
+    },
+    "static/admin/css/login.css": {
+      "checksum": "586129c60a93bae20284d1502b46e41e"
+    },
+    "static/admin/css/nav_sidebar.css": {
+      "checksum": "dd925738f4cc38c5a836c36163978e76"
+    },
+    "static/admin/css/responsive.css": {
+      "checksum": "eafb93ff084ce99dab9d6a2275509cc3"
+    },
+    "static/admin/css/responsive_rtl.css": {
+      "checksum": "7d1130848605a13c45e5c8d6ac918217"
+    },
+    "static/admin/css/rtl.css": {
+      "checksum": "1c5c96b3607a04adb0246192d372fa38"
+    },
+    "static/admin/css/vendor/select2/LICENSE-SELECT2.md": {
+      "checksum": "f94142512c911b193a09e603fb0db26a"
+    },
+    "static/admin/css/vendor/select2/select2.css": {
+      "checksum": "a2194c2626489df39c3906f8d27ecbcb"
+    },
+    "static/admin/css/vendor/select2/select2.min.css": {
+      "checksum": "9f54e6414f87e0d14b9e966f19a174f9"
+    },
+    "static/admin/css/widgets.css": {
+      "checksum": "12deeb17b7a849e4675c47c9b7c03c0d"
+    },
+    "static/admin/img/LICENSE": {
+      "checksum": "2c54f4e1ca1cba30bbad4175130cc5a1"
+    },
+    "static/admin/img/README.txt": {
+      "checksum": "a70711a38d870ceaa34ce048b7b04feb"
+    },
+    "static/admin/img/calendar-icons.svg": {
+      "checksum": "39b290681a8b7334038ba7c8ad29a33f"
+    },
+    "static/admin/img/gis/move_vertex_off.svg": {
+      "checksum": "7a23bf31ef8a19d7dd379faf0c3614b6"
+    },
+    "static/admin/img/gis/move_vertex_on.svg": {
+      "checksum": "0047eba25b67010b656b157e0a37caeb"
+    },
+    "static/admin/img/icon-addlink.svg": {
+      "checksum": "d519b3bab011f1ab11b5e34d5f20fcf0"
+    },
+    "static/admin/img/icon-alert.svg": {
+      "checksum": "034cc7d8a67fe3cccc5597bfc81af52e"
+    },
+    "static/admin/img/icon-calendar.svg": {
+      "checksum": "ac7aea671bea256b3f2e4a9ce4881b74"
+    },
+    "static/admin/img/icon-changelink.svg": {
+      "checksum": "18d2fd706348e40383d061cad38c395b"
+    },
+    "static/admin/img/icon-clock.svg": {
+      "checksum": "e1d4dfac3f2b2898feff2542006446a4"
+    },
+    "static/admin/img/icon-deletelink.svg": {
+      "checksum": "564ef9dc3854d9501d3a11593914b5d6"
+    },
+    "static/admin/img/icon-hidelink.svg": {
+      "checksum": "8d245a995e1889d994632887168869fe"
+    },
+    "static/admin/img/icon-no.svg": {
+      "checksum": "439e821418cd2138c89ea9603338889b"
+    },
+    "static/admin/img/icon-unknown-alt.svg": {
+      "checksum": "81536e128bb6294146d8d8e404761a3e"
+    },
+    "static/admin/img/icon-unknown.svg": {
+      "checksum": "a18cb4398978296b9825b8eeab3cc23e"
+    },
+    "static/admin/img/icon-viewlink.svg": {
+      "checksum": "41eb31f7826e25beebc67aa793bdef4e"
+    },
+    "static/admin/img/icon-yes.svg": {
+      "checksum": "d2f9f035226a83b0ca98a4adfa318a12"
+    },
+    "static/admin/img/inline-delete.svg": {
+      "checksum": "fec1b761f25409936cf06e71676e6703"
+    },
+    "static/admin/img/search.svg": {
+      "checksum": "7cf54ff789c655cab6b4971cc239fcbf"
+    },
+    "static/admin/img/selector-icons.svg": {
+      "checksum": "b4555096cea28edf305031f89402f8d6"
+    },
+    "static/admin/img/sorting-icons.svg": {
+      "checksum": "3a097b59f104e9e56500eb385808bd72"
+    },
+    "static/admin/img/tooltag-add.svg": {
+      "checksum": "e59d620a97425b0b1d5c01e0e1711295"
+    },
+    "static/admin/img/tooltag-arrowright.svg": {
+      "checksum": "bbfb788a849ee115c109b1224a67832b"
+    },
+    "static/admin/js/SelectBox.js": {
+      "checksum": "7d3ce5a9800705ffbd8e6eaa2009fb09"
+    },
+    "static/admin/js/SelectFilter2.js": {
+      "checksum": "b8cf7343ff9e38c9b6d8837a9faa8ba8"
+    },
+    "static/admin/js/actions.js": {
+      "checksum": "867b023a736da858a519d7a7a4d01eac"
+    },
+    "static/admin/js/admin/DateTimeShortcuts.js": {
+      "checksum": "9f6e209cebcafd8430ddb01e9b68b977"
+    },
+    "static/admin/js/admin/RelatedObjectLookups.js": {
+      "checksum": "ef211845e458b7dd6eb5c9662d0940e4"
+    },
+    "static/admin/js/autocomplete.js": {
+      "checksum": "01591ab27be76a799fe8051c4e81ab91"
+    },
+    "static/admin/js/calendar.js": {
+      "checksum": "d64496bbf46d9736dd202dbd806965c3"
+    },
+    "static/admin/js/cancel.js": {
+      "checksum": "ecc4c5ca7b320db9ec67785d7ab4bc65"
+    },
+    "static/admin/js/change_form.js": {
+      "checksum": "9d8ca4f96b75fc3c53e3f05c5a7bfb4e"
+    },
+    "static/admin/js/collapse.js": {
+      "checksum": "f84e7410290f8f194f2cb9b51586f6b6"
+    },
+    "static/admin/js/core.js": {
+      "checksum": "7e257fdf56dc00a1969102a9518778e2"
+    },
+    "static/admin/js/filters.js": {
+      "checksum": "0e360b7a9f80ef8889781e59bc828e65"
+    },
+    "static/admin/js/inlines.js": {
+      "checksum": "22d4d93c00b44a1b2b145334583879d0"
+    },
+    "static/admin/js/jquery.init.js": {
+      "checksum": "b7781a0897fc89389201ee3da15e900f"
+    },
+    "static/admin/js/nav_sidebar.js": {
+      "checksum": "3b9190d420b144427a4d38346e7c6506"
+    },
+    "static/admin/js/popup_response.js": {
+      "checksum": "c6cc78ea555158ea1177ca7e6c9e5329"
+    },
+    "static/admin/js/prepopulate.js": {
+      "checksum": "bd2361dfd64d2183823dc84b0d82801c"
+    },
+    "static/admin/js/prepopulate_init.js": {
+      "checksum": "6cac7f3105b86816ad13714ca1a2f79e"
+    },
+    "static/admin/js/theme.js": {
+      "checksum": "ab270f56bb9c43b88cadf98dce18d360"
+    },
+    "static/admin/js/urlify.js": {
+      "checksum": "ae970a8202121d365888c4fb110e3564"
+    },
+    "static/admin/js/vendor/jquery/LICENSE.txt": {
+      "checksum": "de877aa6d744cc160ff41c26a8e4811f"
+    },
+    "static/admin/js/vendor/jquery/jquery.js": {
+      "checksum": "12e87d2f3a4c8b347ab13a0764d420a3"
+    },
+    "static/admin/js/vendor/jquery/jquery.min.js": {
+      "checksum": "2c872dbe60f4ba70fb85356113d8b35e"
+    },
+    "static/admin/js/vendor/select2/LICENSE.md": {
+      "checksum": "f94142512c911b193a09e603fb0db26a"
+    },
+    "static/admin/js/vendor/select2/i18n/af.js": {
+      "checksum": "4f6fcd73488ce79fae1b7a90aceaecde"
+    },
+    "static/admin/js/vendor/select2/i18n/ar.js": {
+      "checksum": "65aa8e36bf5da57ff4e3f22a835ab035"
+    },
+    "static/admin/js/vendor/select2/i18n/az.js": {
+      "checksum": "270c257daf8140a0cf23ad5de6f8ed1b"
+    },
+    "static/admin/js/vendor/select2/i18n/bg.js": {
+      "checksum": "39b8be30d4f06779839cfaaa415d0690"
+    },
+    "static/admin/js/vendor/select2/i18n/bn.js": {
+      "checksum": "6d42b4dd5665d0fa28f06994eedb4899"
+    },
+    "static/admin/js/vendor/select2/i18n/bs.js": {
+      "checksum": "91624382358e95086b80f00fa0bd6955"
+    },
+    "static/admin/js/vendor/select2/i18n/ca.js": {
+      "checksum": "a166b745933a48ce3d0580a74210617d"
+    },
+    "static/admin/js/vendor/select2/i18n/cs.js": {
+      "checksum": "4f43e8e7d33aa1e6aadf3286c7e379e9"
+    },
+    "static/admin/js/vendor/select2/i18n/da.js": {
+      "checksum": "766346afe4dd72c003242cfb1cbe2617"
+    },
+    "static/admin/js/vendor/select2/i18n/de.js": {
+      "checksum": "8a1c222b0204c8faaf6d3c07c961d8aa"
+    },
+    "static/admin/js/vendor/select2/i18n/dsb.js": {
+      "checksum": "56372c92d2f1bcb2b8e382981dca0546"
+    },
+    "static/admin/js/vendor/select2/i18n/el.js": {
+      "checksum": "27097f071856a0f4e82298fe407d1eac"
+    },
+    "static/admin/js/vendor/select2/i18n/en.js": {
+      "checksum": "cf932ba09a98fe11bde8e1f3dd5e2cfa"
+    },
+    "static/admin/js/vendor/select2/i18n/es.js": {
+      "checksum": "66dbc2652fb1b769bf29058e707b43c8"
+    },
+    "static/admin/js/vendor/select2/i18n/et.js": {
+      "checksum": "2b96fd98289dc3fc5e61f21e6e1a7d52"
+    },
+    "static/admin/js/vendor/select2/i18n/eu.js": {
+      "checksum": "adfe5c97b72c20bb0afbc0968b440e50"
+    },
+    "static/admin/js/vendor/select2/i18n/fa.js": {
+      "checksum": "3b5bd1961cfd0a6f96ac4cd2ea16c243"
+    },
+    "static/admin/js/vendor/select2/i18n/fi.js": {
+      "checksum": "614ec42aa9baaf687ab9ff44705dfd2e"
+    },
+    "static/admin/js/vendor/select2/i18n/fr.js": {
+      "checksum": "05e0542fcfe6df5ab074a377dc1a5a9b"
+    },
+    "static/admin/js/vendor/select2/i18n/gl.js": {
+      "checksum": "d99b1fedaa86d011818cfbab11dd355c"
+    },
+    "static/admin/js/vendor/select2/i18n/he.js": {
+      "checksum": "e420ff6cd3ed77ab9271c9b3d441442c"
+    },
+    "static/admin/js/vendor/select2/i18n/hi.js": {
+      "checksum": "70640d41628f36284af78b22ea8b283b"
+    },
+    "static/admin/js/vendor/select2/i18n/hr.js": {
+      "checksum": "a2b092cc1147f07b978145d407c67fa1"
+    },
+    "static/admin/js/vendor/select2/i18n/hsb.js": {
+      "checksum": "fa3b55265efe8f4182d5e65a1a506252"
+    },
+    "static/admin/js/vendor/select2/i18n/hu.js": {
+      "checksum": "6ec6039cb8a354e2bc6a1794f729caae"
+    },
+    "static/admin/js/vendor/select2/i18n/hy.js": {
+      "checksum": "c7babaeef5a625566434ea79b19d4c7e"
+    },
+    "static/admin/js/vendor/select2/i18n/id.js": {
+      "checksum": "04debded514d3962bb74f05532e793d4"
+    },
+    "static/admin/js/vendor/select2/i18n/is.js": {
+      "checksum": "3ddd9a6a97e93e1910210c9eefc1bca1"
+    },
+    "static/admin/js/vendor/select2/i18n/it.js": {
+      "checksum": "be4fe8d365b5916432504d1f98e2e0af"
+    },
+    "static/admin/js/vendor/select2/i18n/ja.js": {
+      "checksum": "170ae885d74f1634271e1eb470cb4621"
+    },
+    "static/admin/js/vendor/select2/i18n/ka.js": {
+      "checksum": "2083264a54f0873f55468affa796d61e"
+    },
+    "static/admin/js/vendor/select2/i18n/km.js": {
+      "checksum": "c23089cb06ca871153ba9bfe8458a378"
+    },
+    "static/admin/js/vendor/select2/i18n/ko.js": {
+      "checksum": "e7be6c20e67393698a0f05971e9720c1"
+    },
+    "static/admin/js/vendor/select2/i18n/lt.js": {
+      "checksum": "23c7ce903300fc118947994b9cdd16cb"
+    },
+    "static/admin/js/vendor/select2/i18n/lv.js": {
+      "checksum": "08e62128eac1d0e8ac32cfaf75f2ec9f"
+    },
+    "static/admin/js/vendor/select2/i18n/mk.js": {
+      "checksum": "dabbb90871300ce3a295969bc0260420"
+    },
+    "static/admin/js/vendor/select2/i18n/ms.js": {
+      "checksum": "4ba82c9a51ce975fe0e4eff5f6eece65"
+    },
+    "static/admin/js/vendor/select2/i18n/nb.js": {
+      "checksum": "da2fce143f2794208e36dc8520e4c36a"
+    },
+    "static/admin/js/vendor/select2/i18n/ne.js": {
+      "checksum": "3d79fd3f08dbfd0973cf91dd6a62bccd"
+    },
+    "static/admin/js/vendor/select2/i18n/nl.js": {
+      "checksum": "997868a37ed89062ad7b19c9a88f1bb0"
+    },
+    "static/admin/js/vendor/select2/i18n/pl.js": {
+      "checksum": "6031b4f164521f58dfec7d1e46238861"
+    },
+    "static/admin/js/vendor/select2/i18n/ps.js": {
+      "checksum": "38dfa47af9e086eece5a333d711abc79"
+    },
+    "static/admin/js/vendor/select2/i18n/pt-BR.js": {
+      "checksum": "e1b294433e7fc3175842ce37b9f15014"
+    },
+    "static/admin/js/vendor/select2/i18n/pt.js": {
+      "checksum": "33b4a3b44d437614b83497e36c138ca9"
+    },
+    "static/admin/js/vendor/select2/i18n/ro.js": {
+      "checksum": "f75cb460ec3b98b4b9017e9513ca20cf"
+    },
+    "static/admin/js/vendor/select2/i18n/ru.js": {
+      "checksum": "934aa95f5b5f32c72c80857bb2622074"
+    },
+    "static/admin/js/vendor/select2/i18n/sk.js": {
+      "checksum": "33d02cef8d110f358acd1624f7f79ffe"
+    },
+    "static/admin/js/vendor/select2/i18n/sl.js": {
+      "checksum": "131a78bc075237a13750ead3807683d2"
+    },
+    "static/admin/js/vendor/select2/i18n/sq.js": {
+      "checksum": "5636b60d29c9bdd55f18a4585746b6d1"
+    },
+    "static/admin/js/vendor/select2/i18n/sr-Cyrl.js": {
+      "checksum": "f254bb8c4c7ce00d9d17e9e91945ad9b"
+    },
+    "static/admin/js/vendor/select2/i18n/sr.js": {
+      "checksum": "5ed85a48f483d17a7ad102832cb11ea1"
+    },
+    "static/admin/js/vendor/select2/i18n/sv.js": {
+      "checksum": "7a9c2f71e7779a263b2cf3520b1aa611"
+    },
+    "static/admin/js/vendor/select2/i18n/th.js": {
+      "checksum": "f38c20b0221b68924d6c8f0773cb252d"
+    },
+    "static/admin/js/vendor/select2/i18n/tk.js": {
+      "checksum": "7c572a68c78fb798f11f7d8c78ebb9d6"
+    },
+    "static/admin/js/vendor/select2/i18n/tr.js": {
+      "checksum": "b5a0643d1545f4a3e1622e65e46ddc7c"
+    },
+    "static/admin/js/vendor/select2/i18n/uk.js": {
+      "checksum": "8cede7f4803c7dbd1e8261bfa1932b7c"
+    },
+    "static/admin/js/vendor/select2/i18n/vi.js": {
+      "checksum": "097a5b75b3e146e2d94ab8e1510be607"
+    },
+    "static/admin/js/vendor/select2/i18n/zh-CN.js": {
+      "checksum": "2cff662ec5f972b4613566cf5988cda2"
+    },
+    "static/admin/js/vendor/select2/i18n/zh-TW.js": {
+      "checksum": "04554a227c2ba0f3bb6ca3d2e01e5440"
+    },
+    "static/admin/js/vendor/select2/select2.full.js": {
+      "checksum": "c2afdeda30583c460d6db9778ba92cde"
+    },
+    "static/admin/js/vendor/select2/select2.full.min.js": {
+      "checksum": "fcd7500d8e13d2b2aae5d3956dc3e21d"
+    },
+    "static/admin/js/vendor/xregexp/LICENSE.txt": {
+      "checksum": "b6fd2ceea8d3872d310a97a375ed26f9"
+    },
+    "static/admin/js/vendor/xregexp/xregexp.js": {
+      "checksum": "a7e08b0ce6864ff99e850aef98ca6932"
+    },
+    "static/admin/js/vendor/xregexp/xregexp.min.js": {
+      "checksum": "f1ae4617847c53634ea8a83f81e34cb2"
+    },
+    "static/pdf/BLANK_DA_FORM_7817.pdf": {
+      "checksum": "efda4261b5c71bd587b48063d6f60d85"
+    },
+    "static/pdf/DA4856_BLANK.pdf": {
+      "checksum": "6e88ceca0e3856916ed2c208a700935e"
+    },
+    "static/pdf/Test_15U_Phase_Eval.pdf": {
+      "checksum": "cd8056d76fbdaec991300a9dedf6ae2d"
+    },
+    "static/xml/BLANK_DA_FORM_7817_data.xml": {
+      "checksum": "4e457158061d563577e38dbc51686ec2"
+    },
+    "static/xml/DA_FORM_7817_Best_Wrench_data.xml": {
+      "checksum": "bc90b8433ceedd6525a8f2e345550c12"
+    },
+    "static/xml/DA_FORM_7817_Best_Wrench_data_full.xml": {
+      "checksum": "0c458d6df028bb8c4d9fab0a24c64688"
+    },
+    "tasks/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "tasks/admin.py": {
+      "checksum": "ef9b1b6a867d38bfa9b4a56ab5b37823"
+    },
+    "tasks/apps.py": {
+      "checksum": "c68059873d1fd974297e3a57609b02b9"
+    },
+    "tasks/model_utils/Proponent.py": {
+      "checksum": "f2a603c77466f50a97f347ef891f54a7"
+    },
+    "tasks/model_utils/SkillLevel.py": {
+      "checksum": "090546007f92ffbab2abc0e96ae6de13"
+    },
+    "tasks/model_utils/__init__.py": {
+      "checksum": "d1e26b72106baaf8c90b27d08bd55f4a"
+    },
+    "tasks/model_utils/unit_task_upload_to.py": {
+      "checksum": "e394f2ed8804da5ef38ae1ff4e9548c3"
+    },
+    "tasks/models.py": {
+      "checksum": "91f2d79d75fff92683781e4911c4668c"
+    },
+    "tasks/urls.py": {
+      "checksum": "dbfa014728dd87460f31dc344f57b521"
+    },
+    "tasks/views/__init__.py": {
+      "checksum": "53d6dd8d40c4e2c185d56932a475aa78"
+    },
+    "tasks/views/add_tasks_to_ictl.py": {
+      "checksum": "06b828a7b3339a5e7414575ca3460e5e"
+    },
+    "tasks/views/create_ctl.py": {
+      "checksum": "dd4e1be93be6b2076f8aaa84b67791e6"
+    },
+    "tasks/views/get_all_ictls.py": {
+      "checksum": "4fac05456e518954439af25b5653a6c8"
+    },
+    "tasks/views/get_soldier_ctls.py": {
+      "checksum": "2e2109df15123a0622ab9b000b97ae02"
+    },
+    "tasks/views/get_uctl_tasks.py": {
+      "checksum": "458810d4994faa0613a3a6f3cc17ee3b"
+    },
+    "tasks/views/shiny_create_unit_task.py": {
+      "checksum": "3d7794f1c5adca2a85d45197bb29870d"
+    },
+    "tasks/views/shiny_delete_task.py": {
+      "checksum": "58879bc27626faaf512401002a0087e9"
+    },
+    "tasks/views/shiny_get_all_tasks.py": {
+      "checksum": "f3c10f8cb8571cd16d9ad3a7550fa201"
+    },
+    "tasks/views/shiny_get_searchable_tasklist.py": {
+      "checksum": "6235cd619803fe73b5885b13b8699511"
+    },
+    "tasks/views/shiny_get_task_info.py": {
+      "checksum": "d087c7ceac40673e15861fc3fc726de0"
+    },
+    "tasks/views/shiny_get_uctl_info.py": {
+      "checksum": "34539be2cf412b5edabc710e84ca3230"
+    },
+    "tasks/views/shiny_remove_task_from_uctl.py": {
+      "checksum": "c828f3a90dcad3f113e0615c9769ef4c"
+    },
+    "tasks/views/shiny_supercede_uctl.py": {
+      "checksum": "0f573e41e663c576bfad447aef495f8d"
+    },
+    "tasks/views/shiny_update_task_info.py": {
+      "checksum": "ca12e01eef318245af32edbed0b28573"
+    },
+    "tasks/views/shiny_update_uctl_info.py": {
+      "checksum": "1d3dc915d8f52c50f7eb8e196fb0ccb9"
+    },
+    "tasks/views/task_read_pdf.py": {
+      "checksum": "6877cf18dc43fee86e9a643e838b32e9"
+    },
+    "utils/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "utils/http/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "utils/http/constants.py": {
+      "checksum": "cfbec55a8b15affa0847b448e187eb16"
+    },
+    "utils/http/helpers.py": {
+      "checksum": "d6b9649b04d6b0aac3da05325fbb4062"
+    },
+    "utils/logging/__init__.py": {
+      "checksum": "c896159c1453f3f9d743d620d1e4e9a6"
+    },
+    "utils/logging/log_api_call.py": {
+      "checksum": "3b0ccedee2dadc4336fe613fc3c75d12"
+    },
+    "utils/middleware/__init__.py": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
+    },
+    "utils/middleware/servestatic.py": {
+      "checksum": "4651019e6a4179e99c5a440693568709"
+    },
+    "utils/storage/__init__.py": {
+      "checksum": "68b329da9893e34099c7d8ad5cb9c940"
+    },
+    "utils/storage/azure/__init__.py": {
+      "checksum": "19c6ecabc2911d928ea187bcb49d290f"
+    },
+    "utils/storage/azure/carmy_azure_storage.py": {
+      "checksum": "c6a7155d5b78bd825f927d84b2750080"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{# templates/Milds_App/personnel_list.html #}
+{% extends "Milds_App/base.html" %}
+
+{% block title %}Personnel List{% endblock %}
+
+{% block content %}
+  <h1>Personnel</h1>
+
+  {% if soldiers %}
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Primary MOS</th>
+          <th>Can Maintain</th>
+        </tr>
+      </thead>
+      <tbody>
+         {% for soldier in soldiers %}
+          <tr>
+            <td>{{ soldier.rank }}</td>
+            <td>{{ soldier.first_name }}</td>
+            <td>{{ soldier.last_name }}</td>
+            <td>{{ soldier.primary_mos }}</td>
+            <td>{{ soldier.is_maintainer }}</td>
+            <td>
+              <a href="{% url 'update_personnel' soldier.pk %}">Edit</a> |
+              <a href="{% url 'delete_personnel' soldier.pk %}">Delete</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No personnel records found.</p>
+  {% endif %}
+
+  <p><a href="{% url 'create_personnel' %}">Add New Soldier</a></p>
+{% endblock %}
+

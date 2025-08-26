@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="utf-8">
+        <title>griffin.ai - DSR Download</title>
+        <link rel="icon" href="static/auto_dsr/img/griffin-ai-beak.png" />
+        <link rel="stylesheet" href="static/auto_dsr/css/acd-export-style.css" />
+        <script>
+            function updateFormAction() {
+                var unit = document.getElementById('unit').value;
+                var format = document.querySelector('input[name="format"]:checked').value;
+                var form = document.getElementById('dsrForm');
+                form.action = format + '/' + unit ;
+            }
+        </script>
+    </head>
+    <body>
+        <div class="content">
+            <h1>Welcome, {{ user }}</h1>
+            <p>You can use this page to download report files from Griffin.</p>
+            <form id="dsrForm" method="POST" action="" enctype="multipart/form-data">
+                <label for="unit">Select Unit</label>
+                <select id="unit" name="unit" onchange="updateFormAction()">
+                    {% for uic, name in units %}
+                        <option value="{{ uic }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                <label>Select Format</label>
+                <br>
+                <input type="radio" id="format_csv" name="format" value="csv" onclick="updateFormAction()">
+                <label for="format_csv">CSV</label>
+                <input type="radio" id="format_pdf" name="format" value="create" onclick="updateFormAction()">
+                <label for="format_pdf">PDF</label>
+                <br>
+                <button class="upload-button" type="submit">Download</button>
+            </form>
+        </div>  
+    </body>
+</html>
