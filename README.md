@@ -9,7 +9,7 @@ This repository serves as the base code for the **XE401–XE402 Capstone Project
 
 The goal of this project is to develop an application that enables Observer/Controllers (OCs) at the National Training Center (NTC) to analyze and leverage information more effectively. The application will integrate data from multiple sources and tools into a single, cohesive platform to streamline workflows and improve decision-making for Commanders and OCs.
 
-# Repository Structure
+# Repository Structure (Ideally...needs revised)
 
 * `src/` – Source code files  
 * `docs/` – Documentation and design notes  
