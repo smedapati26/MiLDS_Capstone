@@ -20,4 +20,4 @@ The goal of this project is to develop an application that enables Observer/Cont
 
 * Clone this repository:  
   ```bash
-  git clone insert url
+  git clone git@github.com:usma-eecs/ay26-team-repo-5-milds.git
