@@ -1,8 +1,23 @@
 # Capstone_Base
 
-This is the base repository for XE401-XE402 capstone project code.
+This repository serves as the base code for the **XE401–XE402 Capstone Project**.
 
-* Replace this README with text that includes your project name, members, and a brief description.
-* Commit your changes.
-* Push your changes.
-* Github records a log of all your activity.  It will be obvious when you have not committed anything for a long time.
+# Project Overview
+
+* **Project Name:** MILDS  
+* **Team Members:** CDTs Courville, Fuller, Medapati, Notaro, and Stoltzfus  
+
+The goal of this project is to develop an application that enables Observer/Controllers (OCs) at the National Training Center (NTC) to analyze and leverage information more effectively. The application will integrate data from multiple sources and tools into a single, cohesive platform to streamline workflows and improve decision-making for Commanders and OCs.
+
+# Repository Structure
+
+* `src/` – Source code files  
+* `docs/` – Documentation and design notes  
+* `tests/` – Unit tests and validation code  
+* `README.md` – Project overview (this file)  
+
+# Getting Started
+
+* Clone this repository:  
+  ```bash
+  git clone insert url
