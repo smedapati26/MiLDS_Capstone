@@ -1,9 +1,9 @@
 [
     {
-        "model": "aircraft.Aircraft",
+        "model": "back_end.Aircraft",
         "pk": 427011,
         "fields": {
-            "model": "UH-60L",
+            "model_name": "UH-60L",
             "status": "FMC",
             "rtl": "RTL",
             "current_unit": "WDDRA0",
@@ -20,10 +20,10 @@
         }
     },
     {
-        "model": "aircraft.Aircraft",
+        "model": "back_end.Aircraft",
         "pk": 627092,
         "fields": {
-            "model": "UH-60L",
+            "model_name": "UH-60L",
             "status": "NFMC",
             "rtl": "NRTL",
             "current_unit": "WDDRA0",
@@ -40,10 +40,10 @@
         }
     },
     {
-        "model": "aircraft.Aircraft",
+        "model": "back_end.Aircraft",
         "pk": 920240,
         "fields": {
-            "model": "HH-60M",
+            "model_name": "HH-60M",
             "status": "NMCM",
             "rtl": "NRTL",
             "current_unit": "WDDRA0",
@@ -60,65 +60,10 @@
         }
     },
     {
-        "model": "aircraft.Aircraft",
-        "pk": 920240,
-        "fields": {
-            "model": "HH-60M",
-            "status": "NMCM",
-            "rtl": "NRTL",
-            "current_unit": "WDDRA0",
-            "total_airframe_hours": 2160.0,
-            "flight_hours": 11.0,
-            "hours_to_phase": 327.3,
-            "location": 1,
-            "remarks": "SHORT ON #2 DC SYSTEM, DC SYSTEM BREAKER CONTINUALLY POPS WHEN POWER IS APPLIED.",
-            "date_down": "2024-12-03",
-            "ecd": "2024-12-05",
-            "last_sync_time": "2024-06-18T03:13:57Z",
-            "last_export_upload_time": "2024-12-03T13:52:33Z",
-            "last_update_time": "2024-12-03T21:23:40Z"
-        }
-    },
-    {
-        "model": "auto_dsr.location",
-        "pk": 1,
-        "fields": {
-            "name": "SAAF",
-            "alternate_name": "South African Air Force",
-            "short_name": "SAAF",
-            "abbreviation": "SAAF",
-            "code": "SAAF001",
-            "mgrs": "34SNC0000000000",
-            "latitude": -30.5595,
-            "longitude": 22.9375
-        }
-    },
-    {
-        "model": "auto_dsr.unit",
-        "pk": "WDDRA0",
-        "fields": {
-            "uic": "WDDRA0",
-            "short_name": "3bat82nd",
-            "display_name": "3rd Battalion, 82nd Aviation Brigade",
-            "logo": null,
-            "slogan": null,
-            "nick_name": null,
-            "echelon": "1234",
-            "parent_uic": null,
-            "parent_uics": [],
-            "child_uics": [
-                "WDDRA1"
-            ],
-            "subordinate_uics": [
-                "WDDRA2"
-            ]
-        }
-    },
-    {
-        "model": "aircraft.Aircraft",
+        "model": "back_end.Aircraft",
         "pk": 456789,
         "fields": {
-            "model": "UH-60L",
+            "model_name": "UH-60L",
             "status": "FMC",
             "rtl": "RTL",
             "current_unit": "WDDRA0",
@@ -135,10 +80,10 @@
         }
     },
     {
-        "model": "aircraft.Aircraft",
+        "model": "back_end.Aircraft",
         "pk": 555555,
         "fields": {
-            "model": "UH-60L",
+            "model_name": "UH-60L",
             "status": "FMC",
             "rtl": "RTL",
             "current_unit": "WDDRA0",
@@ -155,10 +100,10 @@
         }
     },
     {
-        "model": "aircraft.Aircraft",
+        "model": "back_end.Aircraft",
         "pk": 333333,
         "fields": {
-            "model": "UH-60L",
+            "model_name": "UH-60L",
             "status": "NMCM",
             "rtl": "RTL",
             "current_unit": "WDDRA0",
@@ -175,10 +120,10 @@
         }
     },
     {
-        "model": "aircraft.Aircraft",
+        "model": "back_end.Aircraft",
         "pk": 123456,
         "fields": {
-            "model": "UH-60L",
+            "model_name": "UH-60L",
             "status": "FMC",
             "rtl": "RTL",
             "current_unit": "WDDRA0",
@@ -195,10 +140,10 @@
         }
     },
     {
-        "model": "aircraft.Aircraft",
+        "model": "back_end.Aircraft",
         "pk": 787878,
         "fields": {
-            "model": "UH-60L",
+            "model_name": "UH-60L",
             "status": "NMCM",
             "rtl": "NRTL",
             "current_unit": "WDDRA0",
