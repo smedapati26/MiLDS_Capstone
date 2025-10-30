@@ -1,0 +1,7 @@
+# Designation Request Handler and Views
+from .create_designation import create_designation
+from .delete_designation import delete_designation
+from .designation_request_handler import Designation_ID_RequestHandler, Designation_NO_ID_RequestHandler
+from .list_designation import list_designation
+from .read_designation import read_designation
+from .update_designation import update_designation

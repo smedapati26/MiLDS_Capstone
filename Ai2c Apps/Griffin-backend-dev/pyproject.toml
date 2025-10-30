@@ -1,0 +1,14 @@
+[tool.black]
+line-length= 120
+extend-exclude = '''
+(
+.*migrations/
+)
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ['auto_dsr', 'aircraft', 'agse', 'consistency', 'events', 'fhp', 'middleware', 'phase_sched', 'reports', 'supply', 'uas', 'units', 'utils']
+sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'FIRSTPARTY', 'LOCALFOLDER']
+extend_skip_glob = ["*migrations/*"]

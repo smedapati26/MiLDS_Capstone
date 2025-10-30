@@ -1,0 +1,176 @@
+variables:
+  PYTHON_IMAGE: "python:3.13-slim"
+  TARGET:
+    description: Which region to deploy the application into?
+    options:
+      - dev
+      - test
+      - prod
+    value: dev
+
+before_script:
+  - |
+    export CDSO_VALUE="DEVELOPMENT"
+    CDSO_VER=0.0.1
+    if [ ! -z "${CI_COMMIT_TAG}" ]; then
+     CDSO_VER=${CI_COMMIT_TAG}
+     export CDSO_VALUE="PRODUCTION"
+    fi
+    echo "Setting CDSO Version as ${CDSO_VER}"
+    echo "Setting deployment level to ${CDSO_VALUE}"
+    
+    if [ -f "$(which yq)" ]; then
+      yq e '.backend.version = strenv(CDSO_VER)' -i cdso_config.yml
+      yq e '.deployment_level = strenv(CDSO_VALUE)' -i cdso_config.yml
+    else
+      sed -i 's/\${BACKEND_VERSION}/'"${CDSO_VER}"'/' cdso_config.yml
+      sed -i 's/PRODUCTION/'"${CDSO_VALUE}"'/' cdso_config.yml
+    fi
+
+include:
+  # Minimum required fields for a container project
+  - component: $CI_SERVER_FQDN/cdso/cdso/review@main
+    inputs:
+      name: "backend"
+      pipeline_type: "application-container"
+
+  # Continuous Delivery pipeline for the backend container.
+  - component: $CI_SERVER_FQDN/ai2c/caravan/pipelines/deliver@main
+    # Only run deliver when a tag is created.
+    rules:
+      - if: |
+          $CI_COMMIT_TAG &&
+          ($TARGET == "dev" || $TARGET == "" || $TARGET == null)
+        when: always
+      - when: never
+    inputs:
+      name: backend
+      pipeline_type: container
+      expedition: 0
+      environment: dev
+  
+  # Continuous Delivery pipeline for the backend container.
+  - component: $CI_SERVER_FQDN/ai2c/caravan/pipelines/deliver@main
+    # Only run deliver when a tag is created.
+    rules:
+      - if: |
+          $CI_COMMIT_TAG &&
+          $TARGET == "test"
+        when: always
+      - when: never
+    inputs:
+      name: backend
+      pipeline_type: container
+      expedition: 0
+      environment: test
+    
+  # Continuous Delivery pipeline for the backend container.
+  - component: $CI_SERVER_FQDN/ai2c/caravan/pipelines/deliver@main
+    # Only run deliver when a tag is created.
+    rules:
+      - if: |
+          $CI_COMMIT_TAG &&
+          $TARGET == "prod"
+        when: always
+      - when: never
+    inputs:
+      name: backend
+      pipeline_type: container
+      expedition: 0
+      environment: prod
+
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+      when: never
+    - when: always
+
+test:
+  stage: pre-build
+  image: ${PYTHON_IMAGE}
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+  before_script:
+    - export PATH=/opt/python/3.10.12/bin:$PATH
+    - pip install -r requirements.txt
+    - pip install coverage unittest-xml-reporting
+  script:
+    - coverage run manage.py test --settings=griffin_ai.settings.dev.local
+    - coverage xml
+    - coverage report -m
+  coverage: '/TOTAL.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    paths:
+      - coverage.xml
+    reports:
+      junit: test-results/test-report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+lint:
+  stage: pre-build
+  image: ${PYTHON_IMAGE}
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: always
+  before_script:
+    - export PATH=/opt/python/3.10.12/bin:$PATH
+    - pip install black isort
+  script:
+    - black --check .
+    - isort --check .
+
+version:
+  stage: clean
+  image: registry.cdso.army.mil/cdso/containers/approved-base/alpine:3.21
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: '$CI_COMMIT_REF_NAME == "dev"'
+      when: on_success
+  script:
+    - apk add --no-cache git
+    - VERSION_DATE=`date +%Y.%m.%d-`
+    - case "${CI_COMMIT_REF_NAME}" in
+      "epic-"*)
+      SUFFIX=`echo ${CI_COMMIT_REF_NAME} | awk -F- '{print $1 "-" $2}'`
+      SUFFIX="${SUFFIX}-${CI_PIPELINE_IID}"
+      ;;
+      *)
+      SUFFIX="${CI_PIPELINE_IID}"
+      ;;
+      esac
+    - VERSION="v${VERSION_DATE}${SUFFIX}"
+    - echo "Version will be ${VERSION}"
+    - git remote set-url origin "https://gitlab-ci-token:${CI_TAG_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git config user.email "gitlab-ci@example.com"
+    - git config user.name "GitLab CI"
+    - git tag -a ${VERSION} -m "CI/CD Version creation - ${VERSION}"
+    - git push origin ${VERSION}
+
+trigger_deploy:
+  stage: deliver
+  image: registry.cdso.army.mil/cdso/containers/approved-base/alpine:3.21
+  rules:
+    - if: $CI_COMMIT_TAG &&
+          ($TARGET == "dev" || $TARGET == "" || $TARGET == null)
+      when: on_success
+  script:
+    - |
+      if [ -z "${TARGET}" -o "${TARGET}" == "" ]; then
+       TARGET=dev
+      fi
+      apk add --no-cache curl
+      echo "Updating version to ${CI_COMMIT_TAG} for deployment to ${TARGET}"
+      curl --request PUT --header "Private-Token: ${CI_TAG_TOKEN}" --header "Content-Type: application/json" \
+      "https://${CI_SERVER_HOST}/api/v4/projects/3630/variables/BACKEND_VERSION?value=${CI_COMMIT_TAG}&environment_scope=expedition-0-${TARGET}&filter\[environment_scope\]=expedition-0-${TARGET}"
+      echo ""
+      # Sleeping for a minute to allow container image to be copied into registry before triggering deployment.
+      sleep 60
+      echo "Triggering deployment to ${TARGET}"
+      curl --request POST --form token="${CI_TRIGGER_TOKEN}" --form ref=${HELM_TAG} --form "variables\[UDS_BUNDLE_TASK\]=deploy" --form "variables\[TARGET\]=${TARGET}" "https://code.cdso.army.mil/api/v4/projects/3630/trigger/pipeline"
+ 

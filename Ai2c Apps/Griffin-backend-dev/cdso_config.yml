@@ -1,0 +1,68 @@
+deployment_level: "PRODUCTION" # DEVELOPMENT, STAGING, PRODUCTION
+security_group: "ai2c" # dami_im, up, test_security_group... full list at: cdso/cdso/catalog/security_groups
+organization: "ai2c" # Set to your organization name
+sdd_project_id: 3630 # uncomment and set if the sdd is in a different project
+
+.semgrep:tags:
+  tags: [cdso-large]
+
+backend:
+  version: "${BACKEND_VERSION}"
+  project_type: "container"
+  dockerfile_folder: "."
+  dockerfile: "Dockerfile"
+  container_lifespan: "PERSISTENT"
+  connection_context: "EXTERNAL"
+  mitigations:
+    - CVE-2025-8194: "DESCRIPTION: There is a defect in the CPython tarfile module affecting the TarFile
+        extraction and entry enumeration APIs. The tar implementation would process tar archives with negative
+        offsets without error, resulting in an infinite loop and deadlock during the parsing of maliciously
+        crafted tar archives. MITIGATION: This service does not have any features that involve extracting tar
+        files. Additionally, at runtime, the application calls the semgreprecommended patch found at
+        https://gist.github.com/sethmlarson/1716ac5b82b73dbcbf23ad2eff8b33e1 Therefore, we believe this is a
+        false positive."
+    - CVE-2025-6069: "DESCRIPTION: The html.parser.HTMLParser class had worse-case quadratic complexity when
+        processing certain crafted malformed inputs potentially leading to amplified denial-of-service.
+        MITIGATION: This service does not have any features that accept HTML input. Therefore, we believe this
+        is a false positive."
+    - CVE-2024-1013: "DESCRIPTION: An out-of-bounds stack write flaw was found in unixODBC on 64-bit
+        architectures where the caller has 4 bytes and callee writes 8 bytes. This issue may go unnoticed on
+        little-endian architectures, while big-endian architectures can be broken. MITIGATION: This service only
+        uses unixODBC to establish parameterized connections to a Microsoft SQL Server database using properly
+        configured ODBC drivers. These operations do not involve unsafe memory writes or stack manipulation.
+        Additionally, the application runs exclusively on little-endian architecture where the flawed condition
+        may not be triggered. Therefore, we believe this is a false positive."
+  semgrep:
+    exclusions:
+      - app.rules.community.python.django.security.audit.xss.direct-use-of-httpresponse
+      # Our codebase includes endpoints that intentionally return static, pre-defined 
+      # responses via django.http.HttpResponse. These responses do not interpolate or 
+      # reflect any user-controlled input. As a result, the finding is a false positive 
+      # / not applicable to these endpoints, and residual XSS risk is negligible
+      - app.rules.community.python.django.correctness.no-null-string-field
+      # Given strict legacy validation, schema-enforced Django Ninja endpoints, and 
+      # read-path normalization, the dual representation (NULL vs "") does not create 
+      # a security exposure and is operationally contained. Residual risk is Low and 
+      # will be further reduced by the planned normalization and schema migration.
+      - app.rules.community.python.lang.maintainability.return-not-in-function
+      # Rule is being flagged in django simplehistory getter and setter functions within
+      # models in order to create HistoricalRecords for the object. Return is not called 
+      # directly but impliticly in these function declarations 
+      - app.rules.community.python.lang.maintainability.is-function-without-parentheses
+      # This is being erroneously flagged in cases where we call soldier.is_maintainer or
+      # soldier.is_admin, as it is interpreting those as functions, when in reality they
+      # are boolean attributes of the soldier model
+      - app.rules.community.python.django.security.django-no-csrf-token
+      # This is a false positive. {% csrf_token %} is the django documentation approved
+      # Way of including a csrf token in a custom generated form. All of our html forms
+      # include this tag. Testing has confirmed that forms are generating and sending 
+      # csrf token for custom forms. 
+    ignore:
+      - "tests/"
+      - ".git/*"
+  syft-grype:
+
+  trufflehog:
+    false_positives:
+      - "7d3ce5a9800705ffbd8e6eaa2009fb09"
+      - "3c1eedb889545838b25089751c195d73"

@@ -1,0 +1,147 @@
+variables:
+  SonarQubeUrl: "https://sonarqube.dse.futures.army.mil"
+  SonarQubeProject: "griffin.ai-backend"
+  PYTHON_IMAGE: "cazw0cuaadsepacr01.azurecr.us/rstudio/connect-runtime:jammy-20240911.1-20250108-1936"
+
+stages:
+  - pre-build
+  - scan
+  - deploy
+
+test:
+  stage: pre-build
+  image: ${PYTHON_IMAGE}
+  tags:
+    - kubernetes
+  before_script:
+    - export PATH=/opt/python/3.10.12/bin:$PATH
+    - pip install -r requirements.txt
+    - pip install coverage unittest-xml-reporting --index-url https://rspm.dse.futures.army.mil/pypi-dse/latest/simple --trusted-host rspm.dse.futures.army.mil
+  script:
+    - coverage run manage.py test --settings=griffin_ai.settings.dev.local
+    - coverage xml
+    - coverage report -m
+  coverage: '/TOTAL.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    paths:
+      - coverage.xml
+    reports:
+      junit: test-results/test-report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+lint:
+  stage: pre-build
+  image: ${PYTHON_IMAGE}
+  tags:
+    - kubernetes
+  before_script:
+    - export PATH=/opt/python/3.10.12/bin:$PATH
+    - pip install black isort
+  script:
+    - black --check .
+    - isort --check .
+
+perform-code-scan:
+  image: cazw0cuaadsepacr01.azurecr.us/sonar-scanner-cli:11.2-CERT
+  tags:
+    - kubernetes
+  stage: scan
+  script:
+    - >
+      sonar-scanner -Dsonar.projectKey=$SonarQubeProject \
+                    -Dsonar.login=$SonarQubeToken \
+                    -Dsonar.host.url=$SonarQubeUrl \
+                    -Dsonar.qualitygate.wait=true \
+                    -X
+  allow_failure: true
+
+posit:
+  stage: deploy
+  image: ${PYTHON_IMAGE}
+  tags:
+    - kubernetes
+  only:
+    - /^epic-.*$/
+    - dev
+    - test
+    - prod
+  needs:
+    - job: test
+      artifacts: false
+    - job: lint
+      artifacts: false
+    - project: ai2c/pmx/griffin.ai/frontend-react
+      job: packaging
+      ref: ${CI_COMMIT_REF_NAME}
+      artifacts: true
+  before_script:
+    - export PATH=/opt/python/3.10.12/bin:$PATH
+    - pip install -r requirements.txt
+    - pip install coverage unittest-xml-reporting --index-url https://rspm.dse.futures.army.mil/pypi-dse/latest/simple --trusted-host rspm.dse.futures.army.mil
+    - pip install rsconnect-python
+    - ENV_FILE=griffin_ai/settings/dev/.env
+    - touch ${ENV_FILE}
+    - echo "DB_NAME=${DB_NAME}" >> ${ENV_FILE}
+    - echo "DB_USER=${DB_USER}" >> ${ENV_FILE}
+    - echo "DB_PASS=${DB_PASS}" >> ${ENV_FILE}
+    - echo "DB_HOST=${DB_HOST}" >> ${ENV_FILE}
+    - echo 'DB_DRIVER="ODBC Driver 18 for SQL Server"' >> ${ENV_FILE}
+    - echo "AZ_ACT_URL=${AZ_ACT_URL}" >> ${ENV_FILE}
+    - echo "AZ_STG_CONTAINER=${AZ_STG_CONTAINER}" >> ${ENV_FILE}
+    - mkdir -p ../frontend/dist
+    - mv dist/* ../frontend/dist
+    - chmod 755 collectstatic.sh
+    - ./collectstatic.sh
+  script:
+    - >
+      if [ "${CI_COMMIT_REF_NAME}" == "dev" -o "${CI_COMMIT_REF_NAME}" == "test" ]; then
+        RS_NAME="griffin.ai/backend-${CI_COMMIT_REF_NAME}"
+        RS_PATH="griffin-ai-${CI_COMMIT_REF_NAME}"
+      elif [ "${CI_COMMIT_REF_NAME}" == "prod" ]; then
+        RS_NAME="griffin.ai/backend-prod"
+        RS_PATH="griffin-ai"
+      else
+        RS_NAME="griffin_ai/${CI_COMMIT_REF_NAME}"
+        RS_PATH=${RS_NAME}
+      fi
+    - echo "POSIT App Name - ${RS_NAME}"
+    - echo "POSIT App Path - ${RS_PATH}"
+    - rsconnect add --server http://apps.dse.futures.army.mil/ --name gitlab_posit_ci --insecure --api-key ${POSIT_API_KEY}
+    - REC_COUNT=$(rsconnect content search --title-contains "${RS_NAME}" --published -n gitlab_posit_ci | wc -l)
+    - >
+      if [ ${REC_COUNT} -gt 1 ]; then
+        GUID=$(rsconnect content search --title-contains "${RS_NAME}" --published -n gitlab_posit_ci | tr -d '[]' | grep -i guid | grep -v owner_guid | cut -d":" -f2 | tr -d '", ')
+        EXTRA_CMD="-a ${GUID}"
+        echo "Will update application with id: ${GUID}"
+      else
+        EXTRA_CMD="-N"
+        echo "Will create a new deployment."
+      fi
+    - >
+      rsconnect deploy api --image "${PYTHON_IMAGE}" -n gitlab_posit_ci -t "${RS_NAME}" -e griffin_ai.wsgi:application . \
+                -E DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE}" -E DB_NAME="${DB_NAME}" -E DB_USER="${DB_USER}" \
+                -E DB_PASS="${DB_PASS}" -E DB_HOST="${DB_HOST}" -E DB_DRIVER="ODBC Driver 18 for SQL Server" -E AZ_ACT_URL="${AZ_ACT_URL}" \
+                -E AZ_STG_CONTAINER="${AZ_STG_CONTAINER}" ${EXTRA_CMD}
+    - GUID=$(rsconnect content search --title-contains "${RS_NAME}" --published -n gitlab_posit_ci | tr -d '[]' | grep -i guid | grep -v owner_guid | cut -d":" -f2 | tr -d '", ')
+    - echo "Updating access level to all for ${GUID}"
+    - |
+      DATA='{"access_type": "all"}'
+      curl --silent --show-error -L --max-redirs 0 --fail \
+            -X PATCH \
+            -H "Authorization: Key ${POSIT_API_KEY}" \
+            --data-raw "${DATA}" \
+            "http://apps.dse.futures.army.mil/__api__/v1/content/${GUID}"
+    - echo "Updating path to ${RS_NAME} for ${GUID}"
+    - |
+      DATA='{
+        "force": false,
+        "path": "/'${RS_PATH}'/"
+      }'
+
+      curl --silent --show-error -L --max-redirs 0 --fail \
+            -X PUT \
+            -H "Authorization: Key ${POSIT_API_KEY}" \
+            --data-raw "${DATA}" \
+            "http://apps.dse.futures.army.mil/__api__/v1/content/${GUID}/vanity"

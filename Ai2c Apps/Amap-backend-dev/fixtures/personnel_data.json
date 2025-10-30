@@ -1,0 +1,101 @@
+[
+  {
+    "model": "personnel.MOSCode",
+    "pk": 1,
+    "fields": {
+      "mos": "15R",
+      "mos_description": "AH-64 Maintainer",
+      "amtp_mos": false,
+      "ictl_mos": false
+    }
+  },
+  {
+    "model": "personnel.MOSCode",
+    "pk": 2,
+    "fields": {
+      "mos": "15T",
+      "mos_description": "UH-60 Maintainer",
+      "amtp_mos": false,
+      "ictl_mos": false
+    }
+  },
+  {
+    "model": "personnel.MOSCode",
+    "pk": 3,
+    "fields": {
+      "mos": "15U",
+      "mos_description": "CH-47 Maintainer",
+      "amtp_mos": false,
+      "ictl_mos": false
+    }
+  },
+  {
+    "model": "units.Unit",
+    "pk": "WDDRA0",
+    "fields": {
+      "short_name": "3-82 AVN",
+      "display_name": "3rd Battalion, 82nd Aviation Brigade",
+      "nick_name": "Sky Talons",
+      "echelon": "BN",
+      "logo": null,
+      "compo": "1",
+      "state": "NC",
+      "parent_unit": null,  
+      "start_date": "2005-01-01",
+      "end_date": null,
+      "level": 1,
+      "parent_uics": [],
+      "child_uics": [],
+      "subordinate_uics": [],
+      "as_of_logical_time": 20251030
+    }
+
+  },
+ 
+  {
+    "model": "personnel.Soldier",
+    "pk": "1234567890",
+    "fields": {
+      "rank": "CPT",
+      "first_name": "John",
+      "last_name": "Doe",
+      "primary_mos": "1",
+      "pv2_dor": "2020-06-01",
+      "pfc_dor": "2021-07-01",
+      "spc_dor": null,
+      "sgt_dor": null,
+      "ssg_dor": null,
+      "sfc_dor": null,
+      "unit": "WDDRA0",
+      "is_admin": false,
+      "is_maintainer": true,
+      "dod_email": "john.doe@army.mil",
+      "recieve_emails": false,
+      "birth_month": "JAN",
+      "reporting_ml": null
+    }
+  },
+  {
+    "model": "personnel.Soldier",
+    "pk": "0987654321",
+    "fields": {
+      "rank": "LT",
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "primary_mos": "2",
+      "pv2_dor": null,
+      "pfc_dor": "2019-03-15",
+      "spc_dor": "2020-03-15",
+      "sgt_dor": null,
+      "ssg_dor": null,
+      "sfc_dor": null,
+      "unit": "WDDRA0",
+      "is_admin": true,
+      "is_maintainer": true,
+      "dod_email": null,
+      "birth_month": "FEB",
+      "recieve_emails": false,
+      "reporting_ml": null
+    }
+  }
+]

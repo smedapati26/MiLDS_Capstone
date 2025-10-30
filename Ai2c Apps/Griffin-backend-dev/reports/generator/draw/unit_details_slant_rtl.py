@@ -1,0 +1,64 @@
+import pandas as pd
+from reportlab.pdfgen.canvas import Canvas
+from reportlab.platypus import Frame, Table, TableStyle
+
+from reports.generator.constants import (
+    DSR_SLANT_FRAME_START,
+    DSR_SLANT_TABLE_FONT_SIZE,
+    DSR_SLANT_TABLE_HEADER_FONT_SIZE,
+    HALF_INCH,
+    LANDSCAPE_FULL_FRAME_WIDTH,
+    QUARTER_INCH,
+    THREE_QUARTER_INCH,
+)
+
+
+def draw_rtl_slant(canvas: Canvas, dsr_slant_df: pd.DataFrame):
+    """
+    Draws a unit's DSR RTL Slant table
+
+    @param canvas: (Canvas) The canvas to draw on
+    @param dsr_slant_df: (pd.DataFrame) the unit's DSR details (specifically for the slant)
+    """
+    header_1 = ["RTL", "Total"]
+    dsr_rtl_frame = Frame(
+        x1=QUARTER_INCH,
+        y1=DSR_SLANT_FRAME_START,
+        width=LANDSCAPE_FULL_FRAME_WIDTH / 8,
+        height=HALF_INCH - 2,
+        topPadding=0,
+        bottomPadding=0,
+        leftPadding=0,
+        rightPadding=0,
+    )
+    dsr_rtl_table_style = dsr_rtl_slant_style()
+    dsr_rtl_col_widths = [THREE_QUARTER_INCH - 7, THREE_QUARTER_INCH - 7]
+    dsr_rtl_table = Table(
+        [header_1, [dsr_slant_df[dsr_slant_df.rtl == "RTL"].shape[0], dsr_slant_df.shape[0]]],
+        colWidths=dsr_rtl_col_widths,
+        style=dsr_rtl_table_style,
+    )
+    dsr_rtl_frame.add(dsr_rtl_table, canvas)
+
+
+def dsr_rtl_slant_style() -> TableStyle:
+    """
+    Generate the styles for the Unit DSR Details RTL Slant
+
+    @returns (TableStyle) the TableStyle object to use for styling
+    """
+    style = TableStyle([])
+    # Entire Table
+    style.add("FONTNAME", (0, 0), (-1, -1), "Roboto-Bold")
+    style.add("VALIGN", (0, 0), (-1, -1), "MIDDLE")
+    style.add("ALIGNMENT", (0, 0), (-1, -1), "CENTRE")
+    style.add("TEXTCOLOR", (0, 0), (-1, -1), "#1A1A1A")
+    # Header
+    style.add("BACKGROUND", (0, 0), (-1, 0), "#00458A")
+    style.add("TEXTCOLOR", (0, 0), (-1, 0), "#FFFFFF")
+    style.add("FONTSIZE", (0, 0), (-1, 0), DSR_SLANT_TABLE_HEADER_FONT_SIZE)
+    style.add("LEADING", (0, 0), (-1, 0), DSR_SLANT_TABLE_HEADER_FONT_SIZE)
+    # Values
+    style.add("FONTSIZE", (0, 1), (-1, 1), DSR_SLANT_TABLE_FONT_SIZE)
+    style.add("LEADING", (0, 1), (-1, 1), DSR_SLANT_TABLE_FONT_SIZE)
+    return style

@@ -1,0 +1,3 @@
+# EvaluationType Request Handler and Views
+from .evaluation_type_request_handler import EvaluationType_NO_ID_RequestHandler
+from .list_evaluation_type import list_evaluation_type

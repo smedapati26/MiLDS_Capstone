@@ -1,0 +1,6 @@
+uic,mds,reporting_month,predicted_hours,model,prediction_date
+XX-123457,UH-60M,24-02-15,123.4,A super duper good model,2023-Oct-12
+XX-123457,UH-60M,2024-03-15,123.4,A super duper good model,"Oct 12, 2023"
+XX-123457,UH-60M,2024-04-15,123.4,A super duper good model,2023-10-12
+XX-123457,UH-60M,2024-05-15,123.4,A super duper good model,2023-10-12
+XX-123457,UH-60M,2024-06-15,123.4,A super duper good model,2023-10-12

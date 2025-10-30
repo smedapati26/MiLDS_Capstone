@@ -1,0 +1,133 @@
+/*!
+ * griffin.ai
+ * author: Andre Michell
+ * organization: AI2C - Sustainment
+ * importable griffin style guide compliant css
+ */
+
+/* variable declarations (colorscheme) */
+:root {
+    /* Primary Colors */
+    --dark-blue: #102B43;
+    --medium-blue: #2E7499;
+    --bright-blue: #6EC6F4;
+    --soft-blue: #EBF7FE;
+    --gray: #EBF0F5;
+    --white: #FFFFFF;
+    /* Primary Grays */
+    --black: #000000;
+    --gray-5: #333333;
+    --gray-4: #686968;
+    --gray-3: #828282;
+    --gray-2: #B6B5B5;
+    --gray-1: #DDDDDD;
+    --gray-0: #F8F9F8;
+    --gray-t: #B3B6B5B5;
+    /* Supporting Colors */
+    --warning-red: #AC0200;
+    --warning-gold: #DAB334;
+    --gold-table-text: #B88D00;
+    --confirmation-green: #006B00;
+    /* Graph Colors (Primary)
+    --dark-blue (defined above)
+    --medium-blue (defined above)
+    --confirmation-green (defined above)
+    */
+    --dark-purple: #30136C;
+    --graph-gold: #F2BA00;
+    --graph-orange: #DC6A00;
+    
+    /* Graph Colors (Extended) */
+    --dark-red: #AC0200;
+    --medium-red: #D22A05;
+    --light-red: #FB6B6B;
+    --dark-purple: #800566;
+    --medium-purple: #BB5C73;
+    --light-purple: #E3C7E0;
+    --dark-violet: #30136C;
+    --medium-violet: #795E96;
+    --light-violet: #B9A8BC;
+    /* --dark-blue
+       --medium-blue
+       --bright-blue */
+    --dark-teal: #227277;
+    --medium-teal: #26A7B9;
+    --light-teal: #8DCFCF;
+    --dark-green: #006B00;
+    --medium-green: #6F9A46;
+    --light-green: #D2E597;
+    --dark-gold: #F2BA00;
+    --medium-gold: #FFD706;
+    --light-gold: #FFE58F;
+    --dark-orange: #DC6A00;
+    --medium-orange: #FF993A;
+    --light-orange: #FBD0A8;
+    --dark-gray: #333333;
+    --medium-gray: #828282;
+    --light-gray: #DDDDDD;
+}
+
+/* font face */
+@font-face {
+    font-family: "Open Sans";
+    src: url("../fonts/OpenSans/OpenSans-VarFont.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Open Sans Regular";
+    src: url("../fonts/OpenSans/OpenSans-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Open Sans Bold";
+    src: url("../fonts/OpenSans/OpenSans-Bold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Open Sans SemiBold";
+    src: url("../fonts/OpenSans/OpenSans-SemiBold.ttf") format("truetype");
+}
+
+* {
+    font-family: 'Open Sans Regular', 'Open Sans', sans-serif;
+    color: var(--gray-5);
+}
+
+/* headers */
+h1 {
+    font-family: 'Open Sans Regular';
+    font-size: 35px;
+    margin: 0;
+}
+
+.header-white {
+    background-color: var(--dark-gray);
+    color: var(--white);
+}
+
+h2 {
+    font-family: 'Open Sans Regular';
+    font-size: 25px;
+}
+
+h3 {
+    font-family: 'Open Sans Regular';
+    font-size: 20px;
+}
+
+h4 {
+    font-family: 'Open Sans Bold';
+    font-size: 16px;
+}
+
+form label {
+    font-family: 'Open Sans Bold';
+    font-size: 14px;
+}
+
+.modal header {
+    font-family: 'Open Sans Bold';
+    font-size: 20px;
+    color: var(--white);
+    background-color: var(--medium-blue);
+}
