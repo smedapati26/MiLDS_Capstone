@@ -9,10 +9,8 @@ This repository serves as the base code for the **XE401–XE402 Capstone Project
 
 The goal of this project is to develop an application that enables Observer/Controllers (OCs) at the National Training Center (NTC) to analyze and leverage information more effectively. The application will integrate data from multiple sources and tools into a single, cohesive platform to streamline workflows and test maintainers and logisticians at training centers.
 
-# Repository Structure (Ideally...needs revised)
+# Repository Structure (view from code tab in GitHub)
 
-
-Repository Structure (current)
 .
 ├─ CurrentApp/
 │  └─ MILDS/
@@ -48,13 +46,11 @@ PowerShell
 
 cd ay26-team-repo-5-milds\CurrentApp\MILDS
 
-
 Create & activate a virtual environment
 
 py -0p                     # shows installed Pythons; look for -3.12 or -3.11
 py -3.12 -m venv .venv     # or use -3.11 if 3.12 isn't installed
 .\.venv\Scripts\Activate.ps1
-
 
 If activation is blocked, run once:
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
@@ -63,17 +59,14 @@ Install dependencies
 
 pip install -r requirements.txt
 
-
 Initialize the database & load demo data
 
 python manage.py migrate
 python manage.py loaddata fixtures\aircraft_data.json
 
-Run the server
-
 python manage.py runserver
 
-Useful commands:
+# Useful commands from terminal (.venv):
 
 # Count all Aircraft
 python manage.py shell -c "from app.back_end.models import Aircraft as A; print(A.objects.count())"
