@@ -66,14 +66,14 @@ python manage.py loaddata fixtures\aircraft_data.json
 
 python manage.py runserver
 
-#Ai2c Appliction Install
+# Ai2c Appliction Install
 
 Navigate to the README for Griffin and AMAP for more assistance on running these applications locally. 
 #Must complete this step to load data in Griffin and AMAP: 
 	py manage.py loaddata fixtures/Aircraft_data.json --settings=griffin_ai.settings.dev.local
 	py manage.py loaddata fixtures/personnel_data.json --settings=amap.settings.dev.local
 
-#Access admin page 
+# Access admin page 
 	add /admin at the end of url. Type in username and password
 	example: http://127.0.0.1:8000/admin/
 
