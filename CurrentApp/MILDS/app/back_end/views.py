@@ -324,3 +324,48 @@ def api_push_personnel(request: HttpRequest):
         "status":  "pushed",
         "updated": updated,
     })
+
+# --- JSON API for Aircraft (list + detail) ---
+
+from django.http import JsonResponse, Http404
+
+def aircraft_list(_request):
+    """
+    JSON list of aircraft for /api/aircraft/
+    """
+    data = list(
+        Aircraft.objects.order_by("pk").values(
+            "pk",
+            "model_name",
+            "status",
+            "rtl",
+            "current_unit",
+            "hours_to_phase",
+            "last_update_time",
+        )
+    )
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+
+
+def aircraft_detail(_request, pk: int):
+    """
+    JSON detail for /api/aircraft/<pk>/
+    """
+    try:
+        a = Aircraft.objects.values(
+            "pk",
+            "model_name",
+            "status",
+            "rtl",
+            "current_unit",
+            "total_airframe_hours",
+            "flight_hours",
+            "hours_to_phase",
+            "remarks",
+            "date_down",
+            "ecd",
+            "last_update_time",
+        ).get(pk=pk)
+    except Aircraft.DoesNotExist:
+        raise Http404("Aircraft not found")
+    return JsonResponse(a, safe=False, json_dumps_params={"indent": 2})
