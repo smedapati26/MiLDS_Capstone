@@ -11,6 +11,7 @@ from django.http import JsonResponse, HttpResponseBadRequest, HttpRequest
 from django.views.decorators.http import require_http_methods
 from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta, timezone
+from django.http import HttpResponse
 
 
 NEEDED_FIELDS = [
@@ -22,6 +23,12 @@ NEEDED_FIELDS = [
     "remarks",
     "date_down",
 ]
+
+
+def home(request):
+    return HttpResponse("MILDS is running successfully.")
+
+
 def delete_aircraft(request, pk):
     # Retrieve the specific aircraft object or return a 404 error if not found.
     aircraft = get_object_or_404(Aircraft, pk=pk)
