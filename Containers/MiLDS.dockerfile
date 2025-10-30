@@ -18,7 +18,7 @@ ARG GIT_TOKEN
 RUN git clone https://$GIT_TOKEN@github.com/usma-eecs/ay26-team-repo-5-milds.git MiLDS
 
 # Move into the project directory
-WORKDIR /app/MiLDS
+WORKDIR /app/MiLDS/MiLDSCapstone
 
 # Create and activate a virtual environment
 RUN python -m venv /opt/venv
