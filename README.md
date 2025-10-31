@@ -50,6 +50,7 @@ Create & activate a virtual environment
 
 py -0p                     # shows installed Pythons; look for -3.12 or -3.11
 py -3.12 -m venv .venv     # or use -3.11 if 3.12 isn't installed
+
 .\.venv\Scripts\Activate.ps1
 
 If activation is blocked, run once:

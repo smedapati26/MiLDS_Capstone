@@ -1,0 +1,7 @@
+<!doctype html><html><head><title>Aircraft Form</title></head><body>
+<h1>{{ form.instance.pk|default:"Create Aircraft" }}</h1>
+<form method="post">{% csrf_token %}{{ form.as_p }}
+  <button type="submit">Save</button>
+  <a href="{% url 'list_aircraft' %}">Back</a>
+</form>
+</body></html>

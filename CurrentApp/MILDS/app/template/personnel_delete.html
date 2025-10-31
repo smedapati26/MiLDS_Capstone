@@ -1,0 +1,7 @@
+<!doctype html><html><head><title>Delete Soldier</title></head><body>
+<h1>Delete {{ soldier.last_name }}, {{ soldier.first_name }}?</h1>
+<form method="post">{% csrf_token %}
+  <button type="submit">Yes, delete</button>
+  <a href="{% url 'list_personnel' %}">Cancel</a>
+</form>
+</body></html>

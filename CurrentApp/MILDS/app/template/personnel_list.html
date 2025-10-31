@@ -1,0 +1,23 @@
+<!doctype html><html><head><title>Personnel</title></head><body>
+<h1>Soldiers</h1>
+<p><a href="{% url 'create_personnel' %}">+ New Soldier</a></p>
+<table border="1" cellpadding="6">
+  <tr><th>ID</th><th>Name</th><th>Rank</th><th>MOS</th><th>Unit</th><th>Maintainer</th><th>Actions</th></tr>
+  {% for s in soldiers %}
+    <tr>
+      <td>{{ s.id }}</td>
+      <td>{{ s.last_name }}, {{ s.first_name }}</td>
+      <td>{{ s.rank }}</td>
+      <td>{{ s.primary_mos }}</td>
+      <td>{{ s.current_unit }}</td>
+      <td>{{ s.is_maintainer }}</td>
+      <td>
+        <a href="{% url 'update_personnel' s.pk %}">Edit</a> |
+        <a href="{% url 'delete_personnel' s.pk %}">Delete</a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7">No personnel yet.</td></tr>
+  {% endfor %}
+</table>
+</body></html>

@@ -1,0 +1,7 @@
+<!doctype html><html><head><title>Soldier Form</title></head><body>
+<h1>{{ form.instance.pk|default:"Create Soldier" }}</h1>
+<form method="post">{% csrf_token %}{{ form.as_p }}
+  <button type="submit">Save</button>
+  <a href="{% url 'list_personnel' %}">Back</a>
+</form>
+</body></html>

@@ -1,0 +1,8 @@
+<!doctype html><html><head><title>Delete Aircraft</title></head><body>
+<h1>Delete Aircraft {{ aircraft.pk }}?</h1>
+<p>Model: {{ aircraft.model_name }}</p>
+<form method="post">{% csrf_token %}
+  <button type="submit">Yes, delete</button>
+  <a href="{% url 'list_aircraft' %}">Cancel</a>
+</form>
+</body></html>

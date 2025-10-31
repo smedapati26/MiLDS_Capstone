@@ -39,7 +39,7 @@ def delete_aircraft(request, pk):
         return redirect('list_aircraft')  # Redirect to a listing page or another appropriate page.
     
     # Render a confirmation page when the request method is GET.
-    return render(request, 'Milds_App/aircraft_delete.html', {'aircraft': aircraft})
+    return render(request, "aircraft_delete.html", {"aircraft": aircraft})
 
 
 def create_aircraft(request):
@@ -53,7 +53,7 @@ def create_aircraft(request):
             return redirect('create_aircraft')
     else:
         form = AircraftForm()
-    return render(request, 'Milds_App/aircraft_form.html', {'form': form})
+    return render(request, "aircraft_form.html", {"form": form})
 
 #If Aircraft already exists 
 def update_aircraft(request, pk):
@@ -66,19 +66,18 @@ def update_aircraft(request, pk):
             return redirect('update_aircraft', pk=aircraft.pk)
     else:
         form = AircraftForm(instance=aircraft)
-    return render(request, 'Milds_App/aircraft_form.html', {'form': form})
+    return render(request, "aircraft_form.html", {"form": form})
 
 def list_aircraft(request):
     aircrafts = Aircraft.objects.all()
-    return render(request, 'Milds_App/aircraft_list.html', {'aircrafts': aircrafts})
+    return render(request, "aircraft_list.html", {"aircrafts": aircrafts})
 
 
 #Personnel Management 
 
 def list_personnel(request):
     soldiers = Soldier.objects.all().order_by('last_name', 'first_name')
-    return render(request, 'Milds_App/personnel_list.html', {'soldiers': soldiers
-    })
+    return render(request, "personnel_list.html", {"soldiers": soldiers})
 
 def create_personnel(request):
     if request.method == 'POST':
@@ -91,9 +90,7 @@ def create_personnel(request):
     else:
         form = SoldierForm()
 
-    return render(request, 'Milds_App/personnel_form.html', {
-        'form': form
-    })
+    return render(request, "personnel_form.html", {"form": form})
 
 def update_personnel(request, pk):
     soldier = get_object_or_404(Soldier, pk=pk)
@@ -107,9 +104,7 @@ def update_personnel(request, pk):
     else:
         form = SoldierForm(instance=soldier)
 
-    return render(request, 'Milds_App/personnel_form.html', {
-        'form': form
-    })
+    return render(request, "personnel_form.html", {"form": form})
 
 def delete_personnel(request, pk):
     # Retrieve the specific aircraft object or return a 404 error if not found.
@@ -121,8 +116,7 @@ def delete_personnel(request, pk):
         return redirect('list_personnel')  # Redirect to a listing page or another appropriate page.
     
     # Render a confirmation page when the request method is GET.
-    return render(request, 'Milds_App/personnel_delete.html', {'soldier': soldier})
-
+    return render(request, "personnel_delete.html", {"soldier": soldier})
 
 
 def recent_pushes(request):
