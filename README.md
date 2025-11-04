@@ -5,7 +5,10 @@ This repository serves as the base code for the **XE401–XE402 Capstone Project
 # Project Overview
 
 * **Project Name:** MILDS  
-* **Team Members:** CDTs Courville, Fuller, Medapati, Notaro, and Stoltzfus  
+* **Team Members:** CDTs Courville, Fuller, Medapati, Notaro, and Stoltzfus
+* **Instructor**: COL Haynes
+* **Advisor**: LTC Hutchinson
+* **Project Owner**: Army Artificial Intelligence and Integration Center
 
 The goal of this project is to develop an application that enables Observer/Controllers (OCs) at the National Training Center (NTC) to analyze and leverage information more effectively. The application will integrate data from multiple sources and tools into a single, cohesive platform to streamline workflows and test maintainers and logisticians at training centers.
 
