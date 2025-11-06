@@ -12,7 +12,7 @@ This repository serves as the base code for the **XE401–XE402 Capstone Project
 
 The goal of this project is to develop an application that enables Observer/Controllers (OCs) at the National Training Center (NTC) to analyze and leverage information more effectively. The application will integrate data from multiple sources and tools into a single, cohesive platform to streamline workflows and test maintainers and logisticians at training centers.
 
-# Repository Structure (view from code tab in GitHub)
+## Repository Structure (view from code tab in GitHub)
 
 .
 ├─ CurrentApp/
@@ -33,7 +33,7 @@ The goal of this project is to develop an application that enables Observer/Cont
 ├─ tests/
 └─ README.md
 
-# Requirements
+## Requirements
 
 Python 3.11 or 3.12 (recommended 3.12). Do not use 3.14 with this Django version.
 
@@ -41,7 +41,7 @@ Git
 
 PowerShell
 
-# Getting Started
+## Getting Started
 
 * Clone this repository:  
   ```bash
@@ -72,28 +72,28 @@ python manage.py loaddata fixtures\aircraft_data.json
 
 python manage.py runserver
 
-# Ai2c Appliction Install
+## Ai2c Appliction Install
 
 Navigate to the README for Griffin and AMAP for more assistance on running these applications locally. 
-# Must complete this step to load data in Griffin and AMAP
+## Must complete this step to load data in Griffin and AMAP
 	py manage.py loaddata fixtures/Aircraft_data.json --settings=griffin_ai.settings.dev.local
 	py manage.py loaddata fixtures/personnel_data.json --settings=amap.settings.dev.local
 
-# Access admin page 
+## Access admin page 
 	add /admin at the end of url. Type in username and password
 	example: http://127.0.0.1:8000/admin/
 
 
-# Useful commands from terminal (.venv):
+## Useful commands from terminal (.venv):
 
-# Count all Aircraft
+### Count all Aircraft
 python manage.py shell -c "from app.back_end.models import Aircraft as A; print(A.objects.count())"
 
-# Show first 10 (pk, model_name, status)
+### Show first 10 (pk, model_name, status)
 python manage.py shell -c "from app.back_end.models import Aircraft as A; print(list(A.objects.order_by('pk').values('pk','model_name','status')[:10]))"
 
-# FMC aircraft in WDDRA0 (pk, model_name, unit)
+### FMC aircraft in WDDRA0 (pk, model_name, unit)
 python manage.py shell -c "from app.back_end.models import Aircraft as A; print(list(A.objects.filter(status='FMC', current_unit='WDDRA0').values('pk','model_name','current_unit')))"
 
-# Down birds (NMCM/NMCS) with notes (pk, model_name, remarks)
+### Down birds (NMCM/NMCS) with notes (pk, model_name, remarks)
 python manage.py shell -c "from app.back_end.models import Aircraft as A; print(list(A.objects.filter(status__startswith='NMC').exclude(remarks='').values('pk','model_name','remarks')[:10]))"
