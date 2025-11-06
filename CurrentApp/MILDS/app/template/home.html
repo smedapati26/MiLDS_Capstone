@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>MILDS</h1>
+<p>Pick a section:</p>
+<div style="display:flex; gap:12px;">
+  <a class="btn" href="{% url 'list_aircraft' %}">Aircraft</a>
+  <a class="btn" href="{% url 'list_personnel' %}">Personnel</a>
+</div>
+{% endblock %}

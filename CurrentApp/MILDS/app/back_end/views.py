@@ -50,7 +50,7 @@ def create_aircraft(request):
             aircraft.current_unit = "WDDRA0"  # force value similar to your CLI app
             # Update timestamps if needed:
             aircraft.save()
-            return redirect('create_aircraft')
+            return redirect('list_aircraft')
     else:
         form = AircraftForm()
     return render(request, "aircraft_form.html", {"form": form})
@@ -63,7 +63,7 @@ def update_aircraft(request, pk):
         if form.is_valid():
             aircraft = form.save(commit=False)
             aircraft.save()
-            return redirect('update_aircraft', pk=aircraft.pk)
+            return redirect('list_aircraft', pk=aircraft.pk)
     else:
         form = AircraftForm(instance=aircraft)
     return render(request, "aircraft_form.html", {"form": form})
@@ -86,7 +86,7 @@ def create_personnel(request):
             soldier = form.save(commit=False)
             # you can set any defaults here, e.g. soldier.current_unit = "WDDRA0"
             soldier.save()
-            return redirect('create_personnel')
+            return redirect('list_personnel')
     else:
         form = SoldierForm()
 

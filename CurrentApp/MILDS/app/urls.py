@@ -17,15 +17,10 @@ Including another URLconf
 # CurrentApp/MILDS/app/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import RedirectView
-from .api import api  # keep if you have app/api.py defining `api`
+from django.views.generic import TemplateView  # add this
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", api.urls),                     # /api/…
-    path("", include("app.back_end.urls")),     # aircraft/, personnel/, etc.
-    path("", RedirectView.as_view(              # / → /aircraft/
-        pattern_name="list_aircraft",
-        permanent=False
-    )),
+    path("", TemplateView.as_view(template_name="home.html"), name="home"),  # new
+    path("", include("app.back_end.urls")),
 ]
