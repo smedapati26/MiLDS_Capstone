@@ -14,24 +14,24 @@ The goal of this project is to develop an application that enables Observer/Cont
 
 ## Repository Structure (view from code tab in GitHub)
 
-.
-├─ CurrentApp/
-│  └─ MILDS/
-│     ├─ manage.py
-│     ├─ app/
-│     │  ├─ settings.py
-│     │  ├─ urls.py
-│     │  └─ ...
-│     ├─ app/back_end/
-│     │  ├─ apps.py
-│     │  ├─ models.py
-│     │  ├─ migrations/
-│     │  └─ ...
-│     └─ fixtures/
-│        └─ aircraft_data.json
-├─ docs/
-├─ tests/
-└─ README.md
+CurrentApp/MILDS/
+  app/
+    back_end/
+      models.py
+      views.py
+      urls.py
+      forms.py
+      migrations/
+    template/
+      base.html
+      aircraft_*.html
+      personnel_*.html
+    api.py
+    settings.py
+    urls.py
+  fixtures/
+    aircraft_data.json
+  manage.py
 
 ## Requirements
 
@@ -49,7 +49,7 @@ PowerShell
 
 cd ay26-team-repo-5-milds\CurrentApp\MILDS
 
-Create & activate a virtual environment
+### Create & activate a virtual environment
 
 py -0p                     (shows installed Pythons; look for -3.12 or -3.11)
 
@@ -61,11 +61,11 @@ If activation is blocked, run once:
 
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
-Install dependencies
+### Install dependencies
 
 pip install -r requirements.txt
 
-Initialize the database & load demo data
+### Initialize the database & load demo data
 
 python manage.py migrate
 python manage.py loaddata fixtures\aircraft_data.json
