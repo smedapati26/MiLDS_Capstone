@@ -1,9 +1,50 @@
-<!doctype html><html><head><title>Personnel</title></head><body>
+{% extends "base.html" %}
+{% block content %}
 <h1>Soldiers</h1>
-<p><a href="{% url 'create_personnel' %}">+ New Soldier</a></p>
+<p>
+  <a href="{% url 'create_personnel' %}">+ New Soldier</a> |
+  <a href="{% url 'list_aircraft' %}">Aircraft</a>
+</p>
+
+<form method="get" style="margin-bottom:1rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+  <input type="text" name="q" placeholder="Search name or EDIPI" value="{{ filters.q|default:'' }}"/>
+
+  <select name="rank">
+    <option value="">All Ranks</option>
+    {% for r in ranks %}
+      {% if r %}<option value="{{ r }}" {% if filters.rank == r %}selected{% endif %}>{{ r }}</option>{% endif %}
+    {% endfor %}
+  </select>
+
+  <select name="mos">
+    <option value="">All MOS</option>
+    {% for m in moss %}
+      {% if m %}<option value="{{ m }}" {% if filters.mos == m %}selected{% endif %}>{{ m }}</option>{% endif %}
+    {% endfor %}
+  </select>
+
+  <select name="unit">
+    <option value="">All Units</option>
+    {% for u in units %}
+      {% if u %}<option value="{{ u }}" {% if filters.unit == u %}selected{% endif %}>{{ u }}</option>{% endif %}
+    {% endfor %}
+  </select>
+
+  <select name="maint">
+    <option value="">Maint: Any</option>
+    <option value="yes" {% if filters.maint == "yes" %}selected{% endif %}>Yes</option>
+    <option value="no"  {% if filters.maint == "no"  %}selected{% endif %}>No</option>
+  </select>
+
+  <button type="submit">Apply</button>
+  <a href="{% url 'list_personnel' %}">Reset</a>
+</form>
+
 <table border="1" cellpadding="6">
-  <tr><th>ID</th><th>Name</th><th>Rank</th><th>MOS</th><th>Unit</th><th>Maintainer</th><th>Actions</th></tr>
-  {% for s in soldiers %}
+  <tr>
+    <th>EDIPI</th><th>Name</th><th>Rank</th><th>MOS</th><th>Unit</th><th>Maintainer</th><th>Actions</th>
+  </tr>
+  {% for s in page_obj.object_list %}
     <tr>
       <td>{{ s.user_id }}</td>
       <td>{{ s.last_name }}, {{ s.first_name }}</td>
@@ -17,7 +58,19 @@
       </td>
     </tr>
   {% empty %}
-    <tr><td colspan="7">No personnel yet.</td></tr>
+    <tr><td colspan="7">No personnel found.</td></tr>
   {% endfor %}
 </table>
-</body></html>
+
+{% if page_obj.paginator.num_pages > 1 %}
+  <div style="margin-top:1rem; display:flex; gap:1rem; align-items:center;">
+    {% if page_obj.has_previous %}
+      <a href="?{% for k,v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">« Prev</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?{% for k,v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Next »</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

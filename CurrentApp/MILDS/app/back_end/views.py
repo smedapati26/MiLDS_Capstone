@@ -134,10 +134,48 @@ def list_aircraft(request):
 
 
 #Personnel Management 
-
 def list_personnel(request):
-    soldiers = Soldier.objects.all().order_by('last_name', 'first_name')
-    return render(request, "personnel_list.html", {"soldiers": soldiers})
+    qs = Soldier.objects.all().order_by("last_name", "first_name")
+
+    # --- filters from querystring ---
+    q       = request.GET.get("q", "").strip()             # name/EDIPI search
+    rank    = request.GET.get("rank", "").strip()
+    mos     = request.GET.get("mos", "").strip()
+    unit    = request.GET.get("unit", "").strip()
+    maint   = request.GET.get("maint", "").strip()         # "yes" | "no" | ""
+
+    if q:
+        qs = qs.filter(
+            models.Q(first_name__icontains=q) |
+            models.Q(last_name__icontains=q)  |
+            models.Q(user_id__icontains=q)
+        )
+    if rank:
+        qs = qs.filter(rank__iexact=rank)
+    if mos:
+        qs = qs.filter(primary_mos__iexact=mos)
+    if unit:
+        qs = qs.filter(current_unit__iexact=unit)
+    if maint == "yes":
+        qs = qs.filter(is_maintainer=True)
+    elif maint == "no":
+        qs = qs.filter(is_maintainer=False)
+
+    # dropdown sources
+    ranks = Soldier.objects.order_by().values_list("rank", flat=True).distinct()
+    moss  = Soldier.objects.order_by().values_list("primary_mos", flat=True).distinct()
+    units = Soldier.objects.order_by().values_list("current_unit", flat=True).distinct()
+
+    # pagination
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    ctx = {
+        "page_obj": page_obj,
+        "filters": {"q": q, "rank": rank, "mos": mos, "unit": unit, "maint": maint},
+        "ranks": ranks, "moss": moss, "units": units,
+    }
+    return render(request, "personnel_list.html", ctx)
 
 def create_personnel(request):
     if request.method == 'POST':
