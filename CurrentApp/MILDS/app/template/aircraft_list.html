@@ -1,21 +1,116 @@
-<!doctype html><html><head><title>Aircraft</title></head><body>
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
 <h1>Aircraft</h1>
-<p><a href="{% url 'create_aircraft' %}">+ New Aircraft</a></p>
+
+<p>
+  <a href="{% url 'create_aircraft' %}">+ New Aircraft</a> |
+  <a href="{% url 'list_personnel' %}">Personnel</a>
+</p>
+
+<form method="get" style="margin-bottom:1rem; display:flex; gap:.5rem; flex-wrap:wrap;">
+  <input type="text" name="q" placeholder="Search remarks/model/status"
+         value="{{ filters.q|default:'' }}" />
+
+  <select name="model_name">
+    <option value="">All Models</option>
+    {% for m in model_names %}
+      <option value="{{ m }}" {% if filters.model_name == m %}selected{% endif %}>{{ m }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="status">
+    <option value="">All Status</option>
+    {% for s in statuses %}
+      <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="rtl">
+    <option value="">All RTL</option>
+    {% for r in rtls %}
+      <option value="{{ r }}" {% if filters.rtl == r %}selected{% endif %}>{{ r }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="unit">
+    <option value="">All Units</option>
+    {% for u in units %}
+      <option value="{{ u }}" {% if filters.unit == u %}selected{% endif %}>{{ u }}</option>
+    {% endfor %}
+  </select>
+
+  <input type="number" step="0.1" name="min_hours" placeholder="Min hours"
+         value="{{ filters.min_hours|default:'' }}" style="width:8rem;">
+  <input type="number" step="0.1" name="max_hours" placeholder="Max hours"
+         value="{{ filters.max_hours|default:'' }}" style="width:8rem;">
+
+  <button type="submit">Apply</button>
+  <a href="{% url 'list_aircraft' %}">Reset</a>
+</form>
+
 <table border="1" cellpadding="6">
-  <tr><th>PK</th><th>Model</th><th>Status</th><th>Unit</th><th>Actions</th></tr>
-  {% for a in aircrafts %}
-    <tr>
-      <td>{{ a.pk }}</td>
-      <td>{{ a.model_name }}</td>
-      <td>{{ a.status }}</td>
-      <td>{{ a.current_unit }}</td>
-      <td>
-        <a href="{% url 'update_aircraft' a.pk %}">Edit</a> |
-        <a href="{% url 'delete_aircraft' a.pk %}">Delete</a>
-      </td>
-    </tr>
-  {% empty %}
-    <tr><td colspan="5">No aircraft yet.</td></tr>
-  {% endfor %}
+  <tr>
+    <th>PK</th>
+    <th>Model</th>
+    <th>Status</th>
+    <th>RTL</th>
+    <th>Unit</th>
+    <th>Total Hrs</th>
+    <th>To Phase</th>
+    <th>Actions</th>
+  </tr>
+
+  {% if page_obj %}
+    {% for a in page_obj.object_list %}
+      <tr>
+        <td>{{ a.aircraft_pk }}</td>
+        <td>{{ a.model_name }}</td>
+        <td>{{ a.status }}</td>
+        <td>{{ a.rtl }}</td>
+        <td>{{ a.current_unit }}</td>
+        <td>{{ a.total_airframe_hours }}</td>
+        <td>{{ a.hours_to_phase }}</td>
+        <td>
+          <a href="{% url 'update_aircraft' a.pk %}">Edit</a> |
+          <a href="{% url 'delete_aircraft' a.pk %}">Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="8">No aircraft found.</td></tr>
+    {% endfor %}
+  {% else %}
+    {# Fallback if your view still passes aircrafts instead of page_obj #}
+    {% for a in aircrafts %}
+      <tr>
+        <td>{{ a.aircraft_pk }}</td>
+        <td>{{ a.model_name }}</td>
+        <td>{{ a.status }}</td>
+        <td>{{ a.rtl }}</td>
+        <td>{{ a.current_unit }}</td>
+        <td>{{ a.total_airframe_hours }}</td>
+        <td>{{ a.hours_to_phase }}</td>
+        <td>
+          <a href="{% url 'update_aircraft' a.pk %}">Edit</a> |
+          <a href="{% url 'delete_aircraft' a.pk %}">Delete</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="8">No aircraft yet.</td></tr>
+    {% endfor %}
+  {% endif %}
 </table>
-</body></html>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+  <div style="margin-top:1rem; display:flex; gap:1rem; align-items:center;">
+    {% if page_obj.has_previous %}
+      <a href="?{% for k,v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">« Prev</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?{% for k,v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Next »</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

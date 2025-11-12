@@ -12,6 +12,8 @@ from django.views.decorators.http import require_http_methods
 from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta, timezone
 from django.http import HttpResponse
+from django.db import models
+from django.core.paginator import Paginator
 
 
 NEEDED_FIELDS = [
@@ -68,9 +70,67 @@ def update_aircraft(request, pk):
         form = AircraftForm(instance=aircraft)
     return render(request, "aircraft_form.html", {"form": form})
 
+
 def list_aircraft(request):
-    aircrafts = Aircraft.objects.all()
-    return render(request, "aircraft_list.html", {"aircrafts": aircrafts})
+    qs = Aircraft.objects.all().order_by("aircraft_pk")
+
+    # --- filters from querystring ---
+    model_name = request.GET.get("model_name", "").strip()
+    status     = request.GET.get("status", "").strip()
+    rtl        = request.GET.get("rtl", "").strip()
+    unit       = request.GET.get("unit", "").strip()
+    search     = request.GET.get("q", "").strip()      # free-text search
+    min_hours  = request.GET.get("min_hours", "").strip()
+    max_hours  = request.GET.get("max_hours", "").strip()
+
+    if model_name:
+        qs = qs.filter(model_name__iexact=model_name)
+    if status:
+        qs = qs.filter(status__iexact=status)
+    if rtl:
+        qs = qs.filter(rtl__iexact=rtl)
+    if unit:
+        qs = qs.filter(current_unit__iexact=unit)
+    if search:
+        qs = qs.filter(
+            # tweak fields as useful for quick search
+            models.Q(remarks__icontains=search) |
+            models.Q(model_name__icontains=search) |
+            models.Q(rtl__icontains=search) |
+            models.Q(status__icontains=search)
+        )
+    if min_hours.isdigit():
+        qs = qs.filter(total_airframe_hours__gte=float(min_hours))
+    if max_hours.isdigit():
+        qs = qs.filter(total_airframe_hours__lte=float(max_hours))
+
+    # --- dropdown option sources (distinct values) ---
+    model_names = Aircraft.objects.order_by().values_list("model_name", flat=True).distinct()
+    statuses    = Aircraft.objects.order_by().values_list("status", flat=True).distinct()
+    rtls        = Aircraft.objects.order_by().values_list("rtl", flat=True).distinct()
+    units       = Aircraft.objects.order_by().values_list("current_unit", flat=True).distinct()
+
+    # --- pagination ---
+    paginator = Paginator(qs, 10)  # 10 per page
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    ctx = {
+        "page_obj": page_obj,
+        "filters": {
+            "model_name": model_name,
+            "status": status,
+            "rtl": rtl,
+            "unit": unit,
+            "q": search,
+            "min_hours": min_hours,
+            "max_hours": max_hours,
+        },
+        "model_names": model_names,
+        "statuses": statuses,
+        "rtls": rtls,
+        "units": units,
+    }
+    return render(request, "aircraft_list.html", ctx)
 
 
 #Personnel Management 
