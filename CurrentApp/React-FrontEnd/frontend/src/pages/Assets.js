@@ -1,122 +1,183 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import client from '../api/client';
+import { listAircraft } from '../api/aircraft';
+import { listPersonnel } from '../api/personnel';
 
-export default function Assets() {
-  const [activeTab, setActiveTab] = useState('aircraft'); // 'aircraft' | 'personnel'
+export default function Assets(){
+  const [active, setActive] = useState('aircraft'); // 'aircraft' | 'personnel' | 'scenarios'
+  const [aircraftQuery, setAircraftQuery] = useState('');
+  const [personnelQuery, setPersonnelQuery] = useState('');
 
-  const TabButton = ({ id, label }) => {
-    const isActive = activeTab === id;
-    return (
-      <button
-        onClick={() => setActiveTab(id)}
-        style={{
-          flex: 1,
-          padding: '0.75rem 1rem',
-          fontWeight: 600,
-          border: '1px solid #2a2a2a',
-          borderRight: id === 'aircraft' ? 'none' : '1px solid #2a2a2a',
-          background: isActive ? '#111827' : '#121212',
-          color: isActive ? '#d1d5db' : '#9ca3af',
-          cursor: 'pointer',
-          transition: 'background 120ms ease, color 120ms ease',
-        }}
-        aria-pressed={isActive}
-      >
-        {label}
-      </button>
-    );
-  };
+  // Minimal connection indicators
+  const [aircraftCount, setAircraftCount] = useState(null);   // number | null
+  const [personnelCount, setPersonnelCount] = useState(null); // number | null
+  const [apiError, setApiError] = useState(null);              // string | null
 
-  const Tabs = () => (
+  useEffect(() => {
+    let mounted = true;
+
+    // Ensure CSRF cookie exists, then probe both endpoints
+    client.get('/api/csrf/').finally(async () => {
+      try {
+        const [a, p] = await Promise.allSettled([listAircraft(), listPersonnel()]);
+        if (!mounted) return;
+
+        if (a.status === 'fulfilled') {
+          const data = a.value;
+          const count = Array.isArray(data) ? data.length : (data?.results?.length ?? 0);
+          setAircraftCount(count);
+        }
+        if (p.status === 'fulfilled') {
+          const data = p.value;
+          const count = Array.isArray(data) ? data.length : (data?.results?.length ?? 0);
+          setPersonnelCount(count);
+        }
+
+        if ((a.status === 'rejected') || (p.status === 'rejected')) {
+          setApiError('Some resources failed to load');
+        }
+      } catch (e) {
+        if (mounted) setApiError('API probe failed');
+      }
+    });
+
+    return () => { mounted = false; };
+  }, []);
+
+  const Tab = ({ id, label }) => (
     <div
-      role="tablist"
-      aria-label="Assets sections"
-      style={{
-        display: 'flex',
-        border: '1px solid #2a2a2a',
-        borderRadius: 8,
-        overflow: 'hidden',
-        background: '#111827',
-      }}
+      role="tab"
+      className={`tab ${active === id ? 'tab--active' : ''}`}
+      onClick={() => setActive(id)}
+      aria-pressed={active === id}
     >
-      <TabButton id="aircraft" label="Aircraft" />
-      <TabButton id="personnel" label="Personnel" />
+      {label}
     </div>
   );
 
-  const TableShell = ({ title, columns }) => (
-    <section style={{ marginTop: '1rem' }}>
-      <h2 style={{ margin: '0.5rem 0 0.75rem', fontSize: 20 }}>{title}</h2>
-      <div
-        style={{
-          border: '1px solid #2a2a2a',
-          borderRadius: 8,
-          overflow: 'hidden',
-          background: '#0b0b0b',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#111827' }}>
-            <tr>
-              {columns.map((c) => (
-                <th
-                  key={c}
-                  style={{
-                    textAlign: 'left',
-                    padding: '0.75rem 1rem',
-                    borderBottom: '1px solid #1f2937',
-                    fontWeight: 600,
-                    fontSize: 14,
-                    color: '#d1d5db',
-                  }}
-                >
-                  {c}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {/* Placeholder empty state row */}
-            <tr>
-              <td
-                colSpan={columns.length}
-                style={{ padding: '1.25rem 1rem', color: '#9ca3af', fontStyle: 'italic' }}
-              >
-                No data yet. Click “Add” (coming soon) to create the first entry.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+  const Chip = ({ children }) => (
+    <span style={{
+      display:'inline-flex', alignItems:'center', gap:6,
+      padding:'6px 10px', border:'1px solid var(--border)', borderRadius:999,
+      background:'var(--surface-strong)', color:'#374151', fontWeight:600, fontSize:12
+    }}>
+      {children}
+    </span>
   );
 
+  const SectionHead = ({ title, toolbar, status }) => (
+    <div className="section-head">
+      <h2 className="section-title">{title}</h2>
+      <div className="toolbar">
+        {status}
+        {toolbar}
+      </div>
+    </div>
+  );
+
+  const TableShell = ({ columns }) => (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {columns.map((c) => (
+              <th key={c}>{c}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td className="empty" colSpan={columns.length}>No data yet. Use the controls above to add or update entries.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const Search = ({ value, onChange, placeholder }) => (
+    <div className="search">
+      <span className="icon" aria-hidden>🔎</span>
+      <input className="input" value={value} onChange={onChange} placeholder={placeholder} />
+    </div>
+  );
+
+  const Button = ({ children, variant='primary', onClick }) => (
+    <button className={`btn ${variant === 'primary' ? 'btn-primary':'btn-secondary'}`} onClick={onClick}>
+      {children}
+    </button>
+  );
+
+  const AircraftToolbar = (
+    <>
+      <Search
+        value={aircraftQuery}
+        onChange={(e)=>setAircraftQuery(e.target.value)}
+        placeholder="Search aircraft (Tail #, Type, etc.)"
+      />
+      <Button>Receive Griffin</Button>
+      <Button variant="secondary">Update Griffin</Button>
+    </>
+  );
+
+  const PersonnelToolbar = (
+    <>
+      <Search
+        value={personnelQuery}
+        onChange={(e)=>setPersonnelQuery(e.target.value)}
+        placeholder="Search personnel (Name, Rank, etc.)"
+      />
+      <Button>Receive AMAP</Button>
+      <Button variant="secondary">Update AMAP</Button>
+    </>
+  );
+
+  const ScenariosToolbar = (
+    <>
+      <Button>New Scenario</Button>
+      <Button variant="secondary">Import</Button>
+    </>
+  );
+
+  // Status chips
+  const aircraftStatus = apiError
+    ? <Chip>⚠️ API error</Chip>
+    : (aircraftCount !== null ? <Chip>API connected · {aircraftCount} aircraft</Chip> : <Chip>Connecting…</Chip>);
+
+  const personnelStatus = apiError
+    ? <Chip>⚠️ API error</Chip>
+    : (personnelCount !== null ? <Chip>API connected · {personnelCount} personnel</Chip> : <Chip>Connecting…</Chip>);
+
   return (
-    <main
-      style={{
-        padding: '1.25rem',
-        textAlign: 'left',
-        maxWidth: 1000,
-        margin: '0 auto',
-        color: '#e5e7eb',
-      }}
-    >
-      <h1 style={{ marginBottom: '0.75rem' }}>Assets</h1>
+    <main className="container">
+      {/* Page title */}
+      <h1 className="section-title" style={{ fontSize:24, marginTop:4 }}>Assets</h1>
 
-      <Tabs />
+      {/* Tabs */}
+      <div className="tabs" role="tablist" aria-label="Assets sections" style={{ marginTop:12 }}>
+        <Tab id="aircraft" label="Aircraft" />
+        <Tab id="personnel" label="Personnel" />
+        <Tab id="scenarios" label="Custom Scenarios" />
+      </div>
 
-      {/* Content area */}
-      <div style={{ marginTop: '1rem' }}>
-        {activeTab === 'aircraft' && (
-          <TableShell
-            title="Aircraft"
-            columns={['Tail #', 'Type', 'Status', 'Base', 'Notes']}
-          />
+      {/* Panels */}
+      <div style={{ marginTop:16 }}>
+        {active === 'aircraft' && (
+          <>
+            <SectionHead title="Aircraft" toolbar={AircraftToolbar} status={aircraftStatus} />
+            <TableShell columns={['Tail #','Type','Status','Base','Notes']} />
+          </>
         )}
-        {activeTab === 'personnel' && (
-          <TableShell
-            title="Personnel"
-            columns={['Name', 'Rank', 'Role', 'Unit', 'Status']}
-          />
+
+        {active === 'personnel' && (
+          <>
+            <SectionHead title="Personnel" toolbar={PersonnelToolbar} status={personnelStatus} />
+            <TableShell columns={['Name','Rank','Role','Unit','Status']} />
+          </>
+        )}
+
+        {active === 'scenarios' && (
+          <>
+            <SectionHead title="Custom Scenarios" toolbar={ScenariosToolbar} status={<Chip>Ready</Chip>} />
+            <TableShell columns={['Scenario Name','Type','Status','Owner','Last Updated']} />
+          </>
         )}
       </div>
     </main>
