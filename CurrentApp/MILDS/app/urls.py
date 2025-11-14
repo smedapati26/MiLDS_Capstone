@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 URL configuration for app project.
 
@@ -24,3 +25,21 @@ urlpatterns = [
     path("", include("app.back_end.urls")),
     path("api/", api.urls),  # add this line if missing
 ]
+=======
+'''
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("api/", include("app.back_end.urls")),  # all /api/* go to back_end/urls.py
+]
+'''
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("api/", include("app.back_end.urls")),  # Layout B include
+]
+>>>>>>> 94930a1e (changes for axios)
