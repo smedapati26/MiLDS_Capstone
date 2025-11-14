@@ -71,8 +71,6 @@ class Scenario(models.Model):
 class ScenarioEvent(models.Model):
     scenario = models.ForeignKey(Scenario, related_name='events', on_delete=models.CASCADE)
 
-    # keep this only while you backfill; drop later
-    aircraft_pk_int = models.IntegerField(null=True, blank=True, db_column='aircraft_pk_int')
 
     aircraft = models.ForeignKey(
         Aircraft,
@@ -85,6 +83,7 @@ class ScenarioEvent(models.Model):
     soldier = models.ForeignKey(
         Soldier,
         to_field='user_id',        # target Soldier.user_id
+        db_column='user_id', # reuse legacy column name
         on_delete=models.PROTECT,
         related_name='scenario_events',
         null=True, blank=True
@@ -96,8 +95,8 @@ class ScenarioEvent(models.Model):
 
 class Meta:
     constraints = [
-        models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario', conditions=models.Q(aircraft__isnull=False)),
-        models.UniqueConstraint(fields=['scenario', 'soldier'], name='uniq_event_per_soldier_in_scenario', conditions=models.Q(soldier__isnull=False))
+        models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario'),
+        models.UniqueConstraint(fields=['scenario', 'soldier'], name='uniq_event_per_soldier_in_scenario')
     ]
 
 
@@ -110,7 +109,7 @@ class ScenarioRun(models.Model):
 class ScenarioRunLog(models.Model):
     run = models.ForeignKey(ScenarioRun, on_delete=models.CASCADE, related_name="logs")
     aircraft_pk = models.IntegerField(null=True, blank=True, db_index=True)  # remove unique=True
-    user_id = models.CharField("EDIPI Number", max_length=12, primary_key=True) #from Soldier
+    user_id = models.IntegerField(null=True, blank=True, db_index=True) #from Soldier
     message = models.TextField()
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)
