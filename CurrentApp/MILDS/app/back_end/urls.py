@@ -18,4 +18,10 @@ urlpatterns = [
     path("personnel/create/", views.create_personnel, name="create_personnel"),
     path("personnel/<int:pk>/edit/", views.update_personnel, name="update_personnel"),
     path("personnel/<int:pk>/delete/", views.delete_personnel, name="delete_personnel"),
+
+    # Scenarios
+    path("scenarios/", views.scenario_list, name="scenario_list"),
+    path("scenarios/<int:pk>/run/", views.scenario_run, name="scenario_run"),
+    path("scenarios/runs/<int:pk>/", views.scenario_run_detail, name="scenario_run_detail"),
+
 ]

@@ -4,7 +4,7 @@ from django.db import models
 
 class Aircraft(models.Model):
 
-    aircraft_pk = models.IntegerField(unique=True, null=True, blank=True)
+    aircraft_pk = models.IntegerField(unique=True, db_index=True)
 
     model_name   = models.CharField(max_length=100, default="Unknown Model")
     status       = models.CharField(max_length=50,  default="NMC")
@@ -24,7 +24,7 @@ class Aircraft(models.Model):
     last_update_time        = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.model_name} ({self.pk})"
+        return f"{self.model_name} ({self.aircraft_pk})"
 
 
 '''
@@ -58,3 +58,51 @@ class Soldier(models.Model):
 
     def __str__(self):
         return f"{self.user_id} - {self.last_name} - {self.first_name} - {self.primary_mos}"
+
+## Scenarios
+
+class Scenario(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # optional: is_active flag if you want to toggle visibility
+
+# models.py
+class ScenarioEvent(models.Model):
+    scenario = models.ForeignKey(Scenario, related_name='events', on_delete=models.CASCADE)
+
+    # keep this only while you backfill; drop later
+    aircraft_pk_int = models.IntegerField(null=True, blank=True, db_column='aircraft_pk_int')
+
+    aircraft = models.ForeignKey(
+        Aircraft,
+        to_field='aircraft_pk',     # target Aircraft.aircraft_pk
+        db_column='aircraft_pk',    # reuse legacy column name
+        on_delete=models.PROTECT,
+        related_name='scenario_events',
+        null=True, blank=True
+    )
+    status   = models.CharField(max_length=10, blank=True)
+    rtl      = models.CharField(max_length=10, blank=True)
+    remarks  = models.TextField(blank=True)
+    date_down = models.DateField(null=True, blank=True)
+
+class Meta:
+    constraints = [
+        models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario')
+    ]
+
+
+class ScenarioRun(models.Model):
+    scenario = models.ForeignKey(Scenario, on_delete=models.PROTECT)
+    started_at = models.DateTimeField(auto_now_add=True)
+    total_events = models.IntegerField(default=0)
+    applied_events = models.IntegerField(default=0)
+
+class ScenarioRunLog(models.Model):
+    run = models.ForeignKey(ScenarioRun, on_delete=models.CASCADE, related_name="logs")
+    aircraft_pk = models.IntegerField(null=True, blank=True, db_index=True)  # remove unique=True
+    message = models.TextField()
+    before = models.JSONField(default=dict)
+    after = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)

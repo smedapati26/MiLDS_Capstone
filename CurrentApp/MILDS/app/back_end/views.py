@@ -14,6 +14,11 @@ from datetime import datetime, timedelta, timezone
 from django.http import HttpResponse
 from django.db import models
 from django.core.paginator import Paginator
+from django.db import transaction
+from django.utils import timezone
+from .models import Aircraft, Scenario, ScenarioEvent, ScenarioRun, ScenarioRunLog
+from django.contrib import messages
+
 
 
 NEEDED_FIELDS = [
@@ -25,6 +30,8 @@ NEEDED_FIELDS = [
     "remarks",
     "date_down",
 ]
+
+PATCHABLE = ("status", "rtl", "remarks", "date_down")
 
 
 def home(request):
@@ -468,3 +475,69 @@ def aircraft_detail(_request, pk: int):
     except Aircraft.DoesNotExist:
         raise Http404("Aircraft not found")
     return JsonResponse(a, safe=False, json_dumps_params={"indent": 2})
+
+# Scenarios
+
+def _snapshot(ac: Aircraft):
+    return {
+        "status": ac.status,
+        "rtl": ac.rtl,
+        "remarks": ac.remarks or "",
+        "date_down": ac.date_down.isoformat() if ac.date_down else None,
+    }
+
+def apply_scenario(scenario_id: int) -> ScenarioRun:
+    sc = (Scenario.objects
+          .prefetch_related("events__aircraft")
+          .get(pk=scenario_id))
+    run = ScenarioRun.objects.create(scenario=sc, total_events=sc.events.count())
+
+    applied = 0
+    for ev in sc.events.all().order_by("id"):
+        ac = ev.aircraft
+        if not ac:
+            ScenarioRunLog.objects.create(
+                run=run,
+                aircraft_pk=ev.aircraft_pk_int,  # best effort context
+                message=f"SKIP: Event {ev.id} has no aircraft linked.",
+                before={}, after={}
+            )
+            continue
+
+        before = _snapshot(ac)
+        changed = []
+        if ev.status:    ac.status = ev.status;        changed.append("status")
+        if ev.rtl:       ac.rtl = ev.rtl;              changed.append("rtl")
+        if ev.remarks:   ac.remarks = ev.remarks;      changed.append("remarks")
+        if ev.date_down: ac.date_down = ev.date_down;  changed.append("date_down")
+        ac.save()
+        after = _snapshot(ac)
+
+        ScenarioRunLog.objects.create(
+            run=run,
+            aircraft_pk=ac.aircraft_pk,
+            message=f"Aircraft {ac.aircraft_pk}: " + (", ".join(changed) if changed else "no changes"),
+            before=before, after=after
+        )
+        applied += 1
+
+    run.applied_events = applied
+    run.save()
+    return run
+
+
+def scenario_list(request):
+    return render(request, "scenario_list.html", {
+        "scenarios": Scenario.objects.all().order_by("-created_at")
+    })
+
+def scenario_run(request, pk):  #controller
+    sc = get_object_or_404(Scenario, pk=pk)
+    run = apply_scenario(pk)
+    messages.success(request, f"Ran scenario '{sc.name}': {run.applied_events}/{run.total_events} applied.")
+    return redirect("scenario_run_detail", pk=run.pk)
+
+def scenario_run_detail(request, pk):
+    run = get_object_or_404(ScenarioRun.objects.select_related("scenario"), pk=pk)
+    logs = run.logs.order_by("id")
+    return render(request, "scenario_run_detail.html", {"run": run, "logs": logs})

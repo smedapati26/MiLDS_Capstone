@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head><title>Scenario Run</title></head>
+<body>
+<h1>Scenario Run: {{ run.scenario.name }}</h1>
+
+<p>
+  Applied: {{ run.applied_events }}/{{ run.total_events }}
+  {% if run.created_at %} | Started: {{ run.created_at }}{% endif %}
+</p>
+
+<p>
+  <a href="{% url 'scenario_list' %}">← Back to Scenarios</a>
+  &nbsp;|&nbsp;
+  <a href="{% url 'scenario_run' run.scenario.id %}">Re-run this scenario</a>
+</p>
+
+<table border="1" cellpadding="6">
+  <tr>
+    <th>Aircraft</th>
+    <th>Message</th>
+    <th>Before</th>
+    <th>After</th>
+  </tr>
+
+  {% for log in logs %}
+    <tr>
+      <td>
+        {% if log.aircraft_pk %}
+          <a href="{% url 'update_aircraft' log.aircraft_pk %}">{{ log.aircraft_pk }}</a>
+        {% else %}
+          —
+        {% endif %}
+      </td>
+      <td>{{ log.message|default:"—" }}</td>
+      <td>
+        {% if log.before %}
+          status={{ log.before.status|default:"" }},
+          rtl={{ log.before.rtl|default:"" }},
+          remarks={{ log.before.remarks|default:"" }}
+        {% else %}—{% endif %}
+      </td>
+      <td>
+        {% if log.after %}
+          status={{ log.after.status|default:"" }},
+          rtl={{ log.after.rtl|default:"" }},
+          remarks={{ log.after.remarks|default:"" }}
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="4">No logs recorded for this run.</td></tr>
+  {% endfor %}
+</table>
+</body>
+</html>
