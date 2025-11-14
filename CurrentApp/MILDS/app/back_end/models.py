@@ -71,8 +71,6 @@ class Scenario(models.Model):
 class ScenarioEvent(models.Model):
     scenario = models.ForeignKey(Scenario, related_name='events', on_delete=models.CASCADE)
 
-    # keep this only while you backfill; drop later
-    aircraft_pk_int = models.IntegerField(null=True, blank=True, db_column='aircraft_pk_int')
 
     aircraft = models.ForeignKey(
         Aircraft,
@@ -85,6 +83,7 @@ class ScenarioEvent(models.Model):
     soldier = models.ForeignKey(
         Soldier,
         to_field='user_id',        # target Soldier.user_id
+        db_column='user_id', # reuse legacy column name
         on_delete=models.PROTECT,
         related_name='scenario_events',
         null=True, blank=True
@@ -96,8 +95,13 @@ class ScenarioEvent(models.Model):
 
 class Meta:
     constraints = [
+<<<<<<< HEAD
         models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario', condition=models.Q(aircraft__isnull=False)),
         models.UniqueConstraint(fields=['scenario', 'soldier'], name='uniq_event_per_soldier_in_scenario', condition=models.Q(soldier__isnull=False))
+=======
+        models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario'),
+        models.UniqueConstraint(fields=['scenario', 'soldier'], name='uniq_event_per_soldier_in_scenario')
+>>>>>>> 6c7c07e74ed4744f9843a950bd7eeb49f9faa5de
     ]
 
 
@@ -110,7 +114,11 @@ class ScenarioRun(models.Model):
 class ScenarioRunLog(models.Model):
     run = models.ForeignKey(ScenarioRun, on_delete=models.CASCADE, related_name="logs")
     aircraft_pk = models.IntegerField(null=True, blank=True, db_index=True)  # remove unique=True
+<<<<<<< HEAD
     user_id = models.CharField("EDIPI Number", max_length=12, null=True, blank=True) #from Soldier
+=======
+    user_id = models.IntegerField(null=True, blank=True, db_index=True) #from Soldier
+>>>>>>> 6c7c07e74ed4744f9843a950bd7eeb49f9faa5de
     message = models.TextField()
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)

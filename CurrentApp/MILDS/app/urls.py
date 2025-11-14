@@ -17,10 +17,10 @@ Including another URLconf
 # CurrentApp/MILDS/app/urls.py
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import TemplateView  # add this
+from .api import api  # add this import
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", TemplateView.as_view(template_name="home.html"), name="home"),  # new
     path("", include("app.back_end.urls")),
+    path("api/", api.urls),  # add this line if missing
 ]
