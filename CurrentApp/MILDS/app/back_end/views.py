@@ -1,8 +1,9 @@
+'''
 # MILDS/app/back_end/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import AircraftForm
+#from .forms import AircraftForm
 from .models import Aircraft
-from .forms import SoldierForm
+#from .forms import SoldierForm
 from .models import Soldier
 from django.utils import timezone
 from datetime import timedelta
@@ -20,6 +21,20 @@ from .models import Aircraft, Scenario, ScenarioEvent, ScenarioRun, ScenarioRunL
 from django.contrib import messages
 
 
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
+@ensure_csrf_cookie
+def csrf_bootstrap(request):
+    return JsonResponse({"ok": True})
+
+def aircraft_list(request):
+    data = [{"id": 1, "tail": "A123", "type": "UH-60"}]
+    return JsonResponse(data, safe=False)
+
+def personnel_list(request):
+    data = [{"id": 1, "name": "CPT Jane Doe", "rank": "O-3"}]
+    return JsonResponse(data, safe=False)
 
 NEEDED_FIELDS = [
     "aircraft_pk",
@@ -231,12 +246,9 @@ def recent_pushes(request):
 
 Fixture_Path_Gr= "Griffin-backend/griffin-dev/griffin_ai/fixtures/Aircraft_data.json"
 Fixture_Path_Am= "Amap-backend/backend-dev/fixtures/personnel_data.json"
+    
 
 def api_get_aircraft(request: HttpRequest):
-   """
-   GET → Load `Aircraft_data.json`, upsert only the seven key fields
-         into the Aircraft model, and return a JSON summary.
-   """
    if request.method != "GET":
        return HttpResponseBadRequest("Only GET is allowed here")
    # 1) Load the dumpdata JSON
@@ -282,10 +294,6 @@ def api_get_aircraft(request: HttpRequest):
     })
 @require_http_methods(["POST"])
 def api_push_aircraft(request: HttpRequest):
-    """
-    POST → Read the existing dump‐data JSON, update only the aircraft entries
-    you changed in the DB, and write back the full JSON preserving everything else.
-    """
     # 1) Load the current JSON
     try:
         with open(Fixture_Path_Gr, "r", encoding="utf-8") as f:
@@ -334,10 +342,6 @@ def api_push_aircraft(request: HttpRequest):
 
 
 def api_get_personnel(request: HttpRequest):
-   """
-   GET → Load `personnel_data.json`, upsert only the seven key fields
-         into the Aircraft model, and return a JSON summary.
-   """
    if request.method != "GET":
        return HttpResponseBadRequest("Only GET is allowed here")
    # 1) Load the dumpdata JSON
@@ -382,10 +386,6 @@ def api_get_personnel(request: HttpRequest):
     })
 @require_http_methods(["POST"])
 def api_push_personnel(request: HttpRequest):
-    """
-    POST → Read the existing dump‑data personnel JSON, update only the Soldier entries
-    you changed in the DB, and write back the full JSON preserving everything else.
-    """
     # 1) Load the current JSON
     try:
         with open(Fixture_Path_Am, "r", encoding="utf-8") as f:
@@ -430,6 +430,7 @@ def api_push_personnel(request: HttpRequest):
         "status":  "pushed",
         "updated": updated,
     })
+<<<<<<< HEAD
 
 # --- JSON API for Aircraft (list + detail) ---
 
@@ -541,3 +542,21 @@ def scenario_run_detail(request, pk):
     run = get_object_or_404(ScenarioRun.objects.select_related("scenario"), pk=pk)
     logs = run.logs.order_by("id")
     return render(request, "scenario_run_detail.html", {"run": run, "logs": logs})
+=======
+'''
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+@ensure_csrf_cookie
+def csrf_bootstrap(request):
+    # sets csrftoken cookie on a GET so axios can POST/PATCH later
+    return JsonResponse({"ok": True})
+
+def aircraft_list(request):
+    # simple test payload
+    return JsonResponse([{"id": 1, "tail": "A123", "type": "UH-60"}], safe=False)
+
+def personnel_list(request):
+    # simple test payload
+    return JsonResponse([{"id": 1, "name": "CPT Jane Doe", "rank": "O-3"}], safe=False)
+>>>>>>> 94930a1e (changes for axios)
