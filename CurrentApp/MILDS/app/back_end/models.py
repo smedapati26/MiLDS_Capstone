@@ -115,10 +115,14 @@ class ScenarioRunLog(models.Model):
     run = models.ForeignKey(ScenarioRun, on_delete=models.CASCADE, related_name="logs")
     aircraft_pk = models.IntegerField(null=True, blank=True, db_index=True)  # remove unique=True
 <<<<<<< HEAD
+    user_id = models.IntegerField(null=True, blank=True, db_index=True) #fro m Soldier
+=======
+<<<<<<< HEAD
     user_id = models.CharField("EDIPI Number", max_length=12, null=True, blank=True) #from Soldier
 =======
     user_id = models.IntegerField(null=True, blank=True, db_index=True) #from Soldier
 >>>>>>> 6c7c07e74ed4744f9843a950bd7eeb49f9faa5de
+>>>>>>> a4c6be3b566ac7590f9183d8ecb2014792746821
     message = models.TextField()
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)
