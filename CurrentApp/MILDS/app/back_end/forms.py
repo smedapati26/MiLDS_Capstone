@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # app/back_end/forms.py
 from django import forms
 from .models import Aircraft, Soldier
@@ -38,11 +37,3 @@ class SoldierForm(forms.ModelForm):
             "current_unit",
             "is_maintainer",
         ]
-=======
-# MILDS/app/back_end/forms.py
-from django import forms
-
-class AircraftForm(forms.Form):
-    tail = forms.CharField(max_length=20)
-    type = forms.CharField(max_length=50)
->>>>>>> 94930a1e (changes for axios)

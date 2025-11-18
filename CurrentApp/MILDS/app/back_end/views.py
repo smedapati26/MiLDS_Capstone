@@ -430,7 +430,6 @@ def api_push_personnel(request: HttpRequest):
         "status":  "pushed",
         "updated": updated,
     })
-<<<<<<< HEAD
 
 # --- JSON API for Aircraft (list + detail) ---
 
@@ -542,7 +541,6 @@ def scenario_run_detail(request, pk):
     run = get_object_or_404(ScenarioRun.objects.select_related("scenario"), pk=pk)
     logs = run.logs.order_by("id")
     return render(request, "scenario_run_detail.html", {"run": run, "logs": logs})
-=======
 '''
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -559,4 +557,3 @@ def aircraft_list(request):
 def personnel_list(request):
     # simple test payload
     return JsonResponse([{"id": 1, "name": "CPT Jane Doe", "rank": "O-3"}], safe=False)
->>>>>>> 94930a1e (changes for axios)
