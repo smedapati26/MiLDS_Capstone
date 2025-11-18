@@ -83,7 +83,10 @@ Navigate to the README for Griffin and AMAP for more assistance on running these
 	add /admin at the end of url. Type in username and password
 	example: http://127.0.0.1:8000/admin/
 
-
+## Run Front-End
+	py manage.py runserver 8000 #run back-end
+	npm start #run in react folder
+	
 ## Useful commands from terminal (.venv):
 
 ### Count all Aircraft
