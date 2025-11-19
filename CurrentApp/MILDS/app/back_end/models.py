@@ -4,7 +4,7 @@ from django.db import models
 
 class Aircraft(models.Model):
 
-    aircraft_pk = models.IntegerField(unique=True, db_index=True)
+    aircraft_pk = models.IntegerField(primary_key=True, unique=True, db_index=True)
 
     model_name   = models.CharField(max_length=100, default="Unknown Model")
     status       = models.CharField(max_length=50,  default="NMC")
@@ -93,16 +93,11 @@ class ScenarioEvent(models.Model):
     remarks  = models.TextField(blank=True)
     date_down = models.DateField(null=True, blank=True)
 
-class Meta:
-    constraints = [
-<<<<<<< HEAD
-        models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario', condition=models.Q(aircraft__isnull=False)),
-        models.UniqueConstraint(fields=['scenario', 'soldier'], name='uniq_event_per_soldier_in_scenario', condition=models.Q(soldier__isnull=False))
-=======
-        models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario'),
-        models.UniqueConstraint(fields=['scenario', 'soldier'], name='uniq_event_per_soldier_in_scenario')
->>>>>>> 6c7c07e74ed4744f9843a950bd7eeb49f9faa5de
-    ]
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario'),
+            models.UniqueConstraint(fields=['scenario', 'soldier'], name='uniq_event_per_soldier_in_scenario')
+        ]
 
 
 class ScenarioRun(models.Model):
@@ -114,15 +109,7 @@ class ScenarioRun(models.Model):
 class ScenarioRunLog(models.Model):
     run = models.ForeignKey(ScenarioRun, on_delete=models.CASCADE, related_name="logs")
     aircraft_pk = models.IntegerField(null=True, blank=True, db_index=True)  # remove unique=True
-<<<<<<< HEAD
     user_id = models.IntegerField(null=True, blank=True, db_index=True) #fro m Soldier
-=======
-<<<<<<< HEAD
-    user_id = models.CharField("EDIPI Number", max_length=12, null=True, blank=True) #from Soldier
-=======
-    user_id = models.IntegerField(null=True, blank=True, db_index=True) #from Soldier
->>>>>>> 6c7c07e74ed4744f9843a950bd7eeb49f9faa5de
->>>>>>> a4c6be3b566ac7590f9183d8ecb2014792746821
     message = models.TextField()
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)

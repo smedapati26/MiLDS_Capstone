@@ -1,9 +1,9 @@
-'''
+
 # MILDS/app/back_end/views.py
 from django.shortcuts import render, redirect, get_object_or_404
-#from .forms import AircraftForm
+from .forms import AircraftForm
 from .models import Aircraft
-#from .forms import SoldierForm
+from .forms import SoldierForm
 from .models import Soldier
 from django.utils import timezone
 from datetime import timedelta
@@ -19,10 +19,13 @@ from django.db import transaction
 from django.utils import timezone
 from .models import Aircraft, Scenario, ScenarioEvent, ScenarioRun, ScenarioRunLog
 from django.contrib import messages
-
-
+from .models import Aircraft, ScenarioRun
+from datetime import datetime
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 @ensure_csrf_cookie
 def csrf_bootstrap(request):
@@ -32,10 +35,87 @@ def aircraft_list(request):
     data = [{"id": 1, "tail": "A123", "type": "UH-60"}]
     return JsonResponse(data, safe=False)
 
+@csrf_exempt
+@require_POST
+def revert_last_scenario(request):
+    """
+    Revert the most recent ScenarioRun by restoring each aircraft
+    to its 'before' snapshot recorded in ScenarioRunLog.
+    """
+   # run = ScenarioRun.objects.order_by("-created_at").first()
+    run = ScenarioRun.objects.order_by("-started_at", "-id").first()
+
+    if not run:
+        return JsonResponse({"error": "No scenario runs to revert."}, status=400)
+
+    restored = 0
+    errors = []
+
+    for log in run.logs.all():
+        if not log.aircraft_pk:
+            continue
+
+        try:
+            ac = Aircraft.objects.get(aircraft_pk=log.aircraft_pk)
+        except Aircraft.DoesNotExist:
+            errors.append(f"Aircraft {log.aircraft_pk} missing; skipped.")
+            continue
+
+        before = log.before or {}
+
+        if "status" in before:
+            ac.status = before["status"]
+        if "rtl" in before:
+            ac.rtl = before["rtl"]
+        if "remarks" in before:
+            ac.remarks = before["remarks"]
+
+        if "date_down" in before:
+            d = before["date_down"]
+            if d:
+                from datetime import datetime
+                ac.date_down = datetime.fromisoformat(d).date()
+            else:
+                ac.date_down = None
+
+        ac.save()
+        restored += 1
+
+    return JsonResponse(
+        {"ok": True, "run_id": run.pk, "restored": restored, "errors": errors},
+        json_dumps_params={"indent": 2},
+    )
+
+
+
 def personnel_list(request):
-    data = [{"id": 1, "name": "CPT Jane Doe", "rank": "O-3"}]
+    data = [{"user_id": 1, "rank": "CPT", "first_name": "Beat", "last_name": "Navy",
+             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
+            {"user_id": 2, "rank": "LT", "first_name": "Beat", "last_name": "AF",
+             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
+            {"user_id": 3, "rank": "LTC", "first_name": "Beat", "last_name": "TEMPLE",
+             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
+            {"user_id": 4, "rank": "LTG", "first_name": "Beat", "last_name": "UTSA",
+             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
+            {"user_id": 5, "rank": "MG", "first_name": "Beat", "last_name": "TULSA",
+             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False}]
     return JsonResponse(data, safe=False)
 
+'''
+def personnel_list(_request):
+    data = list(
+        Soldier.objects.order_by("last_name", "first_name").values(
+            "user_id",       # EDIPI / ID
+            "rank",
+            "first_name",
+            "last_name",
+            "primary_mos",
+            "current_unit",
+            "is_maintainer",
+        )
+    )
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+'''
 NEEDED_FIELDS = [
     "aircraft_pk",
     "model_name",
@@ -442,6 +522,7 @@ def aircraft_list(_request):
     data = list(
         Aircraft.objects.order_by("pk").values(
             "pk",
+            "aircraft_pk",
             "model_name",
             "status",
             "rtl",
@@ -486,6 +567,7 @@ def _snapshot(ac: Aircraft):
         "date_down": ac.date_down.isoformat() if ac.date_down else None,
     }
 
+'''
 def apply_scenario(scenario_id: int) -> ScenarioRun:
     sc = (Scenario.objects
           .prefetch_related("events__aircraft")
@@ -524,7 +606,79 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
     run.applied_events = applied
     run.save()
     return run
+'''
+def apply_scenario(scenario_id: int) -> ScenarioRun:
+    sc = (
+        Scenario.objects
+        .prefetch_related("events__aircraft")
+        .get(pk=scenario_id)
+    )
+    run = ScenarioRun.objects.create(
+        scenario=sc,
+        total_events=sc.events.count()
+    )
 
+    applied = 0
+    for ev in sc.events.all().order_by("id"):
+        ac = ev.aircraft
+        if not ac:
+            ScenarioRunLog.objects.create(
+                run=run,
+                aircraft_pk=None,
+                message=f"SKIP: Event {ev.id} has no aircraft linked.",
+                before={},
+                after={},
+            )
+            continue
+
+        before = _snapshot(ac)
+        changed = []
+        if ev.status:
+            ac.status = ev.status
+            changed.append("status")
+        if ev.rtl:
+            ac.rtl = ev.rtl
+            changed.append("rtl")
+        if ev.remarks:
+            ac.remarks = ev.remarks
+            changed.append("remarks")
+        if ev.date_down:
+            ac.date_down = ev.date_down
+            changed.append("date_down")
+        ac.save()
+        after = _snapshot(ac)
+
+        ScenarioRunLog.objects.create(
+            run=run,
+            aircraft_pk=ac.aircraft_pk,
+            message=f"Aircraft {ac.aircraft_pk}: "
+                    + (", ".join(changed) if changed else "no changes"),
+            before=before,
+            after=after,
+        )
+        applied += 1
+
+    run.applied_events = applied
+    run.save()
+    return run
+
+def scenarios_api_list(_request):
+    qs = (
+        Scenario.objects
+        .annotate(event_count=models.Count("events"))
+        .order_by("-created_at")
+    )
+    data = [
+        {
+            "id": sc.id,
+            "name": sc.name,
+            "description": sc.description,
+            "created_at": sc.created_at.isoformat(),
+            "event_count": sc.event_count,
+        }
+        for sc in qs
+    ]
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
 
 def scenario_list(request):
     return render(request, "scenario_list.html", {
@@ -557,3 +711,4 @@ def aircraft_list(request):
 def personnel_list(request):
     # simple test payload
     return JsonResponse([{"id": 1, "name": "CPT Jane Doe", "rank": "O-3"}], safe=False)
+'''

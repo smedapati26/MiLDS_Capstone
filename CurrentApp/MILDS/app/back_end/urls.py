@@ -31,6 +31,17 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path("", views.home, name="home"),  # <--- add this
+    
+    #NEW
+    path("api/csrf/", views.csrf_bootstrap, name="csrf-bootstrap"),
+    path("api/aircraft/", views.aircraft_list, name="aircraft-list"),
+    path("api/aircraft/<int:pk>/", views.aircraft_detail, name="aircraft-detail"),
+    path("api/personnel/", views.personnel_list, name="personnel-list"),
+
+    # Aircraft HTML
+    path("aircraft/", views.list_aircraft, name="list_aircraft"),
+
     # JSON API
     path("api/aircraft/", views.aircraft_list, name="aircraft-list"),
     path("api/aircraft/<int:pk>/", views.aircraft_detail, name="aircraft-detail"),
@@ -51,5 +62,7 @@ urlpatterns = [
     path("scenarios/", views.scenario_list, name="scenario_list"),
     path("scenarios/<int:pk>/run/", views.scenario_run, name="scenario_run"),
     path("scenarios/runs/<int:pk>/", views.scenario_run_detail, name="scenario_run_detail"),
-
+    path("api/scenarios/", views.scenarios_api_list, name="scenarios-api-list"),
+    path("api/scenarios/revert-last/", views.revert_last_scenario, name="scenarios-revert-last"),
+     
 ]

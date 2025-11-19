@@ -4,7 +4,7 @@
         "pk": 427011,
         "fields": {
             "model_name": "UH-60L",
-            "status": "FMC",
+            "status": "NMCM",
             "rtl": "RTL",
             "current_unit": "WDDRA0",
             "total_airframe_hours": 5964.1,
@@ -24,7 +24,7 @@
         "pk": 627092,
         "fields": {
             "model_name": "UH-60L",
-            "status": "NFMC",
+            "status": "FMC",
             "rtl": "NRTL",
             "current_unit": "WDDRA0",
             "total_airframe_hours": 5749.5,
@@ -44,7 +44,7 @@
         "pk": 920240,
         "fields": {
             "model_name": "HH-60M",
-            "status": "NMCM",
+            "status": "FMC",
             "rtl": "NRTL",
             "current_unit": "WDDRA0",
             "total_airframe_hours": 2160.0,
@@ -104,7 +104,7 @@
         "pk": 333333,
         "fields": {
             "model_name": "UH-60L",
-            "status": "NMCM",
+            "status": "FMC",
             "rtl": "RTL",
             "current_unit": "WDDRA0",
             "total_airframe_hours": 4000.0,
@@ -144,7 +144,7 @@
         "pk": 787878,
         "fields": {
             "model_name": "UH-60L",
-            "status": "NMCM",
+            "status": "FMC",
             "rtl": "NRTL",
             "current_unit": "WDDRA0",
             "total_airframe_hours": 0.0,
