@@ -2,47 +2,87 @@ import React, { useEffect, useState } from 'react';
 import client from '../api/client';
 import { listAircraft } from '../api/aircraft';
 import { listPersonnel } from '../api/personnel';
+import { listScenarios } from '../api/scenarios';
 
-export default function Assets(){
+export default function Assets() {
   const [active, setActive] = useState('aircraft'); // 'aircraft' | 'personnel' | 'scenarios'
-  const [aircraftQuery, setAircraftQuery] = useState('');
+
+  // Search state
+  const [aircraftSearch, setAircraftSearch] = useState('');
   const [personnelQuery, setPersonnelQuery] = useState('');
 
-  // Minimal connection indicators
-  const [aircraftCount, setAircraftCount] = useState(null);   // number | null
-  const [personnelCount, setPersonnelCount] = useState(null); // number | null
-  const [apiError, setApiError] = useState(null);              // string | null
+  // Connection indicators
+  const [aircraftCount, setAircraftCount] = useState(null);
+  const [personnelCount, setPersonnelCount] = useState(null);
+  const [apiError, setApiError] = useState(null);
+
+  // Data rows
+  const [aircraftRows, setAircraftRows] = useState([]);
+  const [personnelRows, setPersonnelRows] = useState([]);
+
+  const [scenarioRows, setScenarioRows] = useState([]);
+  const [scenarioCount, setScenarioCount] = useState(null);
+
+  // Scenario UI state
+  const [scenarioApplyingId, setScenarioApplyingId] = useState(null);
+  const [reverting, setReverting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
-    // Ensure CSRF cookie exists, then probe both endpoints
-    client.get('/api/csrf/').finally(async () => {
-      try {
-        const [a, p] = await Promise.allSettled([listAircraft(), listPersonnel()]);
-        if (!mounted) return;
+    client
+      .get('/api/csrf/')
+      .catch(() => {
+        if (mounted) setApiError('CSRF endpoint failed');
+      })
+      .finally(async () => {
+        try {
+          const [a, p, s] = await Promise.allSettled([
+            listAircraft(),
+            listPersonnel(),
+            listScenarios(),
+          ]);
+          if (!mounted) return;
 
-        if (a.status === 'fulfilled') {
-          const data = a.value;
-          const count = Array.isArray(data) ? data.length : (data?.results?.length ?? 0);
-          setAircraftCount(count);
-        }
-        if (p.status === 'fulfilled') {
-          const data = p.value;
-          const count = Array.isArray(data) ? data.length : (data?.results?.length ?? 0);
-          setPersonnelCount(count);
-        }
+          if (a.status === 'fulfilled') {
+            const raw = a.value;
+            const items = Array.isArray(raw) ? raw : raw?.results ?? [];
+            setAircraftRows(items);
+            setAircraftCount(items.length);
+          }
 
-        if ((a.status === 'rejected') || (p.status === 'rejected')) {
-          setApiError('Some resources failed to load');
-        }
-      } catch (e) {
-        if (mounted) setApiError('API probe failed');
-      }
-    });
+          if (p.status === 'fulfilled') {
+            const raw = p.value;
+            const items = Array.isArray(raw) ? raw : raw?.results ?? [];
+            setPersonnelRows(items);
+            setPersonnelCount(items.length);
+          }
 
-    return () => { mounted = false; };
+          if (s.status === 'fulfilled') {
+            const raw = s.value;
+            const items = Array.isArray(raw) ? raw : raw?.results ?? [];
+            setScenarioRows(items);
+            setScenarioCount(items.length);
+          }
+
+          if (
+            a.status === 'rejected' ||
+            p.status === 'rejected' ||
+            s.status === 'rejected'
+          ) {
+            setApiError('Some resources failed to load');
+          }
+        } catch (e) {
+          if (mounted) setApiError('API probe failed');
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  // ---- Small UI helpers ----
 
   const Tab = ({ id, label }) => (
     <div
@@ -56,11 +96,20 @@ export default function Assets(){
   );
 
   const Chip = ({ children }) => (
-    <span style={{
-      display:'inline-flex', alignItems:'center', gap:6,
-      padding:'6px 10px', border:'1px solid var(--border)', borderRadius:999,
-      background:'var(--surface-strong)', color:'#374151', fontWeight:600, fontSize:12
-    }}>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 10px',
+        border: '1px solid var(--border)',
+        borderRadius: 999,
+        background: 'var(--surface-strong)',
+        color: '#374151',
+        fontWeight: 600,
+        fontSize: 12,
+      }}
+    >
       {children}
     </span>
   );
@@ -86,97 +135,371 @@ export default function Assets(){
           </tr>
         </thead>
         <tbody>
-          <tr><td className="empty" colSpan={columns.length}>No data yet. Use the controls above to add or update entries.</td></tr>
+          <tr>
+            <td className="empty" colSpan={columns.length}>
+              No data yet. Use the controls above to add or update entries.
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
   );
 
-  const Search = ({ value, onChange, placeholder }) => (
-    <div className="search">
-      <span className="icon" aria-hidden>🔎</span>
-      <input className="input" value={value} onChange={onChange} placeholder={placeholder} />
-    </div>
-  );
-
-  const Button = ({ children, variant='primary', onClick }) => (
-    <button className={`btn ${variant === 'primary' ? 'btn-primary':'btn-secondary'}`} onClick={onClick}>
+  const Button = ({ children, variant = 'primary', onClick, disabled }) => (
+    <button
+      className={`btn ${
+        variant === 'primary' ? 'btn-primary' : 'btn-secondary'
+      }`}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
     </button>
   );
 
-  const AircraftToolbar = (
-    <>
-      <Search
-        value={aircraftQuery}
-        onChange={(e)=>setAircraftQuery(e.target.value)}
-        placeholder="Search aircraft (Tail #, Type, etc.)"
-      />
-      <Button>Receive Griffin</Button>
-      <Button variant="secondary">Update Griffin</Button>
-    </>
+  // ---- Status chips ----
+
+  const aircraftStatus = apiError ? (
+    <Chip>⚠️ API error</Chip>
+  ) : aircraftCount !== null ? (
+    <Chip>API connected · {aircraftCount} aircraft</Chip>
+  ) : (
+    <Chip>Connecting…</Chip>
   );
 
-  const PersonnelToolbar = (
-    <>
-      <Search
-        value={personnelQuery}
-        onChange={(e)=>setPersonnelQuery(e.target.value)}
-        placeholder="Search personnel (Name, Rank, etc.)"
-      />
-      <Button>Receive AMAP</Button>
-      <Button variant="secondary">Update AMAP</Button>
-    </>
+  const personnelStatus = apiError ? (
+    <Chip>⚠️ API error</Chip>
+  ) : personnelCount !== null ? (
+    <Chip>API connected · {personnelCount} personnel</Chip>
+  ) : (
+    <Chip>Connecting…</Chip>
   );
 
+  // ---- Client-side search filters ----
+
+  const normalizedSearch = aircraftSearch.trim().toLowerCase();
+
+  const filteredAircraft = normalizedSearch
+    ? aircraftRows.filter((row) => {
+        const tail = String(row.aircraft_pk ?? row.pk ?? '').toLowerCase();
+        const type = (row.model_name ?? '').toLowerCase();
+        const unit = (row.current_unit ?? '').toLowerCase();
+        const status = (row.status ?? '').toLowerCase();
+
+        return (
+          tail.includes(normalizedSearch) ||
+          type.includes(normalizedSearch) ||
+          unit.includes(normalizedSearch) ||
+          status.includes(normalizedSearch)
+        );
+      })
+    : aircraftRows;
+
+  const normalizedPersonnelSearch = personnelQuery.trim().toLowerCase();
+
+  const filteredPersonnel = normalizedPersonnelSearch
+    ? personnelRows.filter((row) => {
+        const name = `${row.first_name ?? ''} ${
+          row.last_name ?? ''
+        }`.toLowerCase();
+        const rank = (row.rank ?? '').toLowerCase();
+        const mos = (row.primary_mos ?? '').toLowerCase();
+        const unit = (row.current_unit ?? '').toLowerCase();
+
+        return (
+          name.includes(normalizedPersonnelSearch) ||
+          rank.includes(normalizedPersonnelSearch) ||
+          mos.includes(normalizedPersonnelSearch) ||
+          unit.includes(normalizedPersonnelSearch)
+        );
+      })
+    : personnelRows;
+
+  // ---- Apply scenario from frontend ----
+
+  const handleApplyScenario = async (scenarioId) => {
+    try {
+      setScenarioApplyingId(scenarioId);
+      setApiError(null);
+
+      // Uses your existing HTML view /scenarios/<pk>/run/
+      await client.get(`/scenarios/${scenarioId}/run/`);
+
+      // Refresh aircraft + personnel to reflect changes
+      const [a, p] = await Promise.allSettled([
+        listAircraft(),
+        listPersonnel(),
+      ]);
+
+      if (a.status === 'fulfilled') {
+        const raw = a.value;
+        const items = Array.isArray(raw) ? raw : raw?.results ?? [];
+        setAircraftRows(items);
+        setAircraftCount(items.length);
+      }
+
+      if (p.status === 'fulfilled') {
+        const raw = p.value;
+        const items = Array.isArray(raw) ? raw : raw?.results ?? [];
+        setPersonnelRows(items);
+        setPersonnelCount(items.length);
+      }
+    } catch (e) {
+      console.error(e);
+      setApiError('Failed to apply scenario');
+    } finally {
+      setScenarioApplyingId(null);
+    }
+  };
+
+  // ---- Revert last scenario run ----
+
+  const handleRevertLastScenario = async () => {
+    try {
+      setReverting(true);
+      setApiError(null);
+
+      await client.post('/api/scenarios/revert-last/');
+
+      // After revert, refresh aircraft + personnel
+      const [a, p] = await Promise.allSettled([
+        listAircraft(),
+        listPersonnel(),
+      ]);
+
+      if (a.status === 'fulfilled') {
+        const raw = a.value;
+        const items = Array.isArray(raw) ? raw : raw?.results ?? [];
+        setAircraftRows(items);
+        setAircraftCount(items.length);
+      }
+
+      if (p.status === 'fulfilled') {
+        const raw = p.value;
+        const items = Array.isArray(raw) ? raw : raw?.results ?? [];
+        setPersonnelRows(items);
+        setPersonnelCount(items.length);
+      }
+    } catch (e) {
+      console.error(e);
+      setApiError('Failed to revert last scenario');
+    } finally {
+      setReverting(false);
+    }
+  };
+
+  // Scenarios toolbar component with Revert button
   const ScenariosToolbar = (
     <>
       <Button>New Scenario</Button>
       <Button variant="secondary">Import</Button>
+      <Button
+        variant="secondary"
+        onClick={handleRevertLastScenario}
+        disabled={reverting}
+      >
+        {reverting ? 'Reverting…' : 'Revert last run'}
+      </Button>
     </>
   );
 
-  // Status chips
-  const aircraftStatus = apiError
-    ? <Chip>⚠️ API error</Chip>
-    : (aircraftCount !== null ? <Chip>API connected · {aircraftCount} aircraft</Chip> : <Chip>Connecting…</Chip>);
-
-  const personnelStatus = apiError
-    ? <Chip>⚠️ API error</Chip>
-    : (personnelCount !== null ? <Chip>API connected · {personnelCount} personnel</Chip> : <Chip>Connecting…</Chip>);
+  // ---- Render ----
 
   return (
     <main className="container">
       {/* Page title */}
-      <h1 className="section-title" style={{ fontSize:24, marginTop:4 }}>Assets</h1>
+      <h1 className="section-title" style={{ fontSize: 24, marginTop: 4 }}>
+        Assets
+      </h1>
 
       {/* Tabs */}
-      <div className="tabs" role="tablist" aria-label="Assets sections" style={{ marginTop:12 }}>
+      <div
+        className="tabs"
+        role="tablist"
+        aria-label="Assets sections"
+        style={{ marginTop: 12 }}
+      >
         <Tab id="aircraft" label="Aircraft" />
         <Tab id="personnel" label="Personnel" />
         <Tab id="scenarios" label="Custom Scenarios" />
       </div>
 
       {/* Panels */}
-      <div style={{ marginTop:16 }}>
+      <div style={{ marginTop: 16 }}>
         {active === 'aircraft' && (
           <>
-            <SectionHead title="Aircraft" toolbar={AircraftToolbar} status={aircraftStatus} />
-            <TableShell columns={['Tail #','Type','Status','Base','Notes']} />
+            <SectionHead
+              title="Aircraft"
+              status={aircraftStatus}
+              toolbar={null}
+            />
+
+            <div className="toolbar" style={{ marginBottom: 8 }}>
+              <input
+                type="search"
+                placeholder="Search tail, type, unit..."
+                className="search-input"
+                value={aircraftSearch}
+                onChange={(e) => setAircraftSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tail #</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Base</th>
+                    <th>Hours to Phase</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAircraft.length === 0 ? (
+                    <tr>
+                      <td className="empty" colSpan={5}>
+                        {aircraftRows.length === 0
+                          ? 'No aircraft found.'
+                          : 'No aircraft match your search.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAircraft.map((row) => (
+                      <tr key={row.pk}>
+                        <td>{row.aircraft_pk ?? row.pk}</td>
+                        <td>{row.model_name}</td>
+                        <td>{row.status}</td>
+                        <td>{row.current_unit}</td>
+                        <td>{row.hours_to_phase ?? '—'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
 
         {active === 'personnel' && (
           <>
-            <SectionHead title="Personnel" toolbar={PersonnelToolbar} status={personnelStatus} />
-            <TableShell columns={['Name','Rank','Role','Unit','Status']} />
+            <SectionHead
+              title="Personnel"
+              toolbar={null}
+              status={personnelStatus}
+            />
+
+            <div
+              className="toolbar"
+              style={{ marginBottom: 8, gap: 8, display: 'flex' }}
+            >
+              <input
+                type="search"
+                placeholder="Search name, rank, MOS, unit..."
+                className="search-input"
+                value={personnelQuery}
+                onChange={(e) => setPersonnelQuery(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <Button>Receive AMAP</Button>
+              <Button variant="secondary">Update AMAP</Button>
+            </div>
+
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>EDIPI</th>
+                    <th>Name</th>
+                    <th>Rank</th>
+                    <th>MOS</th>
+                    <th>Unit</th>
+                    <th>Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPersonnel.length === 0 ? (
+                    <tr>
+                      <td className="empty" colSpan={6}>
+                        {personnelRows.length === 0
+                          ? 'No personnel found.'
+                          : 'No personnel match your search.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPersonnel.map((row) => (
+                      <tr key={row.user_id}>
+                        <td>{row.user_id}</td>
+                        <td>
+                          {row.last_name}, {row.first_name}
+                        </td>
+                        <td>{row.rank}</td>
+                        <td>{row.primary_mos}</td>
+                        <td>{row.current_unit}</td>
+                        <td>{row.is_maintainer ? 'Maintainer' : 'Other'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
 
         {active === 'scenarios' && (
           <>
-            <SectionHead title="Custom Scenarios" toolbar={ScenariosToolbar} status={<Chip>Ready</Chip>} />
-            <TableShell columns={['Scenario Name','Type','Status','Owner','Last Updated']} />
+            <SectionHead
+              title="Custom Scenarios"
+              toolbar={ScenariosToolbar}
+              status={
+                scenarioCount !== null ? (
+                  <Chip>{scenarioCount} scenarios</Chip>
+                ) : (
+                  <Chip>Loading…</Chip>
+                )
+              }
+            />
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Events</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scenarioRows.length === 0 ? (
+                    <tr>
+                      <td className="empty" colSpan={5}>
+                        No scenarios defined yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    scenarioRows.map((sc) => (
+                      <tr key={sc.id}>
+                        <td>{sc.name}</td>
+                        <td>{sc.description}</td>
+                        <td>{sc.event_count}</td>
+                        <td>{new Date(sc.created_at).toLocaleString()}</td>
+                        <td>
+                          <Button
+                            onClick={() => handleApplyScenario(sc.id)}
+                            disabled={scenarioApplyingId === sc.id}
+                          >
+                            {scenarioApplyingId === sc.id
+                              ? 'Applying…'
+                              : 'Apply'}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </div>
