@@ -32,6 +32,7 @@ CurrentApp/MILDS/
   fixtures/
     aircraft_data.json
   manage.py
+React
 
 ## Requirements
 
@@ -63,14 +64,19 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 ### Install dependencies
 
-pip install -r requirements.txt
+pip install django-ninja
+pip install react
 
 ### Initialize the database & load demo data
 
-python manage.py migrate
 python manage.py loaddata fixtures\aircraft_data.json
-
+python manage.py migrate
+python mange.py makemigrations
 python manage.py runserver
+
+### In split terminal
+npm install
+npm start
 
 ## Ai2c Appliction Install
 
@@ -82,21 +88,3 @@ Navigate to the README for Griffin and AMAP for more assistance on running these
 ## Access admin page 
 	add /admin at the end of url. Type in username and password
 	example: http://127.0.0.1:8000/admin/
-
-## Run Front-End
-	py manage.py runserver 8000 #run back-end
-	npm start #run in react folder
-	
-## Useful commands from terminal (.venv):
-
-### Count all Aircraft
-python manage.py shell -c "from app.back_end.models import Aircraft as A; print(A.objects.count())"
-
-### Show first 10 (pk, model_name, status)
-python manage.py shell -c "from app.back_end.models import Aircraft as A; print(list(A.objects.order_by('pk').values('pk','model_name','status')[:10]))"
-
-### FMC aircraft in WDDRA0 (pk, model_name, unit)
-python manage.py shell -c "from app.back_end.models import Aircraft as A; print(list(A.objects.filter(status='FMC', current_unit='WDDRA0').values('pk','model_name','current_unit')))"
-
-### Down birds (NMCM/NMCS) with notes (pk, model_name, remarks)
-python manage.py shell -c "from app.back_end.models import Aircraft as A; print(list(A.objects.filter(status__startswith='NMC').exclude(remarks='').values('pk','model_name','remarks')[:10]))"
