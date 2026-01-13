@@ -34,6 +34,11 @@ CurrentApp/MILDS/
   manage.py
 React
 
+## Terminology
+
+L-AMAP = Local/simulated AMAP
+L-Griffin = Local/simulated Griffin
+
 ## Requirements
 
 Python 3.11 or 3.12 (recommended 3.12). Do not use 3.14 with this Django version.
@@ -74,7 +79,7 @@ python manage.py migrate
 python mange.py makemigrations
 python manage.py runserver
 
-### In split terminal
+### In split terminal (\CurrentApp\React-FrontEnd\frontend)
 npm install
 npm start
 
