@@ -98,6 +98,11 @@ class ScenarioEvent(models.Model):
             models.UniqueConstraint(fields=['scenario', 'aircraft'], name='uniq_event_per_aircraft_in_scenario'),
             models.UniqueConstraint(fields=['scenario', 'soldier'], name='uniq_event_per_soldier_in_scenario')
         ]
+        indexes = [
+            models.Index(fields=['scenario']),
+            models.Index(fields=['aircraft']),
+            models.Index(fields=['soldier']),
+        ]
 
 
 class ScenarioRun(models.Model):
@@ -113,4 +118,13 @@ class ScenarioRunLog(models.Model):
     message = models.TextField()
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)
+    changed = models.JSONField(default=list)  # <- NEW: fields altered in this run, e.g. ["status","rtl"]
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['run']),
+            models.Index(fields=['aircraft_pk']),
+            models.Index(fields=['user_id']),
+            models.Index(fields=['created_at']),
+        ]

@@ -26,6 +26,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
+
 
 @ensure_csrf_cookie
 def csrf_bootstrap(request):
@@ -39,50 +41,133 @@ def aircraft_list(request):
 @require_POST
 def revert_last_scenario(request):
     """
+    Revert the most recent ScenarioRun that actually changed something.
+    This handles the case where users click Apply multiple times creating no-op runs.
+    """
+    # look at recent runs; pick the first with at least one non-empty changed log
+    recent = list(ScenarioRun.objects.order_by("-started_at", "-id")[:50])
+
+    run = None
+    for cand in recent:
+        # changed is a dict now; non-empty dict means something changed
+        if cand.logs.exclude(changed={}).exists():
+            run = cand
+            break
+
+    if not run:
+        return JsonResponse(
+            {"ok": True, "restored": 0, "errors": [], "message": "No scenario runs with changes to revert."},
+            json_dumps_params={"indent": 2},
+        )
+
+    # call the by-id version directly
+    return revert_scenario_run(request, run.pk)
+
+
+@csrf_exempt
+@require_POST
+def revert_scenario_run(request, run_id: int):
+    """
     Revert the most recent ScenarioRun by restoring each aircraft
     to its 'before' snapshot recorded in ScenarioRunLog.
+    Supports:
+      - log.changed as list of field names
+      - log.changed as dict of {field: {old, new}} or {field: old/new}
+      - empty changed: falls back to diffing log.before vs log.after
     """
-   # run = ScenarioRun.objects.order_by("-created_at").first()
-    run = ScenarioRun.objects.order_by("-started_at", "-id").first()
+    run = get_object_or_404(ScenarioRun, pk=run_id)
 
     if not run:
         return JsonResponse({"error": "No scenario runs to revert."}, status=400)
 
+    logs = list(run.logs.order_by("-id"))
+
+    def _fields_from_changed(log) -> list[str]:
+        ch = log.changed
+        if not ch:
+            return []
+        if isinstance(ch, dict):
+            return list(ch.keys())
+        if isinstance(ch, list):
+            return [str(x) for x in ch]
+        # unexpected type
+        return []
+
+    def _fields_from_before_after(log) -> list[str]:
+        """Fallback: infer changed fields by comparing before/after snapshots."""
+        before = log.before or {}
+        after = log.after or {}
+        fields = set(before.keys()) | set(after.keys())
+        out = []
+        for f in fields:
+            if before.get(f) != after.get(f):
+                out.append(f)
+        return out
+
     restored = 0
     errors = []
 
-    for log in run.logs.all():
-        if not log.aircraft_pk:
-            continue
+    # You can expand this list if you start snapshotting more fields later
+    RESTORE_FIELDS = {"status", "rtl", "remarks", "date_down"}
 
-        try:
-            ac = Aircraft.objects.get(aircraft_pk=log.aircraft_pk)
-        except Aircraft.DoesNotExist:
-            errors.append(f"Aircraft {log.aircraft_pk} missing; skipped.")
-            continue
+    with transaction.atomic():
+        for log in logs:
+            if not log.aircraft_pk:
+                continue
 
-        before = log.before or {}
+            # Determine what fields we should revert for this log
+            fields = _fields_from_changed(log)
+            if not fields:
+                fields = _fields_from_before_after(log)
 
-        if "status" in before:
-            ac.status = before["status"]
-        if "rtl" in before:
-            ac.rtl = before["rtl"]
-        if "remarks" in before:
-            ac.remarks = before["remarks"]
+            # Only attempt fields we actually know how to restore
+            fields = [f for f in fields if f in RESTORE_FIELDS]
+            if not fields:
+                continue
 
-        if "date_down" in before:
-            d = before["date_down"]
-            if d:
-                from datetime import datetime
-                ac.date_down = datetime.fromisoformat(d).date()
-            else:
-                ac.date_down = None
+            try:
+                ac = Aircraft.objects.select_for_update().get(aircraft_pk=log.aircraft_pk)
+            except Aircraft.DoesNotExist:
+                errors.append(f"Aircraft {log.aircraft_pk} missing; skipped.")
+                continue
 
-        ac.save()
-        restored += 1
+            before = log.before or {}
+
+            if "status" in fields:
+                ac.status = before.get("status", ac.status)
+
+            if "rtl" in fields:
+                ac.rtl = before.get("rtl", ac.rtl)
+
+            if "remarks" in fields:
+                # normalize to empty string if None
+                ac.remarks = before.get("remarks") or ""
+
+            if "date_down" in fields:
+                iso = before.get("date_down")
+                if iso:
+                    # Accept either "YYYY-MM-DD" or full ISO datetime
+                    d = parse_date(iso)
+                    if d is None:
+                        try:
+                            d = datetime.fromisoformat(iso).date()
+                        except Exception:
+                            d = None
+                    ac.date_down = d
+                else:
+                    ac.date_down = None
+
+            ac.save(update_fields=list(set(fields)))
+            restored += 1
 
     return JsonResponse(
-        {"ok": True, "run_id": run.pk, "restored": restored, "errors": errors},
+        {
+            "ok": True,
+            "run_id": run.pk,
+            "restored": restored,
+            "errors": errors,
+            "message": "Reverted changed fields for last run." if restored else "Nothing reverted.",
+        },
         json_dumps_params={"indent": 2},
     )
 
@@ -607,59 +692,91 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
     run.save()
     return run
 '''
+from django.db import transaction
+
 def apply_scenario(scenario_id: int) -> ScenarioRun:
     sc = (
         Scenario.objects
         .prefetch_related("events__aircraft")
         .get(pk=scenario_id)
     )
+
     run = ScenarioRun.objects.create(
         scenario=sc,
         total_events=sc.events.count()
     )
 
     applied = 0
-    for ev in sc.events.all().order_by("id"):
-        ac = ev.aircraft
-        if not ac:
+
+    # keep this aligned with _snapshot()
+    SNAP_FIELDS = ("status", "rtl", "remarks", "date_down")
+
+    def normalize_snapshot(snap: dict) -> dict:
+        """Normalize values so diffs are stable (None vs '', whitespace, etc.)."""
+        out = dict(snap)
+        out["remarks"] = (out.get("remarks") or "").strip()
+        # date_down stored as iso or None already from _snapshot()
+        return out
+
+    with transaction.atomic():
+        for ev in sc.events.all().order_by("id"):
+            ac = ev.aircraft
+
+            if not ac:
+                ScenarioRunLog.objects.create(
+                    run=run,
+                    aircraft_pk=None,
+                    user_id=None,
+                    message=f"SKIP: Event {ev.id} has no aircraft linked.",
+                    before={},
+                    after={},
+                    changed={},  # dict
+                )
+                continue
+
+            before = normalize_snapshot(_snapshot(ac))
+
+            # --- apply to a preview state on the same model instance ---
+            # Only set a field if the event actually provides a value.
+            if ev.status:
+                ac.status = ev.status
+            if ev.rtl:
+                ac.rtl = ev.rtl
+            # IMPORTANT: remarks could legitimately be intended to clear; if you want that,
+            # use a separate boolean or allow empty string events explicitly.
+            if ev.remarks is not None and ev.remarks != "":
+                ac.remarks = ev.remarks
+            if ev.date_down:
+                ac.date_down = ev.date_down
+
+            after_preview = normalize_snapshot(_snapshot(ac))
+
+            # Compute diffs based on before vs after_preview
+            changed = {
+                f: {"old": before.get(f), "new": after_preview.get(f)}
+                for f in SNAP_FIELDS
+                if before.get(f) != after_preview.get(f)
+            }
+
+            if changed:
+                # Persist changes and re-snapshot to record actual stored after
+                ac.save()
+                applied += 1
+
+            after = normalize_snapshot(_snapshot(ac))
+
             ScenarioRunLog.objects.create(
                 run=run,
-                aircraft_pk=None,
-                message=f"SKIP: Event {ev.id} has no aircraft linked.",
-                before={},
-                after={},
+                aircraft_pk=ac.aircraft_pk,
+                user_id=None,
+                message=f"Aircraft {ac.aircraft_pk}: " + (", ".join(changed.keys()) if changed else "no changes"),
+                before=before,
+                after=after,
+                changed=changed,   # dict of old/new
             )
-            continue
-
-        before = _snapshot(ac)
-        changed = []
-        if ev.status:
-            ac.status = ev.status
-            changed.append("status")
-        if ev.rtl:
-            ac.rtl = ev.rtl
-            changed.append("rtl")
-        if ev.remarks:
-            ac.remarks = ev.remarks
-            changed.append("remarks")
-        if ev.date_down:
-            ac.date_down = ev.date_down
-            changed.append("date_down")
-        ac.save()
-        after = _snapshot(ac)
-
-        ScenarioRunLog.objects.create(
-            run=run,
-            aircraft_pk=ac.aircraft_pk,
-            message=f"Aircraft {ac.aircraft_pk}: "
-                    + (", ".join(changed) if changed else "no changes"),
-            before=before,
-            after=after,
-        )
-        applied += 1
 
     run.applied_events = applied
-    run.save()
+    run.save(update_fields=["applied_events"])
     return run
 
 def scenarios_api_list(_request):
