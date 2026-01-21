@@ -27,6 +27,17 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
+from django.views.decorators.http import require_http_methods
+from django.db import IntegrityError
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, Http404
+import json
+from django.utils.dateparse import parse_date
+
+# --- PATCHABLE fields we want editable from React ---
+AIRCRAFT_PATCHABLE = {"status", "rtl", "remarks", "date_down", "current_unit", "hours_to_phase"}
+PERSONNEL_PATCHABLE = {"rank", "primary_mos", "current_unit", "is_maintainer"}
 
 
 @ensure_csrf_cookie
@@ -172,7 +183,7 @@ def revert_scenario_run(request, run_id: int):
     )
 
 
-
+"""
 def personnel_list(request):
     data = [{"user_id": 1, "rank": "CPT", "first_name": "Beat", "last_name": "Navy",
              "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
@@ -185,8 +196,8 @@ def personnel_list(request):
             {"user_id": 5, "rank": "MG", "first_name": "Beat", "last_name": "TULSA",
              "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False}]
     return JsonResponse(data, safe=False)
+"""
 
-'''
 def personnel_list(_request):
     data = list(
         Soldier.objects.order_by("last_name", "first_name").values(
@@ -200,7 +211,7 @@ def personnel_list(_request):
         )
     )
     return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
-'''
+
 NEEDED_FIELDS = [
     "aircraft_pk",
     "model_name",
@@ -619,10 +630,103 @@ def aircraft_list(_request):
     return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
 
 
-def aircraft_detail(_request, pk: int):
+@csrf_exempt
+@require_http_methods(["GET", "PATCH"])
+def aircraft_detail(request, pk: int):
+    """
+    GET  /api/aircraft/<pk>/   -> returns aircraft detail JSON
+    PATCH /api/aircraft/<pk>/  -> updates allowed fields and returns updated JSON
+    """
+    try:
+        ac = Aircraft.objects.get(pk=pk)  # pk is aircraft_pk (your PK) :contentReference[oaicite:8]{index=8}
+    except Aircraft.DoesNotExist:
+        raise Http404("Aircraft not found")
+
+    if request.method == "GET":
+        data = {
+            "pk": ac.pk,
+            "aircraft_pk": ac.aircraft_pk,
+            "model_name": ac.model_name,
+            "status": ac.status,
+            "rtl": ac.rtl,
+            "current_unit": ac.current_unit,
+            "total_airframe_hours": ac.total_airframe_hours,
+            "flight_hours": ac.flight_hours,
+            "hours_to_phase": ac.hours_to_phase,
+            "remarks": ac.remarks,
+            "date_down": ac.date_down.isoformat() if ac.date_down else None,
+            "ecd": ac.ecd.isoformat() if ac.ecd else None,
+            "last_update_time": ac.last_update_time.isoformat() if ac.last_update_time else None,
+        }
+        return JsonResponse(data, json_dumps_params={"indent": 2})
+
+    # ---- PATCH ----
+    try:
+        patch = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    if not isinstance(patch, dict):
+        return JsonResponse({"detail": "PATCH body must be an object"}, status=400)
+
+    update_fields = []
+
+    for field, value in patch.items():
+        if field not in AIRCRAFT_PATCHABLE:
+            continue
+
+        if field == "date_down":
+            if value in (None, ""):
+                ac.date_down = None
+            else:
+                d = parse_date(str(value))
+                if d is None:
+                    return JsonResponse({"detail": "date_down must be YYYY-MM-DD"}, status=400)
+                ac.date_down = d
+            update_fields.append("date_down")
+
+        elif field == "hours_to_phase":
+            if value in (None, ""):
+                ac.hours_to_phase = None
+            else:
+                try:
+                    ac.hours_to_phase = float(value)
+                except Exception:
+                    return JsonResponse({"detail": "hours_to_phase must be a number"}, status=400)
+            update_fields.append("hours_to_phase")
+
+        elif field == "remarks":
+            ac.remarks = "" if value is None else str(value)
+            update_fields.append("remarks")
+
+        else:
+            # status / rtl / current_unit
+            setattr(ac, field, "" if value is None else str(value))
+            update_fields.append(field)
+
+    if not update_fields:
+        return JsonResponse({"detail": "No valid fields to update"}, status=400)
+
+    ac.save(update_fields=list(set(update_fields)))
+
+    # Return updated object in a shape the frontend expects
+    out = {
+        "pk": ac.pk,
+        "aircraft_pk": ac.aircraft_pk,
+        "model_name": ac.model_name,
+        "status": ac.status,
+        "rtl": ac.rtl,
+        "current_unit": ac.current_unit,
+        "hours_to_phase": ac.hours_to_phase,
+        "remarks": ac.remarks,
+        "date_down": ac.date_down.isoformat() if ac.date_down else None,
+    }
+    return JsonResponse(out, json_dumps_params={"indent": 2})
+    
+    
     """
     JSON detail for /api/aircraft/<pk>/
-    """
+    
     try:
         a = Aircraft.objects.values(
             "pk",
@@ -641,6 +745,80 @@ def aircraft_detail(_request, pk: int):
     except Aircraft.DoesNotExist:
         raise Http404("Aircraft not found")
     return JsonResponse(a, safe=False, json_dumps_params={"indent": 2})
+    """
+@csrf_exempt
+@require_http_methods(["GET", "PATCH"])
+def personnel_detail(request, pk: str):
+    """
+    GET  /api/personnel/<user_id>/
+    PATCH /api/personnel/<user_id>/
+    """
+    try:
+        s = Soldier.objects.get(pk=pk)  # pk is user_id :contentReference[oaicite:9]{index=9}
+    except Soldier.DoesNotExist:
+        raise Http404("Personnel not found")
+
+    if request.method == "GET":
+        return JsonResponse(
+            {
+                "user_id": s.user_id,
+                "rank": s.rank,
+                "first_name": s.first_name,
+                "last_name": s.last_name,
+                "primary_mos": s.primary_mos,
+                "current_unit": s.current_unit,
+                "is_maintainer": s.is_maintainer,
+            },
+            json_dumps_params={"indent": 2},
+        )
+
+    # ---- PATCH ----
+    try:
+        patch = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    if not isinstance(patch, dict):
+        return JsonResponse({"detail": "PATCH body must be an object"}, status=400)
+
+    update_fields = []
+
+    for field, value in patch.items():
+        if field not in PERSONNEL_PATCHABLE:
+            continue
+
+        if field == "is_maintainer":
+            # accept true/false, "true"/"false", 1/0
+            if isinstance(value, bool):
+                s.is_maintainer = value
+            elif str(value).lower() in ("true", "1", "yes"):
+                s.is_maintainer = True
+            elif str(value).lower() in ("false", "0", "no"):
+                s.is_maintainer = False
+            else:
+                return JsonResponse({"detail": "is_maintainer must be boolean"}, status=400)
+            update_fields.append("is_maintainer")
+        else:
+            setattr(s, field, "" if value is None else str(value))
+            update_fields.append(field)
+
+    if not update_fields:
+        return JsonResponse({"detail": "No valid fields to update"}, status=400)
+
+    s.save(update_fields=list(set(update_fields)))
+
+    return JsonResponse(
+        {
+            "user_id": s.user_id,
+            "rank": s.rank,
+            "first_name": s.first_name,
+            "last_name": s.last_name,
+            "primary_mos": s.primary_mos,
+            "current_unit": s.current_unit,
+            "is_maintainer": s.is_maintainer,
+        },
+        json_dumps_params={"indent": 2},
+    )
 
 # Scenarios
 
@@ -779,6 +957,7 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
     run.save(update_fields=["applied_events"])
     return run
 
+'''
 def scenarios_api_list(_request):
     qs = (
         Scenario.objects
@@ -796,6 +975,155 @@ def scenarios_api_list(_request):
         for sc in qs
     ]
     return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+'''
+@require_http_methods(["GET", "POST"])
+def scenarios_api_list(request):
+    # -------- GET: list scenarios (existing behavior) --------
+    if request.method == "GET":
+        qs = (
+            Scenario.objects
+            .annotate(event_count=models.Count("events"))
+            .order_by("-created_at")
+        )
+        data = [
+            {
+                "id": sc.id,
+                "name": sc.name,
+                "description": sc.description,
+                "created_at": sc.created_at.isoformat(),
+                "event_count": sc.event_count,
+            }
+            for sc in qs
+        ]
+        return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+
+    # -------- POST: create scenario + events --------
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    name = (payload.get("name") or "").strip()
+    description = (payload.get("description") or "").strip()
+    events = payload.get("events") or []
+
+    if not name:
+        return JsonResponse({"detail": "Scenario name is required."}, status=400)
+    if not isinstance(events, list) or len(events) == 0:
+        return JsonResponse({"detail": "At least one event is required."}, status=400)
+
+    def _coerce_aircraft_pk(v):
+        if v is None or v == "":
+            return None
+        try:
+            return int(v)
+        except Exception:
+            return None
+
+    def _coerce_user_id(v):
+        if v is None:
+            return None
+        v = str(v).strip()
+        return v or None
+
+    created_event_ids = []
+
+    with transaction.atomic():
+        try:
+            sc = Scenario.objects.create(name=name, description=description)
+        except IntegrityError:
+            return JsonResponse({"detail": f"Scenario name '{name}' already exists."}, status=409)
+
+        for idx, ev in enumerate(events):
+            if not isinstance(ev, dict):
+                return JsonResponse({"detail": f"Event {idx} must be an object."}, status=400)
+
+            target = (ev.get("target") or "").strip().lower()
+            aircraft_pk = _coerce_aircraft_pk(ev.get("aircraft_pk"))
+            user_id = _coerce_user_id(ev.get("user_id"))
+
+            # Enforce exactly one target object
+            if target not in ("aircraft", "personnel"):
+                return JsonResponse({"detail": f"Event {idx}: target must be 'aircraft' or 'personnel'."}, status=400)
+
+            if target == "aircraft":
+                if not aircraft_pk:
+                    return JsonResponse({"detail": f"Event {idx}: aircraft_pk required for aircraft events."}, status=400)
+                if user_id:
+                    return JsonResponse({"detail": f"Event {idx}: do not include user_id for aircraft events."}, status=400)
+            else:
+                if not user_id:
+                    return JsonResponse({"detail": f"Event {idx}: user_id required for personnel events."}, status=400)
+                if aircraft_pk:
+                    return JsonResponse({"detail": f"Event {idx}: do not include aircraft_pk for personnel events."}, status=400)
+
+            status = (ev.get("status") or "").strip()
+            rtl = (ev.get("rtl") or "").strip()
+            remarks = ev.get("remarks")
+            if remarks is None:
+                remarks = ""
+            remarks = str(remarks)
+
+            date_down_raw = ev.get("date_down")
+            date_down = None
+            if date_down_raw:
+                # accept "YYYY-MM-DD" (frontend date input)
+                date_down = parse_date(str(date_down_raw))
+                if date_down is None:
+                    return JsonResponse({"detail": f"Event {idx}: date_down must be YYYY-MM-DD."}, status=400)
+
+            # Must change at least one field
+            if not status and not rtl and not remarks.strip() and not date_down:
+                return JsonResponse(
+                    {"detail": f"Event {idx}: must set at least one of status, rtl, remarks, date_down."},
+                    status=400
+                )
+
+            # Resolve FK targets
+            aircraft_obj = None
+            soldier_obj = None
+
+            if target == "aircraft":
+                aircraft_obj = Aircraft.objects.filter(aircraft_pk=aircraft_pk).first()
+                if not aircraft_obj:
+                    return JsonResponse({"detail": f"Event {idx}: aircraft_pk {aircraft_pk} not found."}, status=404)
+
+            if target == "personnel":
+                soldier_obj = Soldier.objects.filter(user_id=user_id).first()
+                if not soldier_obj:
+                    return JsonResponse({"detail": f"Event {idx}: user_id {user_id} not found."}, status=404)
+
+            try:
+                se = ScenarioEvent.objects.create(
+                    scenario=sc,
+                    aircraft=aircraft_obj,
+                    soldier=soldier_obj,
+                    status=status,
+                    rtl=rtl,
+                    remarks=remarks,
+                    date_down=date_down,
+                )
+            except IntegrityError:
+                # Your model has unique constraints per (scenario, aircraft) and (scenario, soldier)
+                return JsonResponse({"detail": f"Event {idx}: duplicate target in this scenario."}, status=409)
+
+            created_event_ids.append(se.id)
+
+    # Return the created scenario (enough for frontend to refresh list)
+    return JsonResponse(
+        {
+            "id": sc.id,
+            "name": sc.name,
+            "description": sc.description,
+            "created_at": sc.created_at.isoformat(),
+            "event_count": len(created_event_ids),
+            "event_ids": created_event_ids,
+        },
+        status=201,
+        json_dumps_params={"indent": 2},
+    )
+
+
 
 def scenario_list(request):
     return render(request, "scenario_list.html", {
