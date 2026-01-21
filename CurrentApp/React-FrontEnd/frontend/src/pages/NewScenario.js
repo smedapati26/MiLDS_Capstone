@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { listAircraft } from '../api/aircraft';
 import { listPersonnel } from '../api/personnel';
+import { createScenario } from '../api/scenarios';
+
 
 function makeId() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -154,22 +156,37 @@ export default function NewScenario() {
     return null;
   };
 
+  
   const handleSave = async () => {
-    // Step 1: UI only — we validate and show the payload.
-    // Step 2 will be wiring this to a backend POST endpoint.
     const v = validate();
     if (v) {
-      setErr(v);
-      return;
+        setErr(v);
+        return;
     }
 
-    setErr(null);
+    try {
+        setErr(null);
 
-    // For now: show payload preview in console + alert.
-    // When you add POST /api/scenarios/, replace this with client.post(...)
-    console.log('Scenario create payload:', payloadPreview);
-    alert('Scenario payload is ready (see console). Next step is wiring POST /api/scenarios/.');
-  };
+        // Ensure CSRF cookie exists (matches your app pattern)
+        await client.get('/api/csrf/');
+
+        await createScenario(payloadPreview);
+
+        // After successful create:
+        // Option A: go back to Assets scenarios tab
+        navigate('/assets');
+    } catch (e) {
+        console.error(e);
+
+        const msg =
+        e?.response?.data?.detail ||
+        e?.response?.data?.error ||
+        'Failed to save scenario. Check backend logs.';
+
+        setErr(msg);
+    }
+    };
+
 
   return (
     <main className="container" style={{ paddingTop: 16 }}>

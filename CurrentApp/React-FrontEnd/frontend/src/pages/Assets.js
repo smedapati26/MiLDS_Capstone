@@ -181,6 +181,57 @@ export default function Assets() {
     });
   };
 
+  const saveAircraft = async (row) => {
+    try {
+      const id = row.pk; // use pk (same key you render) :contentReference[oaicite:12]{index=12}
+
+      const payload = {
+        status: aircraftDraft.status,
+        current_unit: aircraftDraft.current_unit,
+        hours_to_phase: aircraftDraft.hours_to_phase === '' ? null : Number(aircraftDraft.hours_to_phase),
+      };
+
+      const updated = await updateAircraft(id, payload);
+
+      setAircraftRows((prev) =>
+        prev.map((r) => (r.pk === row.pk ? { ...r, ...updated } : r))
+      );
+
+      setEditingAircraftId(null);
+      setAircraftDraft({});
+    } catch (e) {
+      console.error(e);
+      setApiError(e?.response?.data?.detail || 'Failed to save aircraft changes');
+    }
+  };
+
+  const savePersonnel = async (row) => {
+    try {
+      const id = row.user_id; // Soldier PK 
+
+      const payload = {
+        rank: personnelDraft.rank,
+        primary_mos: personnelDraft.primary_mos,
+        current_unit: personnelDraft.current_unit,
+        is_maintainer: !!personnelDraft.is_maintainer,
+      };
+
+      const updated = await updatePersonnel(id, payload);
+
+      setPersonnelRows((prev) =>
+        prev.map((r) => (r.user_id === row.user_id ? { ...r, ...updated } : r))
+      );
+
+      setEditingPersonnelId(null);
+      setPersonnelDraft({});
+    } catch (e) {
+      console.error(e);
+      setApiError(e?.response?.data?.detail || 'Failed to save personnel changes');
+    }
+  };
+
+
+
   const cancelEditAircraft = () => {
     setEditingAircraftId(null);
     setAircraftDraft({});
@@ -466,7 +517,7 @@ export default function Assets() {
                           <td>
                             {isEditing ? (
                               <>
-                                <Button /* later: onClick={saveAircraft} */>Save</Button>
+                                <Button onClick={() => saveAircraft(row)}>Save</Button>
                                 <Button variant="secondary" onClick={cancelEditAircraft}>
                                   Cancel
                                 </Button>
@@ -629,7 +680,7 @@ export default function Assets() {
                             {isEditing ? (
                               <div style={{ display: 'flex', gap: 8 }}>
                                 {/* Save will be wired later */}
-                                <Button /* later: onClick={savePersonnel} */>Save</Button>
+                                <Button onClick={() => savePersonnel(row)}>Save</Button>
                                 <Button variant="secondary" onClick={cancelEditPersonnel}>
                                   Cancel
                                 </Button>
