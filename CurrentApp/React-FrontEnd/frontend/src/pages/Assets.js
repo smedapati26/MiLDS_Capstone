@@ -3,8 +3,13 @@ import client from '../api/client';
 import { listAircraft } from '../api/aircraft';
 import { listPersonnel } from '../api/personnel';
 import { listScenarios } from '../api/scenarios';
+import { useNavigate } from 'react-router-dom';
+
 
 export default function Assets() {
+
+  const navigate = useNavigate();
+
   const [active, setActive] = useState('aircraft'); // 'aircraft' | 'personnel' | 'scenarios'
 
   // Search state
@@ -332,7 +337,7 @@ export default function Assets() {
   // Scenarios toolbar component with Revert button
   const ScenariosToolbar = (
     <>
-      <Button>New Scenario</Button>
+      <Button onClick={() => navigate('/scenarios/new')}>New Scenario</Button>
       <Button variant="secondary">Import</Button>
       <Button
         variant="secondary"
