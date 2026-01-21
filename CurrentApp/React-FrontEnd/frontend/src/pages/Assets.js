@@ -23,6 +23,15 @@ export default function Assets() {
   const [scenarioRows, setScenarioRows] = useState([]);
   const [scenarioCount, setScenarioCount] = useState(null);
 
+    // Which row is being edited?
+  const [editingAircraftId, setEditingAircraftId] = useState(null);
+  const [editingPersonnelId, setEditingPersonnelId] = useState(null);
+
+  // Draft values user is typing
+  const [aircraftDraft, setAircraftDraft] = useState({});
+  const [personnelDraft, setPersonnelDraft] = useState({});
+
+
   // Scenario UI state
   const [scenarioApplyingId, setScenarioApplyingId] = useState(null);
   const [reverting, setReverting] = useState(false);
@@ -156,6 +165,38 @@ export default function Assets() {
       {children}
     </button>
   );
+
+  const startEditAircraft = (row) => {
+    const id = row.pk; // this is what you use as <tr key={row.pk}>
+    setEditingAircraftId(id);
+    setAircraftDraft({
+      status: row.status ?? '',
+      current_unit: row.current_unit ?? '',
+      hours_to_phase: row.hours_to_phase ?? '',
+    });
+  };
+
+  const cancelEditAircraft = () => {
+    setEditingAircraftId(null);
+    setAircraftDraft({});
+  };
+
+  const startEditPersonnel = (row) => {
+    const id = row.user_id; // this is what you use as <tr key={row.user_id}>
+    setEditingPersonnelId(id);
+    setPersonnelDraft({
+      rank: row.rank ?? '',
+      primary_mos: row.primary_mos ?? '',
+      current_unit: row.current_unit ?? '',
+      is_maintainer: !!row.is_maintainer,
+    });
+  };
+
+  const cancelEditPersonnel = () => {
+    setEditingPersonnelId(null);
+    setPersonnelDraft({});
+  };
+
 
   // ---- Status chips ----
 
@@ -353,6 +394,7 @@ export default function Assets() {
                     <th>Status</th>
                     <th>Base</th>
                     <th>Hours to Phase</th>
+                    <th style={{ width: 160 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -365,15 +407,75 @@ export default function Assets() {
                       </td>
                     </tr>
                   ) : (
-                    filteredAircraft.map((row) => (
-                      <tr key={row.pk}>
-                        <td>{row.aircraft_pk ?? row.pk}</td>
-                        <td>{row.model_name}</td>
-                        <td>{row.status}</td>
-                        <td>{row.current_unit}</td>
-                        <td>{row.hours_to_phase ?? '—'}</td>
-                      </tr>
-                    ))
+                    filteredAircraft.map((row) => {
+                      const isEditing = editingAircraftId === row.pk;
+
+                      return (
+                        <tr key={row.pk}>
+                          <td>{row.aircraft_pk ?? row.pk}</td>
+                          <td>{row.model_name}</td>
+
+                          <td>
+                            {isEditing ? (
+                              <input
+                                className="search-input"
+                                value={aircraftDraft.status ?? ''}
+                                onChange={(e) =>
+                                  setAircraftDraft((d) => ({ ...d, status: e.target.value }))
+                                }
+                              />
+                            ) : (
+                              row.status
+                            )}
+                          </td>
+
+                          <td>
+                            {isEditing ? (
+                              <input
+                                className="search-input"
+                                value={aircraftDraft.current_unit ?? ''}
+                                onChange={(e) =>
+                                  setAircraftDraft((d) => ({ ...d, current_unit: e.target.value }))
+                                }
+                              />
+                            ) : (
+                              row.current_unit
+                            )}
+                          </td>
+
+                          <td>
+                            {isEditing ? (
+                              <input
+                                className="search-input"
+                                type="number"
+                                value={aircraftDraft.hours_to_phase ?? ''}
+                                onChange={(e) =>
+                                  setAircraftDraft((d) => ({ ...d, hours_to_phase: e.target.value }))
+                                }
+                              />
+                            ) : (
+                              row.hours_to_phase ?? '—'
+                            )}
+                          </td>
+
+                          <td>
+                            {isEditing ? (
+                              <>
+                                <Button /* later: onClick={saveAircraft} */>Save</Button>
+                                <Button variant="secondary" onClick={cancelEditAircraft}>
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <Button variant="secondary" onClick={() => startEditAircraft(row)}>
+                                Edit
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+
                   )}
                 </tbody>
               </table>
@@ -415,6 +517,7 @@ export default function Assets() {
                     <th>MOS</th>
                     <th>Unit</th>
                     <th>Role</th>
+                    <th style={{ width: 160 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -427,18 +530,114 @@ export default function Assets() {
                       </td>
                     </tr>
                   ) : (
-                    filteredPersonnel.map((row) => (
-                      <tr key={row.user_id}>
-                        <td>{row.user_id}</td>
-                        <td>
-                          {row.last_name}, {row.first_name}
-                        </td>
-                        <td>{row.rank}</td>
-                        <td>{row.primary_mos}</td>
-                        <td>{row.current_unit}</td>
-                        <td>{row.is_maintainer ? 'Maintainer' : 'Other'}</td>
-                      </tr>
-                    ))
+                    filteredPersonnel.map((row) => {
+                      const isEditing = editingPersonnelId === row.user_id;
+
+                      return (
+                        <tr key={row.user_id}>
+                          <td>{row.user_id}</td>
+
+                          {/* Name (leave non-editable for now) */}
+                          <td>
+                            {row.last_name}, {row.first_name}
+                          </td>
+
+                          {/* Rank (editable) */}
+                          <td>
+                            {isEditing ? (
+                              <input
+                                className="search-input"
+                                value={personnelDraft.rank ?? ''}
+                                onChange={(e) =>
+                                  setPersonnelDraft((d) => ({ ...d, rank: e.target.value }))
+                                }
+                                placeholder="e.g., CPT"
+                              />
+                            ) : (
+                              row.rank
+                            )}
+                          </td>
+
+                          {/* MOS (editable) */}
+                          <td>
+                            {isEditing ? (
+                              <input
+                                className="search-input"
+                                value={personnelDraft.primary_mos ?? ''}
+                                onChange={(e) =>
+                                  setPersonnelDraft((d) => ({
+                                    ...d,
+                                    primary_mos: e.target.value,
+                                  }))
+                                }
+                                placeholder="e.g., 15A"
+                              />
+                            ) : (
+                              row.primary_mos
+                            )}
+                          </td>
+
+                          {/* Unit (editable) */}
+                          <td>
+                            {isEditing ? (
+                              <input
+                                className="search-input"
+                                value={personnelDraft.current_unit ?? ''}
+                                onChange={(e) =>
+                                  setPersonnelDraft((d) => ({
+                                    ...d,
+                                    current_unit: e.target.value,
+                                  }))
+                                }
+                                placeholder="e.g., 2-101 CAB"
+                              />
+                            ) : (
+                              row.current_unit
+                            )}
+                          </td>
+
+                          {/* Role / is_maintainer (editable checkbox) */}
+                          <td>
+                            {isEditing ? (
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                                <input
+                                  type="checkbox"
+                                  checked={!!personnelDraft.is_maintainer}
+                                  onChange={(e) =>
+                                    setPersonnelDraft((d) => ({
+                                      ...d,
+                                      is_maintainer: e.target.checked,
+                                    }))
+                                  }
+                                />
+                                <span style={{ fontWeight: 700 }}>
+                                  {personnelDraft.is_maintainer ? 'Maintainer' : 'Other'}
+                                </span>
+                              </label>
+                            ) : (
+                              row.is_maintainer ? 'Maintainer' : 'Other'
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td>
+                            {isEditing ? (
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                {/* Save will be wired later */}
+                                <Button /* later: onClick={savePersonnel} */>Save</Button>
+                                <Button variant="secondary" onClick={cancelEditPersonnel}>
+                                  Cancel
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button variant="secondary" onClick={() => startEditPersonnel(row)}>
+                                Edit
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
