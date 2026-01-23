@@ -10,7 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
+
+GRIFFIN_API_URL = os.getenv("GRIFFIN_API_URL")
+GRIFFIN_API_KEY = os.getenv("GRIFFIN_API_KEY")
+
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
