@@ -2,7 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 import Assets from './pages/Assets';
 import Home from './pages/Home';
-
+import NewScenario from './pages/NewScenario';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -15,7 +15,11 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/assets" element={<Assets />} />
+        <Route path="/scenarios/new" element={<NewScenario />} />
       </Routes>
     </div>
   );
 }
+
+
+
