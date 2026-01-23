@@ -11,6 +11,8 @@ urlpatterns = [
     path("api/aircraft/", views.aircraft_list, name="aircraft-list"),
     path("api/aircraft/<int:pk>/", views.aircraft_detail, name="aircraft-detail"),
     path("api/personnel/", views.personnel_list, name="personnel-list"),
+    path("api/personnel/<str:pk>/", views.personnel_detail, name="personnel-detail"),
+
 
     # Aircraft HTML
     path("aircraft/", views.list_aircraft, name="list_aircraft"),
@@ -21,8 +23,8 @@ urlpatterns = [
     # Personnel HTML
     path("personnel/", views.list_personnel, name="list_personnel"),
     path("personnel/create/", views.create_personnel, name="create_personnel"),
-    path("personnel/<int:pk>/edit/", views.update_personnel, name="update_personnel"),
-    path("personnel/<int:pk>/delete/", views.delete_personnel, name="delete_personnel"),
+    path("personnel/<str:pk>/edit/", views.update_personnel, name="update_personnel"),
+    path("personnel/<str:pk>/delete/", views.delete_personnel, name="delete_personnel"),
 
     # Scenarios HTML
     path("scenarios/", views.scenario_list, name="scenario_list"),
