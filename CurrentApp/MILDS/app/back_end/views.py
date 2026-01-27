@@ -624,6 +624,8 @@ def aircraft_list(_request):
             "rtl",
             "current_unit",
             "hours_to_phase",
+            "remarks",
+            "date_down",
             "last_update_time",
         )
     )
@@ -754,23 +756,23 @@ def personnel_detail(request, pk: str):
     PATCH /api/personnel/<user_id>/
     """
     try:
-        s = Soldier.objects.get(pk=pk)  # pk is user_id :contentReference[oaicite:9]{index=9}
+        s = Soldier.objects.get(pk=pk)  # pk is user_id
     except Soldier.DoesNotExist:
-        raise Http404("Personnel not found")
+        return JsonResponse({"detail": "Personnel not found"}, status=404)
+
+    def serialize():
+        return {
+            "user_id": s.user_id,
+            "rank": s.rank,
+            "first_name": s.first_name,
+            "last_name": s.last_name,
+            "primary_mos": s.primary_mos,
+            "current_unit": s.current_unit,
+            "is_maintainer": s.is_maintainer,
+        }
 
     if request.method == "GET":
-        return JsonResponse(
-            {
-                "user_id": s.user_id,
-                "rank": s.rank,
-                "first_name": s.first_name,
-                "last_name": s.last_name,
-                "primary_mos": s.primary_mos,
-                "current_unit": s.current_unit,
-                "is_maintainer": s.is_maintainer,
-            },
-            json_dumps_params={"indent": 2},
-        )
+        return JsonResponse(serialize(), json_dumps_params={"indent": 2})
 
     # ---- PATCH ----
     try:
@@ -781,14 +783,13 @@ def personnel_detail(request, pk: str):
     if not isinstance(patch, dict):
         return JsonResponse({"detail": "PATCH body must be an object"}, status=400)
 
-    update_fields = []
+    update_fields = set()
 
     for field, value in patch.items():
         if field not in PERSONNEL_PATCHABLE:
             continue
 
         if field == "is_maintainer":
-            # accept true/false, "true"/"false", 1/0
             if isinstance(value, bool):
                 s.is_maintainer = value
             elif str(value).lower() in ("true", "1", "yes"):
@@ -797,28 +798,17 @@ def personnel_detail(request, pk: str):
                 s.is_maintainer = False
             else:
                 return JsonResponse({"detail": "is_maintainer must be boolean"}, status=400)
-            update_fields.append("is_maintainer")
+            update_fields.add("is_maintainer")
         else:
             setattr(s, field, "" if value is None else str(value))
-            update_fields.append(field)
+            update_fields.add(field)
 
+    # If nothing valid was sent, just return current object (better UX than 400)
     if not update_fields:
-        return JsonResponse({"detail": "No valid fields to update"}, status=400)
+        return JsonResponse(serialize(), json_dumps_params={"indent": 2})
 
-    s.save(update_fields=list(set(update_fields)))
-
-    return JsonResponse(
-        {
-            "user_id": s.user_id,
-            "rank": s.rank,
-            "first_name": s.first_name,
-            "last_name": s.last_name,
-            "primary_mos": s.primary_mos,
-            "current_unit": s.current_unit,
-            "is_maintainer": s.is_maintainer,
-        },
-        json_dumps_params={"indent": 2},
-    )
+    s.save(update_fields=list(update_fields))
+    return JsonResponse(serialize(), json_dumps_params={"indent": 2})
 
 # Scenarios
 
