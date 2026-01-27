@@ -71,12 +71,13 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 pip install django-ninja
 pip install react
+pip install python-dotenv httpx
 
 ### Initialize the database & load demo data
 
-python manage.py loaddata fixtures\aircraft_data.json
 python manage.py migrate
-python mange.py makemigrations
+python manage.py loaddata fixtures\aircraft_data.json
+python mangae.py makemigrations (only if changed models.py, run migrate again after)
 python manage.py runserver
 
 ### In split terminal (\CurrentApp\React-FrontEnd\frontend)
