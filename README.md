@@ -59,9 +59,10 @@ cd ay26-team-repo-5-milds\CurrentApp\MILDS
 
 py -0p                     (shows installed Pythons; look for -3.12 or -3.11)
 
-py -3.12 -m venv .venv     (or use -3.11 if 3.12 isn't installed) 
+python3.12 -m venv .venv     (or use -3.11 if 3.12 isn't installed) 
 
-.venv\Scripts\Activate.ps1
+.venv\Scripts\Activate.ps1 (For Windows Terminal)
+. .venv/bin/activate (For Ubuntu Container)
 
 If activation is blocked, run once:
 
@@ -72,6 +73,14 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 pip install django-ninja
 pip install react
 pip install python-dotenv httpx
+
+### Dependencies for Contiainer
+
+pip install django-ninja &&
+pip install react && 
+pip install django-cors-headers && 
+pip install python-dotenv httpx
+
 
 ### Initialize the database & load demo data
 
