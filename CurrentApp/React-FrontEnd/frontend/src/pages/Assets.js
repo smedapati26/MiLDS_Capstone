@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import client from '../api/client';
 import { listAircraft, updateAircraft } from '../api/aircraft';
-import { listPersonnel, updatePersonnel } from '../api/personnel';
+import { listPersonnel, updatePersonnel, syncPersonnel } from '../api/personnel';
 import { listScenarios } from '../api/scenarios';
 import { useNavigate } from 'react-router-dom';
 
@@ -62,6 +62,45 @@ export default function Assets() {
   // Scenario UI state
   const [scenarioApplyingId, setScenarioApplyingId] = useState(null);
   const [reverting, setReverting] = useState(false);
+
+  const [amapSyncing, setAmapSyncing] = useState(false);
+
+  const handleReceiveAMAP = async () => {
+    // Pull last used UIC if present
+    const last = localStorage.getItem('milds_last_uic') || 'WDDRA0';
+    const uic = window.prompt('Enter unit UIC to pull from AMAP (e.g., WDDRA0):', last);
+
+    if (!uic) return;
+
+    try {
+      setAmapSyncing(true);
+      setApiError(null);
+
+      const clean = uic.trim();
+      localStorage.setItem('milds_last_uic', clean);
+
+      // Call Ninja sync endpoint (AMAP -> local DB)
+      await syncPersonnel(clean);
+
+      // Refresh local table
+      const p = await listPersonnel();
+      const items = Array.isArray(p) ? p : p?.results ?? [];
+      setPersonnelRows(items);
+      setPersonnelCount(items.length);
+    } catch (e) {
+      console.error(e);
+      setApiError(
+        e?.response?.data?.error ||
+        e?.response?.data?.detail ||
+        e?.message ||
+        'Failed to receive AMAP roster'
+      );
+    } finally {
+      setAmapSyncing(false);
+    }
+  };
+
+
 
   useEffect(() => {
     console.log('[editingAircraftId changed]', editingAircraftId);
@@ -603,7 +642,7 @@ export default function Assets() {
                           ) : (
                             <span title={row.remarks ?? ''}>{short(row.remarks, 60)}</span>
                           )}
-                        </td>`
+                        </td>
 
                         {/* Hours to Phase */}
                         <td>
@@ -667,7 +706,9 @@ export default function Assets() {
                 onChange={(e) => setPersonnelQuery(e.target.value)}
                 style={{ flex: 1 }}
               />
-              <Button>Receive AMAP</Button>
+              <Button onClick={handleReceiveAMAP} disabled={amapSyncing}>
+                {amapSyncing ? 'Receiving…' : 'Receive AMAP'}
+              </Button>
               <Button variant="secondary">Update AMAP</Button>
             </div>
 
