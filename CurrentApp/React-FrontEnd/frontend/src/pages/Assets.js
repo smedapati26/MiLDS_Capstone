@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import client from '../api/client';
 import { listAircraft, updateAircraft } from '../api/aircraft';
-import { listPersonnel, updatePersonnel, syncPersonnel } from '../api/personnel';
+import { listPersonnel, updatePersonnel, syncPersonnel, injectPersonnelUpdate } from '../api/personnel';
 import { listScenarios } from '../api/scenarios';
 import { useNavigate } from 'react-router-dom';
 
@@ -284,29 +284,80 @@ export default function Assets() {
   };
 
   const savePersonnel = async (row) => {
+    const id = row.user_id; // Soldier PK
+
+    // compute diffs (only push what changed)
+    const changes = [];
+
+    const nextRank = (personnelDraft.rank ?? '').trim();
+    const nextMos = (personnelDraft.primary_mos ?? '').trim();
+    const nextUnit = (personnelDraft.current_unit ?? '').trim();
+    const nextMaint = !!personnelDraft.is_maintainer;
+
+    if ((row.rank ?? '') !== nextRank) changes.push({ field: 'rank', value: nextRank });
+    if ((row.primary_mos ?? '') !== nextMos) changes.push({ field: 'primary_mos', value: nextMos });
+    if ((row.current_unit ?? '') !== nextUnit) changes.push({ field: 'current_unit', value: nextUnit });
+
+    // backend endpoint expects value as string; send "true"/"false"
+    if (!!row.is_maintainer !== nextMaint) changes.push({ field: 'is_maintainer', value: String(nextMaint) });
+
+    if (changes.length === 0) {
+      // nothing changed; just exit edit mode
+      setEditingPersonnelId(null);
+      setPersonnelDraft({});
+      return;
+    }
+
     try {
-      const id = row.user_id; // Soldier PK 
+      setApiError(null);
 
-      const payload = {
-        rank: personnelDraft.rank,
-        primary_mos: personnelDraft.primary_mos,
-        current_unit: personnelDraft.current_unit,
-        is_maintainer: !!personnelDraft.is_maintainer,
-      };
+      // keep your CSRF bootstrap pattern consistent (you already do this elsewhere)
+      await client.get('/api/csrf/');
 
-      const updated = await updatePersonnel(id, payload);
-
-      setPersonnelRows((prev) =>
-        prev.map((r) => (r.user_id === row.user_id ? { ...r, ...updated } : r))
+      // 1) Push to AMAP via your Ninja endpoint (also updates local Soldier in that view)
+      // POST /api/personnel/inject/update?user_id=...&field=...&value=...
+      await Promise.all(
+        changes.map((c) => injectPersonnelUpdate(id, c.field, c.value))
       );
 
+      // 2) Refresh table from local DB after inject(s)
+      const p = await listPersonnel();
+      const items = Array.isArray(p) ? p : p?.results ?? [];
+      setPersonnelRows(items);
+      setPersonnelCount(items.length);
+
+      // exit edit mode
       setEditingPersonnelId(null);
       setPersonnelDraft({});
     } catch (e) {
       console.error(e);
-      setApiError(e?.response?.data?.detail || 'Failed to save personnel changes');
+
+      // Optional fallback: still save locally if AMAP fails (so user doesn’t lose work)
+      try {
+        const payload = {
+          rank: nextRank,
+          primary_mos: nextMos,
+          current_unit: nextUnit,
+          is_maintainer: nextMaint,
+        };
+        const updated = await updatePersonnel(id, payload);
+        setPersonnelRows((prev) =>
+          prev.map((r) => (r.user_id === id ? { ...r, ...updated } : r))
+        );
+      } catch (e2) {
+        console.error(e2);
+      }
+
+      setApiError(
+        e?.response?.data?.details?.error ||
+        e?.response?.data?.error ||
+        e?.response?.data?.detail ||
+        e?.message ||
+        'AMAP update failed'
+      );
     }
   };
+
 
 
 
