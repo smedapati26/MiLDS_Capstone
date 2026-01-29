@@ -590,7 +590,7 @@ export default function Assets() {
                         <td>{daysDown(row.date_down)}</td>
 
                         {/* Remarks */}
-                        <td>
+                        <td className="col-remarks">
                           {isEditing ? (
                             <input
                               className="search-input"
@@ -601,12 +601,17 @@ export default function Assets() {
                               placeholder="Remarks…"
                             />
                           ) : (
-                            <span title={row.remarks ?? ''}>{short(row.remarks, 60)}</span>
+                            <span
+                              className="remarks-clamp"
+                              title={row.remarks ?? ''}
+                            >
+                              {row.remarks ?? '—'}
+                            </span>
                           )}
-                        </td>`
+                        </td>
 
                         {/* Hours to Phase */}
-                        <td>
+                        <td className="col-hours">
                           {isEditing ? (
                             <input
                               className="search-input"
