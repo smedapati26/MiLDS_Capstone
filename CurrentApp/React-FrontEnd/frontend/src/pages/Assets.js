@@ -64,6 +64,14 @@ export default function Assets() {
   const [reverting, setReverting] = useState(false);
 
   useEffect(() => {
+    console.log('[editingAircraftId changed]', editingAircraftId);
+  }, [editingAircraftId]);
+
+  useEffect(() => {
+    console.log('[aircraftRows changed]', aircraftRows.length);
+  }, [aircraftRows]);
+
+  useEffect(() => {
     let mounted = true;
 
     client
@@ -181,11 +189,10 @@ export default function Assets() {
     </div>
   );
 
-  const Button = ({ children, variant = 'primary', onClick, disabled }) => (
+  const Button = ({ children, variant = 'primary', onClick, disabled, type='button' }) => (
     <button
-      className={`btn ${
-        variant === 'primary' ? 'btn-primary' : 'btn-secondary'
-      }`}
+      type={type}
+      className={`btn ${variant === 'primary' ? 'btn-primary' : 'btn-secondary'}`}
       onClick={onClick}
       disabled={disabled}
     >
@@ -194,14 +201,20 @@ export default function Assets() {
   );
 
   const startEditAircraft = (row) => {
-    const id = row.pk; // this is what you use as <tr key={row.pk}>
+    const id = Number(row.pk);
+    console.log('[startEditAircraft] click row.pk=', row.pk, '-> id=', id, 'type=', typeof id);
+
     setEditingAircraftId(id);
     setAircraftDraft({
       status: row.status ?? '',
+      rtl: row.rtl ?? '',
       current_unit: row.current_unit ?? '',
+      date_down: row.date_down ?? '',
+      remarks: row.remarks ?? '',
       hours_to_phase: row.hours_to_phase ?? '',
     });
   };
+
 
   const saveAircraft = async (row) => {
     try {
@@ -209,9 +222,13 @@ export default function Assets() {
 
       const payload = {
         status: aircraftDraft.status,
+        rtl: aircraftDraft.rtl,
         current_unit: aircraftDraft.current_unit,
         hours_to_phase: aircraftDraft.hours_to_phase === '' ? null : Number(aircraftDraft.hours_to_phase),
+        remarks: aircraftDraft.remarks,
+        date_down: aircraftDraft.date_down === '' ? null : aircraftDraft.date_down,
       };
+
 
       const updated = await updateAircraft(id, payload);
 
@@ -481,8 +498,8 @@ export default function Assets() {
                     <th>Date Down</th>
                     <th>Days Down</th>
                     <th>Remarks</th>
-                    <th>Hours to Phase</th>
-                    <th style={{ width: 160 }}>Actions</th>
+                    <th style={{ width: 140 }}>Hours to Phase</th>
+                    <th style={{ width: 140 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -497,12 +514,13 @@ export default function Assets() {
                   ) : (
                     filteredAircraft.map((row) => {
                       const isEditing = editingAircraftId === row.pk;
-
+                      console.log('[render row]', row.pk, 'editingAircraftId=', editingAircraftId, 'isEditing=', isEditing);
                       return (
                       <tr key={row.pk}>
                         <td>{row.aircraft_pk ?? row.pk}</td>
                         <td>{row.model_name ?? '—'}</td>
 
+                        {/* Status */}
                         <td>
                           {isEditing ? (
                             <input
@@ -517,9 +535,26 @@ export default function Assets() {
                           )}
                         </td>
 
-                        <td>{rtlCategory(row.rtl)}</td>
+                        {/* RTL */}
+                        <td>
+                          {isEditing ? (
+                            <select
+                              className="search-input"
+                              value={aircraftDraft.rtl ?? ''}
+                              onChange={(e) =>
+                                setAircraftDraft((d) => ({ ...d, rtl: e.target.value }))
+                              }
+                            >
+                              <option value="">—</option>
+                              <option value="RTL">RTL</option>
+                              <option value="NRTL">NRTL</option>
+                            </select>
+                          ) : (
+                            rtlCategory(row.rtl)
+                          )}
+                        </td>
 
-                        {/* Base */}
+                        {/* Unit */}
                         <td>
                           {isEditing ? (
                             <input
@@ -535,13 +570,40 @@ export default function Assets() {
                         </td>
 
                         {/* Date Down */}
-                        <td>{formatDate(row.date_down)}</td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              className="search-input"
+                              type="date"
+                              value={aircraftDraft.date_down ?? ''}
+                              onChange={(e) =>
+                                setAircraftDraft((d) => ({ ...d, date_down: e.target.value }))
+                              }
+                            />
+                          ) : (
+                            formatDate(row.date_down)
+                          )}
+                        </td>
+
 
                         {/* Days Down */}
                         <td>{daysDown(row.date_down)}</td>
 
                         {/* Remarks */}
-                        <td title={row.remarks ?? ''}>{short(row.remarks, 60)}</td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              className="search-input"
+                              value={aircraftDraft.remarks ?? ''}
+                              onChange={(e) =>
+                                setAircraftDraft((d) => ({ ...d, remarks: e.target.value }))
+                              }
+                              placeholder="Remarks…"
+                            />
+                          ) : (
+                            <span title={row.remarks ?? ''}>{short(row.remarks, 60)}</span>
+                          )}
+                        </td>`
 
                         {/* Hours to Phase */}
                         <td>
@@ -562,12 +624,12 @@ export default function Assets() {
                         {/* Actions */}
                         <td>
                           {isEditing ? (
-                            <>
+                            <div style={{ display: 'flex', gap: 8 }}>
                               <Button onClick={() => saveAircraft(row)}>Save</Button>
                               <Button variant="secondary" onClick={cancelEditAircraft}>
                                 Cancel
                               </Button>
-                            </>
+                            </div>
                           ) : (
                             <Button variant="secondary" onClick={() => startEditAircraft(row)}>
                               Edit

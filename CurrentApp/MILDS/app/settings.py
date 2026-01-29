@@ -23,7 +23,13 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# AMAP URL
+AMAP_API_URL = "http://localhost:8001"
 
+# Dummy user ID
+MILDS_SYSTEM_USER_ID = "999999"
+# AMAP dummy key
+AMAP_API_KEY = "local-dev-key"
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -33,7 +39,7 @@ SECRET_KEY = 'django-insecure-m6trzzqte3s-2r@*jzmn_z*yg=u1dwcvpw_d3#)qtrnu3=2zp)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition

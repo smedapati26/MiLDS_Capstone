@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from app.api.main import api
 
 urlpatterns = [
     path("", views.home, name="home"),
@@ -34,4 +35,8 @@ urlpatterns = [
     path("api/scenarios/", views.scenarios_api_list, name="scenarios-api-list"),
     path("api/scenarios/revert-last/", views.revert_last_scenario, name="scenarios-revert-last"),
     path("api/scenario-runs/<int:run_id>/revert/", views.revert_scenario_run, name="scenario-run-revert"),
+
+    # --- DJANGO NINJA API ---
+    # This handles "api/docs", "api/openapi.json", and any new routers (like injects)
+    path("api/", api.urls),  # <--- 2. ADD THIS LINE
 ]
