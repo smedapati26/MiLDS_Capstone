@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import client from '../api/client';
-import { listAircraft, updateAircraft } from '../api/aircraft';
+import { listAircraft, updateAircraft, syncAircraft, pushAircraft } from '../api/aircraft';
 import { listPersonnel, updatePersonnel, syncPersonnel, injectPersonnelUpdate } from '../api/personnel';
 import { listScenarios } from '../api/scenarios';
+
 import { useNavigate } from 'react-router-dom';
 
 
@@ -38,6 +39,9 @@ export default function Assets() {
   const [aircraftSearch, setAircraftSearch] = useState('');
   const [personnelQuery, setPersonnelQuery] = useState('');
 
+  const [griffinPushing, setGriffinPushing] = useState(false);
+
+
   // Connection indicators
   const [aircraftCount, setAircraftCount] = useState(null);
   const [personnelCount, setPersonnelCount] = useState(null);
@@ -59,9 +63,71 @@ export default function Assets() {
   const [personnelDraft, setPersonnelDraft] = useState({});
 
 
+
   // Scenario UI state
   const [scenarioApplyingId, setScenarioApplyingId] = useState(null);
   const [reverting, setReverting] = useState(false);
+
+  const [griffinSyncing, setGriffinSyncing] = useState(false);
+
+  const handlePushGriffin = async () => {
+    const last = localStorage.getItem('milds_last_uic_griffin') || 'WDDRA0';
+    const uic = window.prompt('Enter unit UIC to push to Griffin (e.g., WDDRA0):', last);
+    if (!uic) return;
+
+    try {
+      setGriffinPushing(true);
+      setApiError(null);
+
+      const clean = uic.trim();
+      localStorage.setItem('milds_last_uic_griffin', clean);
+
+      await client.get('/api/csrf/'); // keep consistent with your other flows
+      const result = await pushAircraft(clean);
+
+      // Refresh local table after push (optional but nice)
+      const a = await listAircraft();
+      const items = Array.isArray(a) ? a : (a?.results ?? []);
+      setAircraftRows(items);
+      setAircraftCount(items.length);
+
+      if (result?.failed > 0) {
+        setApiError(`Pushed ${result.pushed}, failed ${result.failed}. See console for details.`);
+        console.warn("Push Griffin failures:", result.failures);
+      }
+    } catch (e) {
+      console.error(e);
+      setApiError(e?.response?.data?.error || e?.message || 'Failed to push to Griffin');
+    } finally {
+      setGriffinPushing(false);
+    }
+  };
+
+
+  const handleReceiveGriffin = async () => {
+    const last = localStorage.getItem('milds_last_uic_griffin') || 'WDDRA0';
+    const uic = window.prompt('Enter unit UIC to pull from Griffin (e.g., WDDRA0):', last);
+    if (!uic) return;
+
+    try {
+      setGriffinSyncing(true);
+      setApiError(null);
+      const clean = uic.trim();
+      localStorage.setItem('milds_last_uic_griffin', clean);
+
+      await syncAircraft(clean);     // calls Griffin → updates local DB :contentReference[oaicite:6]{index=6}
+      const a = await listAircraft(); // refresh table
+      const items = Array.isArray(a) ? a : (a?.results ?? []);
+      setAircraftRows(items);
+      setAircraftCount(items.length);
+    } catch (e) {
+      console.error(e);
+      setApiError(e?.response?.data?.detail || e?.response?.data?.error || e?.message || 'Failed to receive from Griffin');
+    } finally {
+      setGriffinSyncing(false);
+    }
+  };
+
 
   const [amapSyncing, setAmapSyncing] = useState(false);
 
@@ -574,6 +640,25 @@ export default function Assets() {
                 value={aircraftSearch}
                 onChange={(e) => setAircraftSearch(e.target.value)}
               />
+
+
+              <button
+                className="btn"
+                onClick={handleReceiveGriffin}
+                disabled={griffinSyncing}
+                style={{ marginLeft: '8px' }}
+              >
+                {griffinSyncing ? 'Receiving…' : 'Pull From Griffin'}
+              </button>
+
+              <button
+                className="btn btn-secondary"
+                onClick={handlePushGriffin}
+                disabled={griffinPushing}
+                style={{ marginLeft: '8px' }}
+              >
+                {griffinPushing ? 'Pushing…' : 'Update Griffin'}
+              </button>
             </div>
 
             <div className="table-wrap">
@@ -763,7 +848,7 @@ export default function Assets() {
                 style={{ flex: 1 }}
               />
               <Button onClick={handleReceiveAMAP} disabled={amapSyncing}>
-                {amapSyncing ? 'Receiving…' : 'Receive AMAP'}
+                {amapSyncing ? 'Receiving…' : 'Pull From AMAP'}
               </Button>
               <Button variant="secondary">Update AMAP</Button>
             </div>
