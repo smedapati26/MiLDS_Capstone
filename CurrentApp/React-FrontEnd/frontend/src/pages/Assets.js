@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import client from '../api/client';
 import { listAircraft, updateAircraft, syncAircraft, injectAircraftNMC } from '../api/aircraft';
-import { listPersonnel, updatePersonnel, syncPersonnel } from '../api/personnel';
-import { listScenarios } from '../api/scenarios';
+import { listPersonnel, updatePersonnel, syncPersonnel, injectPersonnelUpdate } from '../api/personnel';
+import { listScenarios, listScenarioRuns, getScenarioRunLogs } from '../api/scenarios';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -38,6 +38,12 @@ export default function Assets() {
   const [aircraftSearch, setAircraftSearch] = useState('');
   const [personnelQuery, setPersonnelQuery] = useState('');
 
+  const [runRows, setRunRows] = useState([]);
+  const [selectedRunId, setSelectedRunId] = useState(null);
+  const [selectedRunLogs, setSelectedRunLogs] = useState([]);
+  const [loadingRunLogs, setLoadingRunLogs] = useState(false);
+
+
   // Connection indicators
   const [aircraftCount, setAircraftCount] = useState(null);
   const [personnelCount, setPersonnelCount] = useState(null);
@@ -57,6 +63,7 @@ export default function Assets() {
   // Draft values user is typing
   const [aircraftDraft, setAircraftDraft] = useState({});
   const [personnelDraft, setPersonnelDraft] = useState({});
+
 
 
   // Scenario UI state
@@ -101,11 +108,10 @@ export default function Assets() {
     }
   };
 
-  const handleReceiveGriffin = async () => {
-    // Pull last used UIC if present
-    const last = localStorage.getItem('milds_last_uic') || 'WDDRA0';
-    const uic = window.prompt('Enter unit UIC to pull from Griffin (e.g., WDDRA0):', last);
 
+  const handleReceiveGriffin = async () => {
+    const last = localStorage.getItem('milds_last_uic_griffin') || 'WDDRA0';
+    const uic = window.prompt('Enter unit UIC to pull from Griffin (e.g., WDDRA0):', last);
     if (!uic) return;
 
     try {
@@ -113,27 +119,20 @@ export default function Assets() {
       setApiError(null);
 
       const clean = uic.trim();
-      localStorage.setItem('milds_last_uic', clean);
+      localStorage.setItem('milds_last_uic_griffin', clean);
 
-      // Call Backend Sync (Griffin -> local DB)
-      const result = await syncAircraft(clean);
-      console.log('Sync Result:', result);
-
-      // Refresh local table to show new aircraft
+      await syncAircraft(clean);
       const a = await listAircraft();
-      const items = Array.isArray(a) ? a : a?.results ?? [];
+      const items = Array.isArray(a) ? a : (a?.results ?? []);
       setAircraftRows(items);
       setAircraftCount(items.length);
-      
-      alert(`Sync Complete! ${result.message || 'Aircraft updated.'}`);
-
     } catch (e) {
       console.error(e);
       setApiError(
-        e?.response?.data?.error ||
         e?.response?.data?.detail ||
+        e?.response?.data?.error ||
         e?.message ||
-        'Failed to receive Griffin data'
+        'Failed to receive from Griffin'
       );
     } finally {
       setGriffinSyncing(false);
@@ -147,6 +146,25 @@ export default function Assets() {
   useEffect(() => {
     console.log('[aircraftRows changed]', aircraftRows.length);
   }, [aircraftRows]);
+
+  useEffect(() => {
+    if (active !== 'scenarios') return;
+
+    (async () => {
+      try {
+        const runs = await listScenarioRuns(50);
+        setRunRows(Array.isArray(runs) ? runs : []);
+      } catch (e) {
+        console.error(e);
+        setApiError(
+          e?.response?.data?.detail ||
+          e?.message ||
+          'Failed to load scenario runs'
+        );
+      }
+    })();
+  }, [active]);
+
 
   useEffect(() => {
     let mounted = true;
@@ -346,29 +364,80 @@ export default function Assets() {
   };
 
   const savePersonnel = async (row) => {
+    const id = row.user_id; // Soldier PK
+
+    // compute diffs (only push what changed)
+    const changes = [];
+
+    const nextRank = (personnelDraft.rank ?? '').trim();
+    const nextMos = (personnelDraft.primary_mos ?? '').trim();
+    const nextUnit = (personnelDraft.current_unit ?? '').trim();
+    const nextMaint = !!personnelDraft.is_maintainer;
+
+    if ((row.rank ?? '') !== nextRank) changes.push({ field: 'rank', value: nextRank });
+    if ((row.primary_mos ?? '') !== nextMos) changes.push({ field: 'primary_mos', value: nextMos });
+    if ((row.current_unit ?? '') !== nextUnit) changes.push({ field: 'current_unit', value: nextUnit });
+
+    // backend endpoint expects value as string; send "true"/"false"
+    if (!!row.is_maintainer !== nextMaint) changes.push({ field: 'is_maintainer', value: String(nextMaint) });
+
+    if (changes.length === 0) {
+      // nothing changed; just exit edit mode
+      setEditingPersonnelId(null);
+      setPersonnelDraft({});
+      return;
+    }
+
     try {
-      const id = row.user_id; // Soldier PK 
+      setApiError(null);
 
-      const payload = {
-        rank: personnelDraft.rank,
-        primary_mos: personnelDraft.primary_mos,
-        current_unit: personnelDraft.current_unit,
-        is_maintainer: !!personnelDraft.is_maintainer,
-      };
+      // keep your CSRF bootstrap pattern consistent (you already do this elsewhere)
+      await client.get('/api/csrf/');
 
-      const updated = await updatePersonnel(id, payload);
-
-      setPersonnelRows((prev) =>
-        prev.map((r) => (r.user_id === row.user_id ? { ...r, ...updated } : r))
+      // 1) Push to AMAP via your Ninja endpoint (also updates local Soldier in that view)
+      // POST /api/personnel/inject/update?user_id=...&field=...&value=...
+      await Promise.all(
+        changes.map((c) => injectPersonnelUpdate(id, c.field, c.value))
       );
 
+      // 2) Refresh table from local DB after inject(s)
+      const p = await listPersonnel();
+      const items = Array.isArray(p) ? p : p?.results ?? [];
+      setPersonnelRows(items);
+      setPersonnelCount(items.length);
+
+      // exit edit mode
       setEditingPersonnelId(null);
       setPersonnelDraft({});
     } catch (e) {
       console.error(e);
-      setApiError(e?.response?.data?.detail || 'Failed to save personnel changes');
+
+      // Optional fallback: still save locally if AMAP fails (so user doesn’t lose work)
+      try {
+        const payload = {
+          rank: nextRank,
+          primary_mos: nextMos,
+          current_unit: nextUnit,
+          is_maintainer: nextMaint,
+        };
+        const updated = await updatePersonnel(id, payload);
+        setPersonnelRows((prev) =>
+          prev.map((r) => (r.user_id === id ? { ...r, ...updated } : r))
+        );
+      } catch (e2) {
+        console.error(e2);
+      }
+
+      setApiError(
+        e?.response?.data?.details?.error ||
+        e?.response?.data?.error ||
+        e?.response?.data?.detail ||
+        e?.message ||
+        'AMAP update failed'
+      );
     }
   };
+
 
 
 
@@ -479,6 +548,9 @@ export default function Assets() {
         const items = Array.isArray(raw) ? raw : raw?.results ?? [];
         setAircraftRows(items);
         setAircraftCount(items.length);
+        const runs = await listScenarioRuns(50);
+        setRunRows(Array.isArray(runs) ? runs : []);
+
       }
 
       if (p.status === 'fulfilled') {
@@ -486,6 +558,9 @@ export default function Assets() {
         const items = Array.isArray(raw) ? raw : raw?.results ?? [];
         setPersonnelRows(items);
         setPersonnelCount(items.length);
+        const runs = await listScenarioRuns(50);
+        setRunRows(Array.isArray(runs) ? runs : []);
+
       }
     } catch (e) {
       console.error(e);
@@ -586,7 +661,7 @@ export default function Assets() {
                 onChange={(e) => setAircraftSearch(e.target.value)}
                 style={{ flex: 1 }} // Add flex: 1 so it takes available space
               />
-              {/* NEW BUTTON */}
+
               <Button onClick={handleReceiveGriffin} disabled={griffinSyncing}>
                 {griffinSyncing ? 'Receiving…' : 'Receive Griffin'}
               </Button>
@@ -796,7 +871,7 @@ export default function Assets() {
                 style={{ flex: 1 }}
               />
               <Button onClick={handleReceiveAMAP} disabled={amapSyncing}>
-                {amapSyncing ? 'Receiving…' : 'Receive AMAP'}
+                {amapSyncing ? 'Receiving…' : 'Pull From AMAP'}
               </Button>
               <Button variant="secondary">Update AMAP</Button>
             </div>
@@ -940,51 +1015,105 @@ export default function Assets() {
         )}
 
         {active === 'scenarios' && (
-          <>
-            <SectionHead
-              title="Custom Scenarios"
-              toolbar={ScenariosToolbar}
-              status={
-                scenarioCount !== null ? (
-                  <Chip>{scenarioCount} scenarios</Chip>
+        <>
+          <SectionHead
+            title="Custom Scenarios"
+            toolbar={ScenariosToolbar}
+            status={
+              scenarioCount !== null ? <Chip>{scenarioCount} scenarios</Chip> : <Chip>Loading…</Chip>
+            }
+          />
+
+          {/* Scenarios table */}
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Events</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scenarioRows.length === 0 ? (
+                  <tr>
+                    <td className="empty" colSpan={5}>No scenarios defined yet.</td>
+                  </tr>
                 ) : (
-                  <Chip>Loading…</Chip>
-                )
-              }
-            />
+                  scenarioRows.map((sc) => (
+                    <tr key={sc.id}>
+                      <td>{sc.name}</td>
+                      <td>{sc.description}</td>
+                      <td>{sc.event_count}</td>
+                      <td>{new Date(sc.created_at).toLocaleString()}</td>
+                      <td>
+                        <Button
+                          onClick={() => handleApplyScenario(sc.id)}
+                          disabled={scenarioApplyingId === sc.id}
+                        >
+                          {scenarioApplyingId === sc.id ? 'Applying…' : 'Apply'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Runs section */}
+          <div style={{ marginTop: 18 }}>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>Recent Scenario Runs</h2>
+
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Events</th>
-                    <th>Created</th>
+                    <th>Run ID</th>
+                    <th>Scenario</th>
+                    <th>Started</th>
+                    <th>Applied</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {scenarioRows.length === 0 ? (
+                  {runRows.length === 0 ? (
                     <tr>
-                      <td className="empty" colSpan={5}>
-                        No scenarios defined yet.
-                      </td>
+                      <td className="empty" colSpan={5}>No runs yet.</td>
                     </tr>
                   ) : (
-                    scenarioRows.map((sc) => (
-                      <tr key={sc.id}>
-                        <td>{sc.name}</td>
-                        <td>{sc.description}</td>
-                        <td>{sc.event_count}</td>
-                        <td>{new Date(sc.created_at).toLocaleString()}</td>
+                    runRows.map((r) => (
+                      <tr key={r.id}>
+                        <td>{r.id}</td>
+                        <td>{r.scenario_name ?? r.scenario_id}</td>
+                        <td>{r.started_at ? new Date(r.started_at).toLocaleString() : '—'}</td>
+                        <td>{r.applied_events}/{r.total_events}</td>
                         <td>
                           <Button
-                            onClick={() => handleApplyScenario(sc.id)}
-                            disabled={scenarioApplyingId === sc.id}
+                            variant="secondary"
+                            onClick={async () => {
+                              setSelectedRunId(r.id);
+                              setLoadingRunLogs(true);
+                              try {
+                                const logs = await getScenarioRunLogs(r.id);
+                                setSelectedRunLogs(logs);
+                              } finally {
+                                setLoadingRunLogs(false);
+                              }
+                            }}
                           >
-                            {scenarioApplyingId === sc.id
-                              ? 'Applying…'
-                              : 'Apply'}
+                            View log
+                          </Button>
+
+                          {/* NOTE: This endpoint probably doesn't exist yet unless you added it */}
+                          <Button
+                            variant="secondary"
+                            style={{ marginLeft: 8 }}
+                            onClick={() => client.post(`/api/scenario-runs/${r.id}/revert/`)}
+                          >
+                            Revert this run
                           </Button>
                         </td>
                       </tr>
@@ -993,8 +1122,50 @@ export default function Assets() {
                 </tbody>
               </table>
             </div>
-          </>
-        )}
+
+            {/* Selected run log */}
+            {selectedRunId && (
+              <div style={{ marginTop: 12 }}>
+                <h3 style={{ fontSize: 15, marginBottom: 6 }}>
+                  Run {selectedRunId} log
+                </h3>
+
+                {loadingRunLogs ? (
+                  <div>Loading…</div>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Aircraft</th>
+                          <th>Message</th>
+                          <th>Changed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedRunLogs.length === 0 ? (
+                          <tr>
+                            <td className="empty" colSpan={3}>No log entries.</td>
+                          </tr>
+                        ) : (
+                          selectedRunLogs.map((log) => (
+                            <tr key={log.id}>
+                              <td>{log.aircraft_pk ?? '—'}</td>
+                              <td>{log.message}</td>
+                              <td>{Object.keys(log.changed || {}).join(', ') || '—'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
       </div>
     </main>
   );

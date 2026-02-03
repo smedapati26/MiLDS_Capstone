@@ -6,8 +6,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('back_end', '0011_remove_aircraft_id_alter_aircraft_aircraft_pk_and_more'),
+        ('back_end', '0013_aircraft_serial'),
     ]
+
 
     operations = [
         migrations.AddField(

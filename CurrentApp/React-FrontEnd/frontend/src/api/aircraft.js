@@ -20,14 +20,16 @@ export async function updateAircraft(id, payload) {
   return res.data;
 }
 
-// --- NEW INTEGRATION FUNCTIONS ---
+// --- GRIFFIN INTEGRATION ---
 
 // POST /api/aircraft/sync/{uic}
 export async function syncAircraft(uic) {
   const clean = String(uic || '').trim();
   if (!clean) throw new Error('UIC is required');
 
-  const res = await client.post(`/api/aircraft/sync/${encodeURIComponent(clean)}`);
+  const res = await client.post(
+    `/api/aircraft/sync/${encodeURIComponent(clean)}`
+  );
   return res.data;
 }
 

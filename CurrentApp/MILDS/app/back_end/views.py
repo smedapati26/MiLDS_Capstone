@@ -34,6 +34,10 @@ from django.http import JsonResponse, Http404
 import json
 from django.utils.dateparse import parse_date
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from .models import ScenarioRun, ScenarioRunLog
+
 # --- PATCHABLE fields we want editable from React ---
 AIRCRAFT_PATCHABLE = {"status", "rtl", "remarks", "date_down", "current_unit", "hours_to_phase"}
 PERSONNEL_PATCHABLE = {"rank", "primary_mos", "current_unit", "is_maintainer"}
@@ -1146,3 +1150,61 @@ def personnel_list(request):
     # simple test payload
     return JsonResponse([{"id": 1, "name": "CPT Jane Doe", "rank": "O-3"}], safe=False)
 '''
+
+@require_http_methods(["GET"])
+def scenario_runs_api_list(request):
+    """
+    Returns recent scenario runs so frontend can display history.
+    GET /api/scenario-runs/?limit=50
+    """
+    try:
+        limit = int(request.GET.get("limit", 50))
+    except ValueError:
+        limit = 50
+    limit = max(1, min(limit, 200))
+
+    runs = (
+        ScenarioRun.objects
+        .select_related("scenario")
+        .order_by("-started_at", "-id")[:limit]
+    )
+
+    data = [
+        {
+            "id": r.id,
+            "scenario_id": r.scenario_id,
+            "scenario_name": r.scenario.name if r.scenario_id else None,
+            "started_at": r.started_at.isoformat() if r.started_at else None,
+            "applied_events": r.applied_events,
+            "total_events": r.total_events,
+        }
+        for r in runs
+    ]
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+
+
+@require_http_methods(["GET"])
+def scenario_run_logs_api(request, run_id: int):
+    """
+    Returns the logs for a specific run.
+    GET /api/scenario-runs/<run_id>/logs/
+    """
+    logs = (
+        ScenarioRunLog.objects
+        .filter(run_id=run_id)
+        .order_by("id")
+    )
+
+    data = [
+        {
+            "id": log.id,
+            "aircraft_pk": log.aircraft_pk,
+            "message": log.message,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+            "changed": log.changed or {},   # dict of field -> {old,new} :contentReference[oaicite:5]{index=5}
+            "before": log.before or {},
+            "after": log.after or {},
+        }
+        for log in logs
+    ]
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
