@@ -46,7 +46,7 @@ def sync_aircraft(request, uic: str):
         # Only set aircraft_pk the FIRST time we see this serial
         if created:
             obj.aircraft_pk = abs(hash(serial)) % 1_000_000_000
-            obj.save(update_fields=["aircraft_pk"])
+            obj.save()
 
         synced_count += 1
 
@@ -71,19 +71,19 @@ def inject_aircraft_change(request, aircraft_pk: str, field: str, value: str):
 
 # --- 3. SCENARIO SPECIFIC INJECTS ---
 @router.post("/inject/nmc")
-def inject_nmc_status(request, aircraft_pk: str):
+def inject_nmc_status(request, aircraft_pk: int):
+    plane = get_object_or_404(Aircraft, aircraft_pk=aircraft_pk)
+
     client = GriffinClient()
-    
-    payload = {"status": "NMC"}
-    result = client.inject_aircraft_update(aircraft_pk, payload)
-    
-    if result["success"]:
-        plane = get_object_or_404(Aircraft, aircraft_pk=aircraft_pk)
-        plane.status = "NMC"
-        plane.save()
-        return {"message": f"Aircraft {aircraft_pk} marked as NMC."}
-    
-    return {"error": "NMC Injection Failed", "details": result}
+    result = client.inject_aircraft_update(plane.serial, {"status": "NMC"})
+
+    if not result.get("success"):
+        return {"error": "NMC Injection Failed", "details": result}
+
+    plane.status = "NMC"
+    plane.save(update_fields=["status"])
+
+    return {"message": f"Aircraft {plane.serial} marked as NMC."}
 
 # --- 4. LIST AIRCRAFT ---
 @router.get("")

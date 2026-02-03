@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('back_end', '0013_aircraft_serial'),
+        ('back_end', '0012_aircraft_serial'),
     ]
 
 
