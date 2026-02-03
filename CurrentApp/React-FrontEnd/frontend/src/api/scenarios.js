@@ -11,3 +11,13 @@ export async function createScenario(payload) {
   const resp = await client.post("/api/scenarios/", payload);
   return resp.data;
 }
+
+export async function listScenarioRuns(limit = 50) {
+  const { data } = await client.get('/api/scenario-runs/', { params: { limit } });
+  return data;
+}
+
+export async function getScenarioRunLogs(runId) {
+  const { data } = await client.get(`/api/scenario-runs/${runId}/logs/`);
+  return data;
+}

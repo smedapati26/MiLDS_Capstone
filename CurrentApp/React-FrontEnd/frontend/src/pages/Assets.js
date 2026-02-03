@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import client from '../api/client';
 import { listAircraft, updateAircraft, syncAircraft, pushAircraft } from '../api/aircraft';
 import { listPersonnel, updatePersonnel, syncPersonnel, injectPersonnelUpdate } from '../api/personnel';
-import { listScenarios } from '../api/scenarios';
+
 
 import { useNavigate } from 'react-router-dom';
+import { listScenarios, listScenarioRuns, getScenarioRunLogs } from '../api/scenarios';
 
 
 export default function Assets() {
@@ -40,6 +41,12 @@ export default function Assets() {
   const [personnelQuery, setPersonnelQuery] = useState('');
 
   const [griffinPushing, setGriffinPushing] = useState(false);
+
+  const [runRows, setRunRows] = useState([]);
+  const [runCount, setRunCount] = useState(null);
+  const [selectedRunId, setSelectedRunId] = useState(null);
+  const [selectedRunLogs, setSelectedRunLogs] = useState([]);
+  const [loadingRunLogs, setLoadingRunLogs] = useState(false);
 
 
   // Connection indicators
@@ -165,6 +172,21 @@ export default function Assets() {
       setAmapSyncing(false);
     }
   };
+
+  
+  useEffect(() => {
+    if (active !== 'scenarios') return;
+
+    (async () => {
+      try {
+        const runs = await listScenarioRuns(50);
+        setRunRows(Array.isArray(runs) ? runs : []);
+      } catch (e) {
+        console.error(e);
+        setApiError(e?.response?.data?.detail || e?.message || 'Failed to load scenario runs');
+      }
+    })();
+  }, [active]);
 
 
 
@@ -534,6 +556,9 @@ export default function Assets() {
         const items = Array.isArray(raw) ? raw : raw?.results ?? [];
         setAircraftRows(items);
         setAircraftCount(items.length);
+        const runs = await listScenarioRuns(50);
+        setRunRows(Array.isArray(runs) ? runs : []);
+
       }
 
       if (p.status === 'fulfilled') {
@@ -541,6 +566,9 @@ export default function Assets() {
         const items = Array.isArray(raw) ? raw : raw?.results ?? [];
         setPersonnelRows(items);
         setPersonnelCount(items.length);
+        const runs = await listScenarioRuns(50);
+        setRunRows(Array.isArray(runs) ? runs : []);
+
       }
     } catch (e) {
       console.error(e);
@@ -992,51 +1020,105 @@ export default function Assets() {
         )}
 
         {active === 'scenarios' && (
-          <>
-            <SectionHead
-              title="Custom Scenarios"
-              toolbar={ScenariosToolbar}
-              status={
-                scenarioCount !== null ? (
-                  <Chip>{scenarioCount} scenarios</Chip>
+        <>
+          <SectionHead
+            title="Custom Scenarios"
+            toolbar={ScenariosToolbar}
+            status={
+              scenarioCount !== null ? <Chip>{scenarioCount} scenarios</Chip> : <Chip>Loading…</Chip>
+            }
+          />
+
+          {/* Scenarios table */}
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Description</th>
+                  <th>Events</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scenarioRows.length === 0 ? (
+                  <tr>
+                    <td className="empty" colSpan={5}>No scenarios defined yet.</td>
+                  </tr>
                 ) : (
-                  <Chip>Loading…</Chip>
-                )
-              }
-            />
+                  scenarioRows.map((sc) => (
+                    <tr key={sc.id}>
+                      <td>{sc.name}</td>
+                      <td>{sc.description}</td>
+                      <td>{sc.event_count}</td>
+                      <td>{new Date(sc.created_at).toLocaleString()}</td>
+                      <td>
+                        <Button
+                          onClick={() => handleApplyScenario(sc.id)}
+                          disabled={scenarioApplyingId === sc.id}
+                        >
+                          {scenarioApplyingId === sc.id ? 'Applying…' : 'Apply'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Runs section */}
+          <div style={{ marginTop: 18 }}>
+            <h2 style={{ fontSize: 16, marginBottom: 8 }}>Recent Scenario Runs</h2>
+
             <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Events</th>
-                    <th>Created</th>
+                    <th>Run ID</th>
+                    <th>Scenario</th>
+                    <th>Started</th>
+                    <th>Applied</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {scenarioRows.length === 0 ? (
+                  {runRows.length === 0 ? (
                     <tr>
-                      <td className="empty" colSpan={5}>
-                        No scenarios defined yet.
-                      </td>
+                      <td className="empty" colSpan={5}>No runs yet.</td>
                     </tr>
                   ) : (
-                    scenarioRows.map((sc) => (
-                      <tr key={sc.id}>
-                        <td>{sc.name}</td>
-                        <td>{sc.description}</td>
-                        <td>{sc.event_count}</td>
-                        <td>{new Date(sc.created_at).toLocaleString()}</td>
+                    runRows.map((r) => (
+                      <tr key={r.id}>
+                        <td>{r.id}</td>
+                        <td>{r.scenario_name ?? r.scenario_id}</td>
+                        <td>{r.started_at ? new Date(r.started_at).toLocaleString() : '—'}</td>
+                        <td>{r.applied_events}/{r.total_events}</td>
                         <td>
                           <Button
-                            onClick={() => handleApplyScenario(sc.id)}
-                            disabled={scenarioApplyingId === sc.id}
+                            variant="secondary"
+                            onClick={async () => {
+                              setSelectedRunId(r.id);
+                              setLoadingRunLogs(true);
+                              try {
+                                const logs = await getScenarioRunLogs(r.id);
+                                setSelectedRunLogs(logs);
+                              } finally {
+                                setLoadingRunLogs(false);
+                              }
+                            }}
                           >
-                            {scenarioApplyingId === sc.id
-                              ? 'Applying…'
-                              : 'Apply'}
+                            View log
+                          </Button>
+
+                          {/* NOTE: This endpoint probably doesn't exist yet unless you added it */}
+                          <Button
+                            variant="secondary"
+                            style={{ marginLeft: 8 }}
+                            onClick={() => client.post(`/api/scenario-runs/${r.id}/revert/`)}
+                          >
+                            Revert this run
                           </Button>
                         </td>
                       </tr>
@@ -1045,8 +1127,50 @@ export default function Assets() {
                 </tbody>
               </table>
             </div>
-          </>
-        )}
+
+            {/* Selected run log */}
+            {selectedRunId && (
+              <div style={{ marginTop: 12 }}>
+                <h3 style={{ fontSize: 15, marginBottom: 6 }}>
+                  Run {selectedRunId} log
+                </h3>
+
+                {loadingRunLogs ? (
+                  <div>Loading…</div>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Aircraft</th>
+                          <th>Message</th>
+                          <th>Changed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedRunLogs.length === 0 ? (
+                          <tr>
+                            <td className="empty" colSpan={3}>No log entries.</td>
+                          </tr>
+                        ) : (
+                          selectedRunLogs.map((log) => (
+                            <tr key={log.id}>
+                              <td>{log.aircraft_pk ?? '—'}</td>
+                              <td>{log.message}</td>
+                              <td>{Object.keys(log.changed || {}).join(', ') || '—'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
       </div>
     </main>
   );
