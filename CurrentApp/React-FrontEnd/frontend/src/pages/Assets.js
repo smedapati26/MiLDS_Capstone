@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import client from '../api/client';
-import { listAircraft, updateAircraft } from '../api/aircraft';
+import { listAircraft, updateAircraft, syncAircraft, injectAircraftNMC } from '../api/aircraft';
 import { listPersonnel, updatePersonnel, syncPersonnel } from '../api/personnel';
 import { listScenarios } from '../api/scenarios';
 import { useNavigate } from 'react-router-dom';
@@ -64,6 +64,7 @@ export default function Assets() {
   const [reverting, setReverting] = useState(false);
 
   const [amapSyncing, setAmapSyncing] = useState(false);
+  const [griffinSyncing, setGriffinSyncing] = useState(false);
 
   const handleReceiveAMAP = async () => {
     // Pull last used UIC if present
@@ -100,7 +101,44 @@ export default function Assets() {
     }
   };
 
+  const handleReceiveGriffin = async () => {
+    // Pull last used UIC if present
+    const last = localStorage.getItem('milds_last_uic') || 'WDDRA0';
+    const uic = window.prompt('Enter unit UIC to pull from Griffin (e.g., WDDRA0):', last);
 
+    if (!uic) return;
+
+    try {
+      setGriffinSyncing(true);
+      setApiError(null);
+
+      const clean = uic.trim();
+      localStorage.setItem('milds_last_uic', clean);
+
+      // Call Backend Sync (Griffin -> local DB)
+      const result = await syncAircraft(clean);
+      console.log('Sync Result:', result);
+
+      // Refresh local table to show new aircraft
+      const a = await listAircraft();
+      const items = Array.isArray(a) ? a : a?.results ?? [];
+      setAircraftRows(items);
+      setAircraftCount(items.length);
+      
+      alert(`Sync Complete! ${result.message || 'Aircraft updated.'}`);
+
+    } catch (e) {
+      console.error(e);
+      setApiError(
+        e?.response?.data?.error ||
+        e?.response?.data?.detail ||
+        e?.message ||
+        'Failed to receive Griffin data'
+      );
+    } finally {
+      setGriffinSyncing(false);
+    }
+  };
 
   useEffect(() => {
     console.log('[editingAircraftId changed]', editingAircraftId);
@@ -283,6 +321,30 @@ export default function Assets() {
     }
   };
 
+  const handleInjectNMC = async (row) => {
+    if (!window.confirm(`Are you sure you want to mark ${row.serial} as NMC in Griffin?`)) {
+      return;
+    }
+
+    try {
+      setApiError(null);
+      
+      // Call Backend Inject (MiLDS -> Griffin -> MiLDS)
+      const result = await injectAircraftNMC(row.pk); // or row.aircraft_pk depending on your data
+      
+      alert(`Success! ${result.message}`);
+      
+      // Update local UI immediately without full reload
+      setAircraftRows((prev) =>
+        prev.map((r) => (r.pk === row.pk ? { ...r, status: 'NMC', remarks: 'EXERCISE: NMC Injection' } : r))
+      );
+
+    } catch (e) {
+      console.error(e);
+      alert('Injection Failed: ' + (e?.response?.data?.error || e.message));
+    }
+  };
+
   const savePersonnel = async (row) => {
     try {
       const id = row.user_id; // Soldier PK 
@@ -356,7 +418,7 @@ export default function Assets() {
 
   const filteredAircraft = normalizedSearch
     ? aircraftRows.filter((row) => {
-        const serial = String(row.aircraft_pk ?? row.pk ?? '').toLowerCase();
+        const serial = String(row.serial ?? '').toLowerCase();
         const model = (row.model_name ?? '').toLowerCase();
         const unit = (row.current_unit ?? '').toLowerCase();
         const status = (row.status ?? '').toLowerCase();
@@ -515,14 +577,26 @@ export default function Assets() {
               toolbar={null}
             />
 
-            <div className="toolbar" style={{ marginBottom: 8 }}>
+            <div className="toolbar" style={{ marginBottom: 8, gap: 8, display: 'flex' }}>
               <input
                 type="search"
                 placeholder="Search serial, model, unit, status, remarks..."
                 className="search-input"
                 value={aircraftSearch}
                 onChange={(e) => setAircraftSearch(e.target.value)}
+                style={{ flex: 1 }} // Add flex: 1 so it takes available space
               />
+              {/* NEW BUTTON */}
+              <Button onClick={handleReceiveGriffin} disabled={griffinSyncing}>
+                {griffinSyncing ? 'Receiving…' : 'Receive Griffin'}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => alert("Update Griffin is not implemented yet.")}
+              >
+                Update Griffin
+              </Button>
+
             </div>
 
             <div className="table-wrap">
@@ -556,7 +630,7 @@ export default function Assets() {
                       console.log('[render row]', row.pk, 'editingAircraftId=', editingAircraftId, 'isEditing=', isEditing);
                       return (
                       <tr key={row.pk}>
-                        <td>{row.aircraft_pk ?? row.pk}</td>
+                        <td>{row.serial ?? row.aircraft_pk}</td>
                         <td>{row.model_name ?? '—'}</td>
 
                         {/* Status */}
@@ -675,9 +749,19 @@ export default function Assets() {
                               </Button>
                             </div>
                           ) : (
-                            <Button variant="secondary" onClick={() => startEditAircraft(row)}>
-                              Edit
-                            </Button>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <Button variant="secondary" onClick={() => startEditAircraft(row)}>
+                                Edit
+                              </Button>
+                              {/* NEW INJECT BUTTON */}
+                              <Button 
+                                variant="secondary" 
+                                onClick={() => handleInjectNMC(row)}
+                                style={{ borderColor: 'red', color: 'red' }}
+                              >
+                                Break
+                              </Button>
+                            </div>
                           )}
                         </td>
                       </tr>

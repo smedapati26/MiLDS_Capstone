@@ -1,4 +1,3 @@
-
 # MILDS/app/back_end/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import AircraftForm
@@ -619,6 +618,7 @@ def aircraft_list(_request):
         Aircraft.objects.order_by("pk").values(
             "pk",
             "aircraft_pk",
+            "serial",              # <-- ADD THIS
             "model_name",
             "status",
             "rtl",
@@ -630,7 +630,6 @@ def aircraft_list(_request):
         )
     )
     return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
-
 
 @csrf_exempt
 @require_http_methods(["GET", "PATCH"])

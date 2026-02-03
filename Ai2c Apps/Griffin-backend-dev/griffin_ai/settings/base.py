@@ -180,3 +180,15 @@ CONTENT_SECURITY_POLICY = {
 CSP_INCLUDE_NONCE_IN = ["default-src", "script-src", "fonts-src", "style-src"]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
+
+# --- LOCAL DEVELOPMENT OVERRIDES ---
+DEBUG = True
+ALLOWED_HOSTS = ["*"]
+
+# --- DATABASE CONFIGURATION ---
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}

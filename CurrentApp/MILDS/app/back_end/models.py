@@ -5,7 +5,7 @@ from django.db import models
 class Aircraft(models.Model):
 
     aircraft_pk = models.IntegerField(primary_key=True, unique=True, db_index=True)
-
+    serial       = models.CharField(max_length=20, unique=True, db_index=True)
     model_name   = models.CharField(max_length=100, default="Unknown Model")
     status       = models.CharField(max_length=50,  default="NMC")
     rtl          = models.CharField(max_length=50,  default="NRTL")
