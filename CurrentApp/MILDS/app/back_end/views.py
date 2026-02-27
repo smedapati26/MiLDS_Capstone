@@ -1,3 +1,4 @@
+
 # MILDS/app/back_end/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import AircraftForm
@@ -990,7 +991,7 @@ def scenarios_api_list(request):
         ]
         return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
 
-    # -------- POST: create scenario + events --------
+    # -------- POST: create aircraft-only scenario + events --------
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
@@ -1013,12 +1014,6 @@ def scenarios_api_list(request):
         except Exception:
             return None
 
-    def _coerce_user_id(v):
-        if v is None:
-            return None
-        v = str(v).strip()
-        return v or None
-
     created_event_ids = []
 
     with transaction.atomic():
@@ -1031,24 +1026,16 @@ def scenarios_api_list(request):
             if not isinstance(ev, dict):
                 return JsonResponse({"detail": f"Event {idx} must be an object."}, status=400)
 
-            target = (ev.get("target") or "").strip().lower()
+            target = (ev.get("target") or "aircraft").strip().lower()
+            if target != "aircraft":
+                return JsonResponse({"detail": f"Event {idx}: only aircraft events are supported."}, status=400)
+
+            if ev.get("user_id") not in (None, ""):
+                return JsonResponse({"detail": f"Event {idx}: user_id is not supported for scenarios."}, status=400)
+
             aircraft_pk = _coerce_aircraft_pk(ev.get("aircraft_pk"))
-            user_id = _coerce_user_id(ev.get("user_id"))
-
-            # Enforce exactly one target object
-            if target not in ("aircraft", "personnel"):
-                return JsonResponse({"detail": f"Event {idx}: target must be 'aircraft' or 'personnel'."}, status=400)
-
-            if target == "aircraft":
-                if not aircraft_pk:
-                    return JsonResponse({"detail": f"Event {idx}: aircraft_pk required for aircraft events."}, status=400)
-                if user_id:
-                    return JsonResponse({"detail": f"Event {idx}: do not include user_id for aircraft events."}, status=400)
-            else:
-                if not user_id:
-                    return JsonResponse({"detail": f"Event {idx}: user_id required for personnel events."}, status=400)
-                if aircraft_pk:
-                    return JsonResponse({"detail": f"Event {idx}: do not include aircraft_pk for personnel events."}, status=400)
+            if not aircraft_pk:
+                return JsonResponse({"detail": f"Event {idx}: aircraft_pk is required."}, status=400)
 
             status = (ev.get("status") or "").strip()
             rtl = (ev.get("rtl") or "").strip()
@@ -1060,49 +1047,35 @@ def scenarios_api_list(request):
             date_down_raw = ev.get("date_down")
             date_down = None
             if date_down_raw:
-                # accept "YYYY-MM-DD" (frontend date input)
                 date_down = parse_date(str(date_down_raw))
                 if date_down is None:
                     return JsonResponse({"detail": f"Event {idx}: date_down must be YYYY-MM-DD."}, status=400)
 
-            # Must change at least one field
             if not status and not rtl and not remarks.strip() and not date_down:
                 return JsonResponse(
                     {"detail": f"Event {idx}: must set at least one of status, rtl, remarks, date_down."},
-                    status=400
+                    status=400,
                 )
 
-            # Resolve FK targets
-            aircraft_obj = None
-            soldier_obj = None
-
-            if target == "aircraft":
-                aircraft_obj = Aircraft.objects.filter(aircraft_pk=aircraft_pk).first()
-                if not aircraft_obj:
-                    return JsonResponse({"detail": f"Event {idx}: aircraft_pk {aircraft_pk} not found."}, status=404)
-
-            if target == "personnel":
-                soldier_obj = Soldier.objects.filter(user_id=user_id).first()
-                if not soldier_obj:
-                    return JsonResponse({"detail": f"Event {idx}: user_id {user_id} not found."}, status=404)
+            aircraft_obj = Aircraft.objects.filter(aircraft_pk=aircraft_pk).first()
+            if not aircraft_obj:
+                return JsonResponse({"detail": f"Event {idx}: aircraft_pk {aircraft_pk} not found."}, status=404)
 
             try:
                 se = ScenarioEvent.objects.create(
                     scenario=sc,
                     aircraft=aircraft_obj,
-                    soldier=soldier_obj,
+                    soldier=None,
                     status=status,
                     rtl=rtl,
                     remarks=remarks,
                     date_down=date_down,
                 )
             except IntegrityError:
-                # Your model has unique constraints per (scenario, aircraft) and (scenario, soldier)
-                return JsonResponse({"detail": f"Event {idx}: duplicate target in this scenario."}, status=409)
+                return JsonResponse({"detail": f"Event {idx}: duplicate aircraft in this scenario."}, status=409)
 
             created_event_ids.append(se.id)
 
-    # Return the created scenario (enough for frontend to refresh list)
     return JsonResponse(
         {
             "id": sc.id,
@@ -1115,7 +1088,6 @@ def scenarios_api_list(request):
         status=201,
         json_dumps_params={"indent": 2},
     )
-
 
 
 def scenario_list(request):
