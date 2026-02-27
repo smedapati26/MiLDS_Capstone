@@ -67,6 +67,8 @@ def shiny_get_soldier_flags(request: HttpRequest, specific_soldier: str):
             flag_info = flag.tasking_flag_info
         elif flag.flag_type == SoldierFlagType.PROFILE:
             flag_info = flag.profile_flag_info
+        elif flag.flag_type == SoldierFlagType.SIMCASUALTY:
+            flag_info = flag.simcasualty_flag_info
 
         flag_return_data = {
             "id": flag.id,

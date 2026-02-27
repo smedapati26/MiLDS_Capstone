@@ -295,6 +295,8 @@ def get_unit_availability_details(request, uic: str, start_date: date, end_date:
                     flag_info = active_flag.tasking_flag_info
                 elif active_flag.flag_type == SoldierFlagType.PROFILE:
                     flag_info = active_flag.profile_flag_info
+                elif flag.flag_type == SoldierFlagType.SIMCASUALTY:
+                    flag_info = active_flag.simcasualty_flag_info
 
                 # Create flag details
                 flag_details = AvailabilityFlagDetails(
@@ -650,6 +652,8 @@ def get_unit_health_roster(request, uic: str, start_date: date, end_date: date) 
                 flag_info = active_flag.tasking_flag_info
             elif active_flag.flag_type == SoldierFlagType.PROFILE:
                 flag_info = active_flag.profile_flag_info
+            elif flag.flag_type == SoldierFlagType.SIMCASUALTY:
+                flag_info = active_flag.simcasualty_flag_info
 
             # Create flag details
             flag_details = AvailabilityFlagDetails(
