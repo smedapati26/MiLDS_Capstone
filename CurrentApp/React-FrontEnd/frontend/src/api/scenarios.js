@@ -34,3 +34,13 @@ export async function getScenarioRunLogs(runId) {
   const { data } = await client.get(`/api/scenario-runs/${runId}/logs/`);
   return data;
 }
+
+export async function previewRandomScenario(payload) {
+  const csrfToken = getCookie('csrftoken');
+
+  const resp = await client.post('/api/scenarios/randomize/preview/', payload, {
+    headers: { 'X-CSRFToken': csrfToken },
+  });
+
+  return resp.data; // { name, description, events, meta }
+}
