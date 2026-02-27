@@ -74,6 +74,7 @@ def shiny_create_soldier_flag(request: HttpRequest):
                 unit_position_flag_info=flag_data.get("unit_position_flag_info", None),
                 tasking_flag_info=flag_data.get("tasking_flag_info", None),
                 profile_flag_info=flag_data.get("profile_flag_info", None),
+                symcasualty_flag_info=flag_data.get("symcasualty_flag_info", None), 
                 mx_availability=flag_data.get("mx_availability"),
                 start_date=flag_data.get("start_date"),
                 end_date=flag_data.get("end_date", None),
