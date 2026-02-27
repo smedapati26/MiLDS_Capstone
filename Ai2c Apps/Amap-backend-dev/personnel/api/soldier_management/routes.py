@@ -69,6 +69,8 @@ def get_unit_flags(request: HttpRequest, uic: str):
             flag_info = flag.tasking_flag_info
         elif flag.flag_type == SoldierFlagType.PROFILE:
             flag_info = flag.profile_flag_info
+        elif flag.flag_type == SoldierFlagType.SIMCASUALTY:
+            flag_info = flag.simcasualty_flag_info
         else:
             flag_info = None
 
@@ -179,6 +181,9 @@ def get_soldier_active_flags(request: HttpRequest, soldier_id: str):
             flag_info = flag.tasking_flag_info
         elif flag.flag_type == SoldierFlagType.PROFILE:
             flag_info = flag.profile_flag_info
+        elif flag.flag_type == SoldierFlagType.SIMCASUALTY:
+            flag_info = flag.simcasualty_flag_info
+            
         else:
             flag_info = None
 

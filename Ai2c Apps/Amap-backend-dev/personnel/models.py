@@ -10,6 +10,7 @@ from personnel.model_utils import (
     Months,
     MxAvailability,
     ProfileFlagOptions,
+    SimCasualtyFlagOptions,
     Rank,
     SoldierFlagType,
     TaskingFlagOptions,
@@ -317,6 +318,9 @@ class SoldierFlag(models.Model):
     )
     profile_flag_info = models.CharField(
         "Profile Flag Info", max_length=30, null=True, blank=True, choices=ProfileFlagOptions.choices
+    )
+    simcasualty_flag_info = models.CharField(
+        "Simulate Casualty Info", max_length=30, null=True, blank=True, choices=SimCasualtyFlagOptions.choices
     )
     mx_availability = models.CharField(
         "Soldier Availability to conduct MX",

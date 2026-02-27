@@ -9,4 +9,5 @@ from .AdminFlagOptions import AdminFlagOptions
 from .UnitPositionFlagOptions import UnitPositionFlagOptions
 from .TaskingFlagOptions import TaskingFlagOptions
 from .ProfileFlagOptions import ProfileFlagOptions
+from .SimCasualtyFlagOptions import SimCasualtyFlagOptions
 from .MxAvailability import MxAvailability

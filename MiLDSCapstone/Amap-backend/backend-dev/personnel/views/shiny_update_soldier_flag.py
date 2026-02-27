@@ -12,6 +12,7 @@ from personnel.model_utils import (
     AdminFlagOptions,
     UnitPositionFlagOptions,
     MxAvailability,
+    SimCasualtyFlagOptions,
     TaskingFlagOptions,
     ProfileFlagOptions,
 )
@@ -73,6 +74,7 @@ def shiny_update_soldier_flag(request: HttpRequest):
             "tasking_flag_info",
             "profile_flag_info",
             "mx_availability",
+            "simcasualty_info"
             "start_date",
             "end_date",
             "flag_remarks",
@@ -127,6 +129,12 @@ def shiny_update_soldier_flag(request: HttpRequest):
             if not MxAvailability.has_value(mx_availability):
                 raise ValidationError(MxAvailability.has_value(mx_availability, return_error=True))
             flag.mx_availability = mx_availability
+            
+        simcasualty_flag_info = flag_data.get("simcasualty_flag_info", None)
+        if simcasualty_flag_info is not None:
+            if not SimCasualtyFlagOptions.has_value(simcasualty_flag_info):
+                raise ValidationError(SimCasualtyFlagOptions.has_value(simcasualty_flag_info, return_error=True))
+            flag.simcasualty_flag_info = simcasualty_flag_info
 
         start_date = flag_data.get("start_date", None)
         if start_date is not None:
@@ -162,6 +170,10 @@ def shiny_update_soldier_flag(request: HttpRequest):
             flag.unit_position_flag_info = None
             flag.tasking_flag_info = None
             flag.admin_flag_info = None
+        elif flag.flag_type == SoldierFlagType.SIMCASUALTY:
+            flag.unit_position_flag_info = None
+            flag.tasking_flag_info = None
+            flag.admin_flag_info = None
         elif flag.flag_type == SoldierFlagType.OTHER:
             flag.admin_flag_info = None
             flag.unit_position_flag_info = None
@@ -178,6 +190,7 @@ def shiny_update_soldier_flag(request: HttpRequest):
                 individual_flag.tasking_flag_info = flag.tasking_flag_info
                 individual_flag.profile_flag_info = flag.profile_flag_info
                 individual_flag.mx_availability = flag.mx_availability
+                individual_flag.simcasualty_flag_info= flag.simcasualty_flag_info
                 individual_flag.start_date = flag.start_date
                 individual_flag.end_date = flag.end_date
                 individual_flag.flag_remarks = flag.flag_remarks

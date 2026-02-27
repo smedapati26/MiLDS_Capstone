@@ -69,6 +69,7 @@ class SoldierFlagIn(Schema):
     unit_position_flag_info: Optional[str] = None
     tasking_flag_info: Optional[str] = None
     profile_flag_info: Optional[str] = None
+    simcasualty_flag_info: Optional[str] = None 
     mx_availability: str
     start_date: date
     end_date: Optional[date] = None
@@ -81,6 +82,7 @@ class SoldierFlagUpdateIn(Schema):
     unit_position_flag_info: Optional[str] = None
     tasking_flag_info: Optional[str] = None
     profile_flag_info: Optional[str] = None
+    simcasualty_flag_info: Optional[str] = None
     mx_availability: Optional[str] = None
     start_date: Optional[date] = None
     end_date: Optional[date] = None
