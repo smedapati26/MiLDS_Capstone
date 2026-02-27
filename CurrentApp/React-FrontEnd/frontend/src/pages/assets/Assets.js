@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import client from '../api/client';
-import { listAircraft, updateAircraft, syncAircraft, injectAircraftNMC } from '../api/aircraft';
-import { listPersonnel, updatePersonnel, syncPersonnel, injectPersonnelUpdate } from '../api/personnel';
-import { listScenarios, listScenarioRuns, getScenarioRunLogs } from '../api/scenarios';
+import client from '../../api/client';
+import { listAircraft, updateAircraft, syncAircraft, injectAircraftNMC } from '../../api/aircraft';
+import { listPersonnel, updatePersonnel, syncPersonnel, injectPersonnelUpdate } from '../../api/personnel';
+import { listScenarios, listScenarioRuns, getScenarioRunLogs } from '../../api/scenarios';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -412,7 +412,10 @@ export default function Assets() {
     } catch (e) {
       console.error(e);
 
-      // Optional fallback: still save locally if AMAP fails (so user doesn’t lose work)
+      // If AMAP fails, still save locally so the user does not lose work.
+      // If that local save succeeds, exit edit mode and do NOT leave the UI in an error state.
+      let savedLocally = false;
+
       try {
         const payload = {
           rank: nextRank,
@@ -424,17 +427,37 @@ export default function Assets() {
         setPersonnelRows((prev) =>
           prev.map((r) => (r.user_id === id ? { ...r, ...updated } : r))
         );
+
+        savedLocally = true;
+        setEditingPersonnelId(null);
+        setPersonnelDraft({});
+        setApiError(null);
+
+        window.alert(
+          'Personnel saved in MILDS, but the AMAP update failed. Your local data was saved.'
+        );
       } catch (e2) {
         console.error(e2);
+        setApiError(
+          e2?.response?.data?.detail ||
+          e2?.response?.data?.error ||
+          e?.response?.data?.details?.error ||
+          e?.response?.data?.error ||
+          e?.response?.data?.detail ||
+          e?.message ||
+          'Failed to save personnel changes'
+        );
       }
 
-      setApiError(
-        e?.response?.data?.details?.error ||
-        e?.response?.data?.error ||
-        e?.response?.data?.detail ||
-        e?.message ||
-        'AMAP update failed'
-      );
+      if (!savedLocally) {
+        setApiError(
+          e?.response?.data?.details?.error ||
+          e?.response?.data?.error ||
+          e?.response?.data?.detail ||
+          e?.message ||
+          'AMAP update failed'
+        );
+      }
     }
   };
 
