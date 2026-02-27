@@ -7,11 +7,24 @@ export async function listScenarios() {
 }
 
 
-export async function createScenario(payload) {
-  const resp = await client.post("/api/scenarios/", payload);
-  return resp.data;
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return '';
 }
 
+export async function createScenario(payload) {
+  const csrfToken = getCookie('csrftoken');
+
+  const resp = await client.post('/api/scenarios/', payload, {
+    headers: {
+      'X-CSRFToken': csrfToken,
+    },
+  });
+
+  return resp.data;
+}
 export async function listScenarioRuns(limit = 50) {
   const { data } = await client.get('/api/scenario-runs/', { params: { limit } });
   return data;
