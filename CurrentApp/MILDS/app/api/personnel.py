@@ -109,8 +109,7 @@ def inject_revoke_qualifications(request, user_id: str):
 from ninja import Router
 from app.api.amap_client import AmapClient
 from django.shortcuts import get_object_or_404
-from app.back_end.models import Soldier
-
+from app.back_end.models import Soldier, SoldierFlag, SimCasualtyFlagOptions
 router = Router()
 
 # --- 1. SYNC ---
@@ -189,27 +188,46 @@ def inject_personnel_change(request, user_id: str, field: str, value: str):
 
 # --- 3. SCENARIO SPECIFIC INJECTS (The "Workarounds") ---
 
-@router.post("/inject/casualty")
-def inject_casualty_status(request, user_id: str):
+@router.post("/inject/casualty/{user_id}", response={200: dict, 400: dict, 404: dict, 500: dict})
+def inject_casualty_status(request, user_id: str, casualty_type: str):
     """
-    Scenario: Soldier is a casualty.
-    Logic: Sets MOS to "None" so they vanish from maintenance availability.
+    Injects a casualty by creating a Flag in AMAP and setting the simulation state in MILDS.
     """
-    client = AmapClient()
-    
-    # HARDCODED LOGIC: We know 'None' string triggers the filter in AMAP
-    payload = {"primary_mos": "None"}
-    
-    result = client.inject_soldier_update(user_id, payload)
-    
-    if result["success"]:
-        soldier = get_object_or_404(Soldier, user_id=user_id)
-        soldier.primary_mos = None # Save as None locally
-        soldier.save()
-        return {"message": f"Soldier {user_id} marked as casualty (MOS removed)."}
-    
-    return {"error": "Casualty Injection Failed", "details": result}
+    # 1. Validate the casualty type
+    if not SimCasualtyFlagOptions.has_value(casualty_type):
+        valid_options = [choice[0] for choice in SimCasualtyFlagOptions.choices if choice[0] != "None"]
+        return 400, {"error": f"Invalid casualty type. Choose from: {valid_options}"}
 
+    # 2. Update AMAP (Create the Real-World Flag)
+    client = AmapClient()
+    amap_result = client.inject_casualty_flag(user_id, casualty_type)
+
+    if not amap_result.get("success"):
+        return 500, {"error": "Failed to flag soldier in AMAP.", "details": amap_result.get("error")}
+
+    # 3. Update MILDS (Local Simulation State)
+    local_soldier = Soldier.objects.filter(user_id=user_id).first()
+
+    if local_soldier:
+        # Flip the simulation status switch (No MOS changes!)
+        local_soldier.simulated_casualty = casualty_type
+        local_soldier.save()
+
+        # Optional: Mirror the flag locally so MILDS has a record of what it sent to AMAP
+        SoldierFlag.objects.create(
+            soldier=local_soldier,
+            start_date=date.today(),
+            flag_remarks=f"SIMULATION EVENT: {casualty_type}"
+        )
+        
+        return 200, {
+            "message": f"Casualty successfully injected. {local_soldier.last_name} flagged in AMAP and marked as {casualty_type} in MILDS.",
+            "amap_data": amap_result.get("data")
+        }
+    else:
+        return 404, {"error": "Flag created in AMAP, but soldier not found locally in MILDS."}
+
+# import your router/ninja setup here
 
 @router.post("/inject/revoke_quals")
 def inject_revoke_qualifications(request, user_id: str):
