@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 import { listAircraft } from '../api/aircraft';
-import { createScenario } from '../api/scenarios';
-
+import { createScenario, previewRandomScenario } from '../api/scenarios';
 
 function makeId() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -31,6 +30,9 @@ export default function NewScenario() {
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
+
+  const [numEvents, setNumEvents] = useState(5);
+  const [seed, setSeed] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -142,6 +144,48 @@ export default function NewScenario() {
     }
   };
 
+  const handleRandomizePreview = async () => {
+  // Require at least a name to keep behavior aligned with backend
+  if (!name.trim()) {
+    setErr('Scenario name is required before randomizing.');
+    return;
+  }
+
+  try {
+    setErr(null);
+    await client.get('/api/csrf/');
+
+    const previewReq = {
+      name: name.trim(),
+      description: description.trim(),
+      num_events: Number(numEvents) || 5,
+      seed: seed.trim() === '' ? null : Number(seed),
+      // aircraft-only for now; no unit filter unless you want to add it
+    };
+
+    const preview = await previewRandomScenario(previewReq);
+
+    // Convert preview.events -> your local event state shape (adds _id)
+    const nextEvents = (preview.events || []).map((ev) => ({
+      _id: makeId(),
+      aircraft_pk: String(ev.aircraft_pk ?? ''),
+      status: ev.status ?? '',
+      rtl: ev.rtl ?? '',
+      remarks: ev.remarks ?? '',
+      date_down: ev.date_down ?? '',
+    }));
+
+    setEvents(nextEvents.length ? nextEvents : [makeEmptyEvent()]);
+  } catch (e) {
+    console.error(e);
+    const msg =
+      e?.response?.data?.detail ||
+      e?.response?.data?.error ||
+      'Failed to generate random preview. Check backend logs.';
+    setErr(msg);
+  }
+};
+
   return (
     <main className="container" style={{ paddingTop: 16 }}>
       <div className="section-head">
@@ -152,6 +196,9 @@ export default function NewScenario() {
           </button>
           <button className="btn btn-primary" onClick={handleSave} disabled={loading}>
             Save Scenario
+          </button>
+          <button className="btn btn-secondary" onClick={handleRandomizePreview} disabled={loading}>
+            Randomize (Preview)
           </button>
         </div>
       </div>

@@ -1,43 +1,37 @@
-
 # MILDS/app/back_end/views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from .forms import AircraftForm
-from .models import Aircraft
-from .forms import SoldierForm
-from .models import Soldier
-from django.utils import timezone
-from datetime import timedelta
-import json
-from django.http import JsonResponse, HttpResponseBadRequest, HttpRequest
-from django.views.decorators.http import require_http_methods
-from django.utils.dateparse import parse_date
-from datetime import datetime, timedelta, timezone
-from django.http import HttpResponse
-from django.db import models
-from django.core.paginator import Paginator
-from django.db import transaction
-from django.utils import timezone
-from .models import Aircraft, Scenario, ScenarioEvent, ScenarioRun, ScenarioRunLog
-from django.contrib import messages
-from .models import Aircraft, ScenarioRun
-from datetime import datetime
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
-from django.views.decorators.http import require_http_methods
-from django.db import IntegrityError
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, Http404
-import json
-from django.utils.dateparse import parse_date
 
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from .models import ScenarioRun, ScenarioRunLog
+# Standard library
+import json
+import random
+from datetime import datetime, timedelta
+
+# Django core
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import (
+    JsonResponse,
+    HttpResponse,
+    HttpResponseBadRequest,
+    Http404,
+    HttpRequest,
+)
+from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.db import transaction, models, IntegrityError
+from django.core.paginator import Paginator
+from django.contrib import messages
+
+# Local app imports
+from .forms import AircraftForm, SoldierForm
+from .models import (
+    Aircraft,
+    Soldier,
+    Scenario,
+    ScenarioEvent,
+    ScenarioRun,
+    ScenarioRunLog,
+)
 
 # --- PATCHABLE fields we want editable from React ---
 AIRCRAFT_PATCHABLE = {"status", "rtl", "remarks", "date_down", "current_unit", "hours_to_phase"}
@@ -1180,3 +1174,101 @@ def scenario_run_logs_api(request, run_id: int):
         for log in logs
     ]
     return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+
+@require_http_methods(["POST"])
+def scenarios_api_randomize_preview(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    # Inputs
+    name = (payload.get("name") or "").strip()
+    description = (payload.get("description") or "").strip()
+    unit = (payload.get("unit") or "").strip()
+    seed = payload.get("seed", None)
+
+    try:
+        num_events = int(payload.get("num_events", 5))
+    except Exception:
+        return JsonResponse({"detail": "num_events must be an integer."}, status=400)
+    num_events = max(1, min(num_events, 50))
+
+    if not name:
+        return JsonResponse({"detail": "Scenario name is required."}, status=400)
+
+    rng = random.Random(seed)
+
+    # Candidate aircraft
+    qs = Aircraft.objects.all()
+    if unit:
+        qs = qs.filter(current_unit=unit)
+    aircraft_list = list(qs)
+
+    if not aircraft_list:
+        return JsonResponse({"detail": "No aircraft available for randomization."}, status=400)
+
+    if num_events > len(aircraft_list):
+        num_events = len(aircraft_list)
+
+    chosen = rng.sample(aircraft_list, k=num_events)
+
+    # Inject-style actions (aircraft-only)
+    STATUS_CHOICES = ["NMC"]     # tune later
+    RTL_CHOICES = ["NRTL"]       # tune later
+    REMARK_TEMPLATES = [
+        "Generated inject: maintenance issue",
+        "Generated inject: phase inspection required",
+        "Generated inject: system fault reported",
+    ]
+    today = timezone.localdate()
+
+    events = []
+    for ac in chosen:
+        # Pick some actions; guarantee at least one change
+        actions = []
+        if rng.random() < 0.70: actions.append("status")
+        if rng.random() < 0.50: actions.append("rtl")
+        if rng.random() < 0.40: actions.append("date_down")
+        if rng.random() < 0.40: actions.append("remarks")
+        if not actions: actions = ["status"]
+
+        ev = {
+            "target": "aircraft",
+            "aircraft_pk": str(ac.aircraft_pk),
+            "user_id": None,
+            "status": "",
+            "rtl": "",
+            "date_down": None,
+            "remarks": "",
+        }
+
+        if "status" in actions:
+            ev["status"] = rng.choice(STATUS_CHOICES)
+        if "rtl" in actions:
+            ev["rtl"] = rng.choice(RTL_CHOICES)
+        if "date_down" in actions:
+            ev["date_down"] = today.isoformat()
+        if "remarks" in actions:
+            # Must be non-empty for apply_scenario to apply it
+            ev["remarks"] = rng.choice(REMARK_TEMPLATES)
+
+        # Ensure it would pass your /api/scenarios/ validation:
+        if not ev["status"] and not ev["rtl"] and not (ev["remarks"] or "").strip() and not ev["date_down"]:
+            ev["status"] = "NMC"
+
+        events.append(ev)
+
+    return JsonResponse(
+        {
+            "name": name,
+            "description": description,
+            "events": events,
+            "meta": {
+                "seed": seed,
+                "unit": unit or None,
+                "num_events": num_events,
+            },
+        },
+        json_dumps_params={"indent": 2},
+    )
