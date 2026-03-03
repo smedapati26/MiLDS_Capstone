@@ -35,7 +35,7 @@ from .models import (
 
 # --- PATCHABLE fields we want editable from React ---
 AIRCRAFT_PATCHABLE = {"status", "rtl", "remarks", "date_down", "current_unit", "hours_to_phase"}
-PERSONNEL_PATCHABLE = {"rank", "primary_mos", "current_unit", "is_maintainer"}
+PERSONNEL_PATCHABLE = {"rank", "primary_mos", "current_unit", "is_maintainer", "simulated_casualty"}
 
 
 @ensure_csrf_cookie
@@ -206,6 +206,7 @@ def personnel_list(_request):
             "primary_mos",
             "current_unit",
             "is_maintainer",
+            "simulated_casualty"
         )
     )
     return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
@@ -767,6 +768,7 @@ def personnel_detail(request, pk: str):
             "primary_mos": s.primary_mos,
             "current_unit": s.current_unit,
             "is_maintainer": s.is_maintainer,
+            "simulated_casualty": s.simulated_casualty
         }
 
     if request.method == "GET":

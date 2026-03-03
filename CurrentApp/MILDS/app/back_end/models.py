@@ -80,7 +80,9 @@ class Soldier(models.Model):
         "Simulated Casualty Status", 
         max_length=30, 
         choices=SimCasualtyFlagOptions.choices, 
-        default=None
+        default=None,
+        null=True,
+        blank=True
     )
 
 class SoldierFlag(models.Model):
@@ -99,9 +101,6 @@ class SoldierFlag(models.Model):
         on_delete=models.CASCADE,
         related_name="soldier_flags",
         db_column="flag_soldier_id",
-    )
-    simcasualty_flag_info = models.CharField(
-        "Simulate Casualty Info", max_length=30, null=True, blank=True, choices=SimCasualtyFlagOptions.choices
     )
     start_date = models.DateField("Start Date of Flag")
     end_date = models.DateField("End Date of Flag", null=True, blank=True)

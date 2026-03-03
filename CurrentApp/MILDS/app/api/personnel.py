@@ -110,6 +110,7 @@ from ninja import Router
 from app.api.amap_client import AmapClient
 from django.shortcuts import get_object_or_404
 from app.back_end.models import Soldier, SoldierFlag, SimCasualtyFlagOptions
+from datetime import date
 router = Router()
 
 # --- 1. SYNC ---
