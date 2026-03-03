@@ -8,99 +8,91 @@ router = Router()
 # --- 1. SYNC ---
 @router.post("/sync/{uic}", response={200: dict, 500: dict})
 def sync_aircraft(request, uic: str):
+
     client = GriffinClient()
     result = client.sync_unit_data(uic)
 
-    if not result.get("success"):
-        print("SYNC FAILED")
+    if not result["success"]:
         return 500, result
 
-    data = result.get("data")
+    data = result.get("data", {})
+    raw_aircraft = data.get("aircraft", [])
 
-    aircraft_list = []
-    if isinstance(data, dict):
-        aircraft_list = data.get("aircraft", [])
+    print(f"DEBUG: Processing {len(raw_aircraft)} aircraft for unit {uic}")
 
-    synced_count = 0
+    for item in raw_aircraft:
+        serial = str(item.get("serial", "")).strip()
+        if not serial:
+            continue
 
-    for item in aircraft_list:
-
-        serial = item.get("serial")
-
-        obj, created = Aircraft.objects.update_or_create(
+        Aircraft.objects.update_or_create(
             serial=serial,
             defaults={
                 "model_name": item.get("model"),
                 "status": item.get("status"),
                 "rtl": item.get("rtl"),
-                "current_unit": item.get("current_unit"),
+                "current_unit": uic,
                 "total_airframe_hours": item.get("total_airframe_hours"),
+                "flight_hours": item.get("flight_hours"),
                 "hours_to_phase": item.get("hours_to_phase"),
                 "remarks": item.get("remarks"),
+                "date_down": item.get("date_down"),
+                "ecd": item.get("ecd"),
                 "last_sync_time": item.get("last_sync_time"),
                 "last_export_upload_time": item.get("last_export_upload_time"),
                 "last_update_time": item.get("last_update_time"),
             }
         )
 
-        # Only set aircraft_pk the FIRST time we see this serial
-        if created:
-            obj.aircraft_pk = abs(hash(serial)) % 1_000_000_000
-            obj.save()
-
-        synced_count += 1
-
-    return {"message": f"Synced {synced_count} aircraft."}
+    return {"message": f"Synced {len(raw_aircraft)} aircraft."}
 
 # --- 2. GENERIC UPDATE ---
 @router.post("/inject/update")
-def inject_aircraft_change(request, aircraft_pk: str, field: str, value: str):
-    client = GriffinClient()
+def inject_aircraft_change(request, serial: str, field: str, value: str):
+    """
+    Step 2: O.C. injects a simple change.
+    """
+    # Fetch local record first to get the serial (the translation step)
+    plane = get_object_or_404(Aircraft, serial=serial)
     
-    payload = {field: value}
-    result = client.inject_aircraft_update(aircraft_pk, payload)
+    client = GriffinClient()
+    payload = {field: value} 
+    
+    result = client.inject_aircraft_update(plane.serial, payload)
     
     if not result["success"]:
          return {"error": "Injection failed", "details": result.get("error")}
 
-    plane = get_object_or_404(Aircraft, aircraft_pk=aircraft_pk)
+    # Update Local MILDS System
     setattr(plane, field, value)
     plane.save()
 
     return {"message": f"Injection successful: {field} changed to {value}"}
 
 # --- 3. SCENARIO SPECIFIC INJECTS ---
+
 @router.post("/inject/nmc")
-def inject_nmc_status(request, aircraft_pk: int):
-    plane = get_object_or_404(Aircraft, aircraft_pk=aircraft_pk)
+def inject_nmc_status(request, serial: str):
+    print("QUERY PARAMS:", request.GET)
+    print("POST BODY:", request.body)
+    print("POST DATA:", request.POST)
 
+    return {"debug": "check terminal"}
+    
+    """
+    Scenario: Aircraft is Non-Mission Capable.
+    """
+    plane = get_object_or_404(Aircraft, serial=serial)
     client = GriffinClient()
-    result = client.inject_aircraft_update(plane.serial, {"status": "NMC"})
-
-    if not result.get("success"):
-        return {"error": "NMC Injection Failed", "details": result}
-
-    plane.status = "NMC"
-    plane.save(update_fields=["status"])
-
-    return {"message": f"Aircraft {plane.serial} marked as NMC."}
-
-# --- 4. LIST AIRCRAFT ---
-@router.get("")
-def list_aircraft(request):
-    print("===== LIST_AIRCRAFT HIT =====")
-
-    aircraft = Aircraft.objects.all().order_by("aircraft_pk")
-
-    return [
-        {
-            "serial": ac.serial,
-            "model": ac.model_name,
-            "status": ac.status,
-            "rtl": ac.rtl,
-            "unit": ac.current_unit,
-            "date_down": ac.date_down,
-            "remarks": ac.remarks,
-        }
-        for ac in aircraft
-    ]
+    
+    # HARDCODED LOGIC: Matching his "None" casualty logic
+    payload = {"status": "NMC"}
+    
+    result = client.inject_aircraft_update(plane.serial, payload)
+    
+    if result["success"]:
+        plane.status = "NMC"
+        plane.save()
+        return {"message": f"Aircraft {plane.serial} marked as NMC."}
+    
+    return {"error": "NMC Injection Failed", "details": result}

@@ -7,7 +7,6 @@ class AircraftForm(forms.ModelForm):
         model = Aircraft
         # Exclude current_unit since you force it in the view
         fields = [
-            "aircraft_pk",
             "model_name",
             "status",
             "rtl",

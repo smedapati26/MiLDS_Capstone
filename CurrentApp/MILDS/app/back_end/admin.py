@@ -8,10 +8,10 @@ from .models import (
 # ---------- Aircraft ----------
 @admin.register(Aircraft)
 class AircraftAdmin(admin.ModelAdmin):
-    list_display  = ("aircraft_pk", "model_name", "status", "rtl", "current_unit", "last_update_time")
+    list_display  = ("serial", "model_name", "status", "rtl", "current_unit", "last_update_time")
     list_filter   = ("model_name", "status", "rtl", "current_unit")
-    search_fields = ("aircraft_pk", "model_name", "remarks")
-    ordering      = ("aircraft_pk",)
+    search_fields = ("serial", "model_name", "remarks")
+    ordering      = ("serial",)
     readonly_fields = ("last_sync_time", "last_export_upload_time", "last_update_time")
 
 # ---------- Soldier ----------
@@ -44,7 +44,7 @@ class ScenarioAdmin(admin.ModelAdmin):
 class ScenarioEventAdmin(admin.ModelAdmin):
     list_display  = ("scenario", "aircraft", "status", "rtl", "date_down", "short_remarks")
     list_filter   = ("status", "rtl", "scenario")
-    search_fields = ("scenario__name", "aircraft__aircraft_pk", "remarks")
+    search_fields = ("scenario__name", "aircraft__serial", "remarks")
     autocomplete_fields = ("aircraft",)
 
     def short_remarks(self, obj):
@@ -70,7 +70,7 @@ class ScenarioRunAdmin(admin.ModelAdmin):
 @admin.register(ScenarioRunLog)
 class ScenarioRunLogAdmin(admin.ModelAdmin):
     list_display  = ("run", "aircraft_pk", "created_at", "message")
-    list_filter   = ("created_at",)
     search_fields = ("run__scenario__name", "aircraft_pk", "message")
     readonly_fields = ("run", "aircraft_pk", "message", "before", "after", "created_at")
+    list_filter   = ("created_at",)
     ordering = ("-created_at",)

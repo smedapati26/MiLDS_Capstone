@@ -38,7 +38,6 @@ urlpatterns = [
 
     # --- DJANGO NINJA API ---
     # This handles "api/docs", "api/openapi.json", and any new routers (like injects)
-    path("api/", api.urls),  # <--- 2. ADD THIS LINE
     
     path("api/scenario-runs/", views.scenario_runs_api_list, name="scenario-runs-api-list"),
     path("api/scenario-runs/<int:run_id>/logs/", views.scenario_run_logs_api, name="scenario-run-logs-api"),

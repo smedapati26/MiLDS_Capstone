@@ -37,7 +37,7 @@ export async function syncAircraft(uic) {
 export async function injectAircraftUpdate(id, field, value) {
   const res = await client.post(`/api/aircraft/inject/update`, null, {
     params: {
-      aircraft_pk: id,
+      serial: id,
       field: field,
       value: value
     }
@@ -48,7 +48,7 @@ export async function injectAircraftUpdate(id, field, value) {
 // POST /api/aircraft/inject/nmc
 export async function injectAircraftNMC(id) {
   const res = await client.post(`/api/aircraft/inject/nmc`, null, {
-    params: { aircraft_pk: id }
+    params: { serial: id }
   });
   return res.data;
 }

@@ -11,10 +11,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
-
-GRIFFIN_API_URL = os.getenv("GRIFFIN_API_URL")
-GRIFFIN_API_KEY = os.getenv("GRIFFIN_API_KEY")
-
 from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
@@ -23,13 +19,15 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# AMAP URL
+# --- AMAP Settings (Partner's Side) ---
 AMAP_API_URL = "http://localhost:8001"
-
-# Dummy user ID
-MILDS_SYSTEM_USER_ID = "999999"
-# AMAP dummy key
+MILDS_SYSTEM_USER_ID = "1234567890"
 AMAP_API_KEY = "local-dev-key"
+
+# --- Griffin Settings (Your Side) ---
+GRIFFIN_API_URL = "http://localhost:8001"
+GRIFFIN_API_KEY = "dev-key"
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 

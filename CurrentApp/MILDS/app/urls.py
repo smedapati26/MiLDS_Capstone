@@ -17,8 +17,10 @@ Including another URLconf
 # CurrentApp/MILDS/app/urls.py
 from django.contrib import admin
 from django.urls import path, include
+from app.api.main import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/", api.urls),
     path("", include("app.back_end.urls")),
 ]

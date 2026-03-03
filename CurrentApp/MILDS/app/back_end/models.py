@@ -4,8 +4,7 @@ from django.db import models
 
 class Aircraft(models.Model):
 
-    aircraft_pk = models.IntegerField(primary_key=True, unique=True, db_index=True)
-    serial       = models.CharField(max_length=20, unique=True, db_index=True)
+    serial = models.CharField(primary_key=True, max_length=20)
     model_name   = models.CharField(max_length=100, default="Unknown Model")
     status       = models.CharField(max_length=50,  default="NMC")
     rtl          = models.CharField(max_length=50,  default="NRTL")
@@ -74,9 +73,9 @@ class ScenarioEvent(models.Model):
 
     aircraft = models.ForeignKey(
         Aircraft,
-        to_field='aircraft_pk',     # target Aircraft.aircraft_pk
+        to_field='serial',     # target Aircraft.aircraft_pk
         db_column='aircraft_pk',    # reuse legacy column name
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name='scenario_events',
         null=True, blank=True
     )

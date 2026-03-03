@@ -37,7 +37,7 @@ def shiny_aircraft_dsr(request: HttpRequest, uic: str):
         "last_export_upload_time",
         "last_update_time",
     ]
-    aircraft_qs = Aircraft.objects.filter(uic=requested_unit)
+    aircraft_qs = Aircraft.objects.filter(current_unit=requested_unit)
     aircraft = list(aircraft_qs.values(*aircraft_values))
 
     inspection_values = ["serial", "inspection__inspection_name", "till_due"]

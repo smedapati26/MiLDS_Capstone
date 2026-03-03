@@ -37,6 +37,7 @@ from django.utils.dateparse import parse_date
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .models import ScenarioRun, ScenarioRunLog
+from app.api.griffin_client import GriffinClient
 
 # --- PATCHABLE fields we want editable from React ---
 AIRCRAFT_PATCHABLE = {"status", "rtl", "remarks", "date_down", "current_unit", "hours_to_phase"}
@@ -171,7 +172,28 @@ def revert_scenario_run(request, run_id: int):
                 else:
                     ac.date_down = None
 
-            ac.save(update_fields=list(set(fields)))
+            ac.save(update_fields=list(set(update_fields)))
+
+            # ---- PUSH TO GRIFFIN ----
+            client = GriffinClient()
+
+            # Only send fields Griffin understands
+            griffin_payload = {}
+
+            for field in update_fields:
+                if field == "date_down":
+                    griffin_payload["date_down"] = (
+                        ac.date_down.isoformat() if ac.date_down else None
+                    )
+                elif field in ["status", "rtl", "current_unit", "hours_to_phase", "remarks"]:
+                    griffin_payload[field] = getattr(ac, field)
+
+            if griffin_payload:
+                result = client.inject_aircraft_update(ac.serial, griffin_payload)
+
+                if not result.get("success"):
+                    print("⚠ Griffin update failed:", result)
+            
             restored += 1
 
     return JsonResponse(
@@ -620,8 +642,6 @@ def aircraft_list(_request):
     """
     data = list(
         Aircraft.objects.order_by("pk").values(
-            "pk",
-            "aircraft_pk",
             "serial",              # <-- ADD THIS
             "model_name",
             "status",
@@ -650,7 +670,7 @@ def aircraft_detail(request, pk: int):
     if request.method == "GET":
         data = {
             "pk": ac.pk,
-            "aircraft_pk": ac.aircraft_pk,
+            "serial": ac.serial,
             "model_name": ac.model_name,
             "status": ac.status,
             "rtl": ac.rtl,
@@ -717,7 +737,7 @@ def aircraft_detail(request, pk: int):
     # Return updated object in a shape the frontend expects
     out = {
         "pk": ac.pk,
-        "aircraft_pk": ac.aircraft_pk,
+        "serial": ac.serial,
         "model_name": ac.model_name,
         "status": ac.status,
         "rtl": ac.rtl,
@@ -896,7 +916,7 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
             if not ac:
                 ScenarioRunLog.objects.create(
                     run=run,
-                    aircraft_pk=None,
+                    serial=None,
                     user_id=None,
                     message=f"SKIP: Event {ev.id} has no aircraft linked.",
                     before={},
@@ -938,9 +958,8 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
 
             ScenarioRunLog.objects.create(
                 run=run,
-                aircraft_pk=ac.aircraft_pk,
                 user_id=None,
-                message=f"Aircraft {ac.aircraft_pk}: " + (", ".join(changed.keys()) if changed else "no changes"),
+                message=f"Aircraft {ac.serial}: " + (", ".join(changed.keys()) if changed else "no changes"),
                 before=before,
                 after=after,
                 changed=changed,   # dict of old/new

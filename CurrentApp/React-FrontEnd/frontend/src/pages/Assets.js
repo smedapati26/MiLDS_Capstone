@@ -296,24 +296,26 @@ export default function Assets() {
   );
 
   const startEditAircraft = (row) => {
-    const id = Number(row.pk);
-    console.log('[startEditAircraft] click row.pk=', row.pk, '-> id=', id, 'type=', typeof id);
+    console.log("EDIT CLICKED");
+    console.log("ROW:", row);
+    console.log("ROW SERIAL:", row.serial);
 
-    setEditingAircraftId(id);
+    setEditingAircraftId(row.serial);
+
     setAircraftDraft({
-      status: row.status ?? '',
-      rtl: row.rtl ?? '',
-      current_unit: row.current_unit ?? '',
-      date_down: row.date_down ?? '',
-      remarks: row.remarks ?? '',
-      hours_to_phase: row.hours_to_phase ?? '',
+      status: row.status ?? "",
+      rtl: row.rtl ?? "",
+      current_unit: row.current_unit ?? "",
+      hours_to_phase: row.hours_to_phase ?? "",
+      remarks: row.remarks ?? "",
+      date_down: row.date_down ?? "",
     });
   };
 
 
   const saveAircraft = async (row) => {
     try {
-      const id = row.pk; // use pk (same key you render) :contentReference[oaicite:12]{index=12}
+      const id = row.serial; // use pk (same key you render) :contentReference[oaicite:12]{index=12}
 
       const payload = {
         status: aircraftDraft.status,
@@ -328,7 +330,7 @@ export default function Assets() {
       const updated = await updateAircraft(id, payload);
 
       setAircraftRows((prev) =>
-        prev.map((r) => (r.pk === row.pk ? { ...r, ...updated } : r))
+        prev.map((r) => (r.serial === row.serial ? { ...r, ...updated } : r))
       );
 
       setEditingAircraftId(null);
@@ -348,7 +350,7 @@ export default function Assets() {
       setApiError(null);
       
       // Call Backend Inject (MiLDS -> Griffin -> MiLDS)
-      const result = await injectAircraftNMC(row.pk); // or row.aircraft_pk depending on your data
+      const result = await injectAircraftNMC(row.serial); // or row.aircraft_pk depending on your data
       
       alert(`Success! ${result.message}`);
       
@@ -701,7 +703,7 @@ export default function Assets() {
                     </tr>
                   ) : (
                     filteredAircraft.map((row) => {
-                      const isEditing = editingAircraftId === row.pk;
+                      const isEditing = editingAircraftId === row.serial;
                       console.log('[render row]', row.pk, 'editingAircraftId=', editingAircraftId, 'isEditing=', isEditing);
                       return (
                       <tr key={row.pk}>

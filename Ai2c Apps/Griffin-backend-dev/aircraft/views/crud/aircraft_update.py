@@ -43,6 +43,7 @@ def update_aircraft(request: HttpRequest, aircraft_serial: str):
     # Get user id for logging
     try:
         user_id = request.headers["X-On-Behalf-Of"]
+        print("HEADER USER ID:", user_id) # REMOVE DEBUG COMMENT!!!!
         user = User.objects.get(user_id=user_id)
     except KeyError:
         return HttpResponseBadRequest(HTTP_ERROR_MESSAGE_NO_USER_ID_IN_HEADER)
