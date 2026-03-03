@@ -35,7 +35,7 @@ urlpatterns = [
     path("api/scenarios/", views.scenarios_api_list, name="scenarios-api-list"),
     path("api/scenarios/revert-last/", views.revert_last_scenario, name="scenarios-revert-last"),
     path("api/scenario-runs/<int:run_id>/revert/", views.revert_scenario_run, name="scenario-run-revert"),
-
+    path("api/scenarios/randomize/preview/", views.scenarios_api_randomize_preview, name="scenarios-randomize-preview"),
     # --- DJANGO NINJA API ---
     # This handles "api/docs", "api/openapi.json", and any new routers (like injects)
     

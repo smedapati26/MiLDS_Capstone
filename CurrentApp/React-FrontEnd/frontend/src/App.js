@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
-import Assets from './pages/Assets';
+import Assets from './pages/assets/Assets';
 import Home from './pages/Home';
 import NewScenario from './pages/NewScenario';
 

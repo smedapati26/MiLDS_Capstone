@@ -2,6 +2,7 @@ import httpx
 from django.conf import settings
 from ninja.errors import HttpError
 from app.back_end.models import Soldier
+from datetime import date
 
 class AmapClient:
     def __init__(self):
@@ -52,5 +53,43 @@ class AmapClient:
                 
                 return {"success": True, "data": response.json()}
 
+        except httpx.RequestError as e:
+            return {"success": False, "error": f"Could not connect to AMAP: {str(e)}"}
+    # Inside your AmapClient class:
+    def inject_casualty_flag(self, user_id: str, casualty_type: str):
+        endpoint = "/personnel/flags/create"
+        
+        # We now have the perfect combination of keys and allowed values!
+        payload = {
+            "soldier_id": str(user_id), 
+            "start_date": str(date.today()),
+            "flag_type": casualty_type,  
+            "mx_availability": "Unavailable",  # <--- Updated to match the exact AMAP choice!
+            "flag_remarks": f"SIMULATION EVENT: {casualty_type}"
+        }
+
+        custom_headers = self.headers.copy()
+        custom_headers["X-On-Behalf-Of"] = str(user_id)  
+
+        try:
+            with httpx.Client(base_url=self.base_url, headers=custom_headers, timeout=5.0) as client:
+                response = client.post(endpoint, json=payload)
+                
+                if response.status_code not in [200, 201]:
+                    return {
+                        "success": False, 
+                        "error": "AMAP rejected the request.", 
+                        "details": response.text,
+                        "status": response.status_code
+                    }
+                
+                # --- FIX: Safely try to read JSON, fallback to text if it's empty/plain text ---
+                try:
+                    response_data = response.json()
+                except ValueError:
+                    response_data = {"message": response.text or "Flag created successfully in AMAP"}
+
+                return {"success": True, "data": response_data}
+                
         except httpx.RequestError as e:
             return {"success": False, "error": f"Could not connect to AMAP: {str(e)}"}

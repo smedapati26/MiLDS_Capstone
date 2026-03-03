@@ -4,8 +4,10 @@ from .Months import Months
 from .MosCode import MosCode
 from .MxAvailability import MxAvailability
 from .ProfileFlagOptions import ProfileFlagOptions
+from .SimCasualtyFlagOptions import SimCasualtyFlagOptions
 from .Rank import Rank
 from .SoldierFlagType import SoldierFlagType
+from .SimCasualtyFlagOptions import SimCasualtyFlagOptions
 from .TaskingFlagOptions import TaskingFlagOptions
 from .UnitPositionFlagOptions import UnitPositionFlagOptions
 from .UserRole import UserRoleAccessLevel

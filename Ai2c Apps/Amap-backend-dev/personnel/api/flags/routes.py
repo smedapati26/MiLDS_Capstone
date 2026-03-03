@@ -13,6 +13,7 @@ from personnel.model_utils import (
     AdminFlagOptions,
     MxAvailability,
     ProfileFlagOptions,
+    SimCasualtyFlagOptions,
     SoldierFlagType,
     TaskingFlagOptions,
     UnitPositionFlagOptions,
@@ -79,6 +80,8 @@ def get_soldier_flags(request: HttpRequest, specific_soldier: str):
         elif flag.flag_type == SoldierFlagType.TASKING:
             flag_info = flag.tasking_flag_info
         elif flag.flag_type == SoldierFlagType.PROFILE:
+            flag_info = flag.profile_flag_info
+        elif flag.flag_type == SoldierFlagType.SIMCASUALTY:
             flag_info = flag.profile_flag_info
 
         flag_return_data = {
@@ -168,6 +171,7 @@ def create_soldier_flag(request: HttpRequest, data: SoldierFlagIn):
             unit_position_flag_info=data.unit_position_flag_info,
             tasking_flag_info=data.tasking_flag_info,
             profile_flag_info=data.profile_flag_info,
+            simcasualty_flag_info=data.simcasualty_flag_info,
             mx_availability=data.mx_availability,
             start_date=data.start_date,
             end_date=data.end_date,
@@ -246,6 +250,11 @@ def update_soldier_flag(request: HttpRequest, flag_id: int, data: SoldierFlagUpd
             raise HttpError(400, ProfileFlagOptions.has_value(data.profile_flag_info, return_error=True))
         flag.profile_flag_info = data.profile_flag_info
 
+    if data.simcasualty_flag_info is not None:
+        if not SimCasualtyFlagOptions.has_value(data.simcasualty_flag_info):
+            raise HttpError(400, SimCasualtyFlagOptions.has_value(data.simcasualty_flag_info, return_error=True))
+        flag.simcasualty_flag_info = data.simcasualty_flag_info
+
     if data.mx_availability is not None:
         if not MxAvailability.has_value(data.mx_availability):
             raise HttpError(400, MxAvailability.has_value(data.mx_availability, return_error=True))
@@ -279,11 +288,16 @@ def update_soldier_flag(request: HttpRequest, flag_id: int, data: SoldierFlagUpd
         flag.unit_position_flag_info = None
         flag.tasking_flag_info = None
         flag.admin_flag_info = None
+    elif flag.flag_type == SoldierFlagType.SIMCASUALTY:
+        flag.unit_position_flag_info = None
+        flag.tasking_flag_info = None
+        flag.admin_flag_info = None
     elif flag.flag_type == SoldierFlagType.OTHER:
         flag.admin_flag_info = None
         flag.unit_position_flag_info = None
         flag.tasking_flag_info = None
         flag.profile_flag_info = None
+        flag.symcasualty_flag_info = None
 
     # Update Flag info
     flag._history_user = updated_by

@@ -2,6 +2,30 @@ from django.db import models
 
 from django.db import models
 
+class SimCasualtyFlagOptions(models.TextChoices):
+    """
+    Defines the options for Simulated Casualty Flags
+    """
+
+    SIMINJURED = "SimulatedInjury", ("Simulated Injury")
+    SIMKIA =  "SimulatedKIA", ("Simulated KIA")
+
+    @classmethod
+    def has_value(cls, value, return_error=False):
+        """Checks to see if value is in Enum
+
+        @param: value (str): String value to validate in Enum values
+        @param: return_error (bool, optional): Returns error message when True. Defaults to False.
+
+        @returns: (bool | str): IF return_error is True then returns error message
+        """
+        valid_value = value in cls.values
+        if not valid_value and return_error:
+            return f"{value} not found in Simulated Casualty Flag Options"
+
+        return valid_value
+
+
 class Aircraft(models.Model):
 
     serial = models.CharField(primary_key=True, max_length=20)
@@ -51,13 +75,53 @@ class Soldier(models.Model):
     primary_mos = models.CharField("MOS",max_length=10, null = True, blank=True) #from Soldier
     current_unit = models.CharField(max_length=50, default="WDDRA0") #Unit
     is_maintainer = models.BooleanField("Can Maintain", default=True)
+    simulated_casualty = models.CharField(
+        "Simulated Casualty Status", 
+        max_length=30, 
+        choices=SimCasualtyFlagOptions.choices, 
+        default=None,
+        null=True,
+        blank=True
+    )
+
+class SoldierFlag(models.Model):
+    """
+    Defines a "Flag" that applies to a soldier or a unit, which denotes that a soldier is unable
+    to perform maintenance, or able to perform maintenance in a limited capacity. The soldier may
+    also be able to perform maintenance as usual, but the flag can denote that they are not in a
+    role where they are turning wrenches on a daily basis (tool room, orderly room, etc)
+    """
+    id = models.BigAutoField("Auto Generated Unique Id", primary_key=True)
+    soldier = models.ForeignKey(
+        Soldier,
+        default=None,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="soldier_flags",
+        db_column="flag_soldier_id",
+    )
+    start_date = models.DateField("Start Date of Flag")
+    end_date = models.DateField("End Date of Flag", null=True, blank=True)
+    flag_remarks = models.TextField("Entry Comment", max_length=512, null=True, blank=True)
+    last_modified_by = models.ForeignKey(
+        Soldier,
+        on_delete=models.DO_NOTHING,
+        null=True,
+        blank=True,
+        related_name="created_modified_flags",
+        db_column="last_modified_by",
+    )
+    flag_deleted = models.BooleanField(default=False)
+    
 
 
 
 
     def __str__(self):
-        return f"{self.user_id} - {self.last_name} - {self.first_name} - {self.primary_mos}"
-
+        if self.soldier:
+            return f"{self.soldier.user_id} - {self.soldier.last_name} - {self.get_simcasualty_flag_info_display()}"
+        return f"Flag ID: {self.id} (No Soldier)"
 ## Scenarios
 
 class Scenario(models.Model):

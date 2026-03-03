@@ -1,47 +1,44 @@
 # MILDS/app/back_end/views.py
-from django.shortcuts import render, redirect, get_object_or_404
-from .forms import AircraftForm
-from .models import Aircraft
-from .forms import SoldierForm
-from .models import Soldier
-from django.utils import timezone
-from datetime import timedelta
-import json
-from django.http import JsonResponse, HttpResponseBadRequest, HttpRequest
-from django.views.decorators.http import require_http_methods
-from django.utils.dateparse import parse_date
-from datetime import datetime, timedelta, timezone
-from django.http import HttpResponse
-from django.db import models
-from django.core.paginator import Paginator
-from django.db import transaction
-from django.utils import timezone
-from .models import Aircraft, Scenario, ScenarioEvent, ScenarioRun, ScenarioRunLog
-from django.contrib import messages
-from .models import Aircraft, ScenarioRun
-from datetime import datetime
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
-from django.views.decorators.http import require_http_methods
-from django.db import IntegrityError
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, Http404
-import json
-from django.utils.dateparse import parse_date
 
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from .models import ScenarioRun, ScenarioRunLog
+# Standard library
+import json
+import random
+from datetime import datetime, timedelta
+
+# Django core
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import (
+    JsonResponse,
+    HttpResponse,
+    HttpResponseBadRequest,
+    Http404,
+    HttpRequest,
+)
+from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from django.db import transaction, models, IntegrityError
+from django.core.paginator import Paginator
+from django.contrib import messages
+
+# Local app imports
+from .forms import AircraftForm, SoldierForm
+from .models import (
+    Aircraft,
+    Soldier,
+    Scenario,
+    ScenarioEvent,
+    ScenarioRun,
+    ScenarioRunLog,
+)
+
+# Griffin client (from your HEAD side)
 from app.api.griffin_client import GriffinClient
 
 # --- PATCHABLE fields we want editable from React ---
 AIRCRAFT_PATCHABLE = {"status", "rtl", "remarks", "date_down", "current_unit", "hours_to_phase"}
-PERSONNEL_PATCHABLE = {"rank", "primary_mos", "current_unit", "is_maintainer"}
+PERSONNEL_PATCHABLE = {"rank", "primary_mos", "current_unit", "is_maintainer", "simulated_casualty"}
 
 
 @ensure_csrf_cookie
@@ -233,6 +230,7 @@ def personnel_list(_request):
             "primary_mos",
             "current_unit",
             "is_maintainer",
+            "simulated_casualty"
         )
     )
     return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
@@ -792,6 +790,7 @@ def personnel_detail(request, pk: str):
             "primary_mos": s.primary_mos,
             "current_unit": s.current_unit,
             "is_maintainer": s.is_maintainer,
+            "simulated_casualty": s.simulated_casualty
         }
 
     if request.method == "GET":
@@ -1009,7 +1008,7 @@ def scenarios_api_list(request):
         ]
         return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
 
-    # -------- POST: create scenario + events --------
+    # -------- POST: create aircraft-only scenario + events --------
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
@@ -1032,12 +1031,6 @@ def scenarios_api_list(request):
         except Exception:
             return None
 
-    def _coerce_user_id(v):
-        if v is None:
-            return None
-        v = str(v).strip()
-        return v or None
-
     created_event_ids = []
 
     with transaction.atomic():
@@ -1050,24 +1043,16 @@ def scenarios_api_list(request):
             if not isinstance(ev, dict):
                 return JsonResponse({"detail": f"Event {idx} must be an object."}, status=400)
 
-            target = (ev.get("target") or "").strip().lower()
+            target = (ev.get("target") or "aircraft").strip().lower()
+            if target != "aircraft":
+                return JsonResponse({"detail": f"Event {idx}: only aircraft events are supported."}, status=400)
+
+            if ev.get("user_id") not in (None, ""):
+                return JsonResponse({"detail": f"Event {idx}: user_id is not supported for scenarios."}, status=400)
+
             aircraft_pk = _coerce_aircraft_pk(ev.get("aircraft_pk"))
-            user_id = _coerce_user_id(ev.get("user_id"))
-
-            # Enforce exactly one target object
-            if target not in ("aircraft", "personnel"):
-                return JsonResponse({"detail": f"Event {idx}: target must be 'aircraft' or 'personnel'."}, status=400)
-
-            if target == "aircraft":
-                if not aircraft_pk:
-                    return JsonResponse({"detail": f"Event {idx}: aircraft_pk required for aircraft events."}, status=400)
-                if user_id:
-                    return JsonResponse({"detail": f"Event {idx}: do not include user_id for aircraft events."}, status=400)
-            else:
-                if not user_id:
-                    return JsonResponse({"detail": f"Event {idx}: user_id required for personnel events."}, status=400)
-                if aircraft_pk:
-                    return JsonResponse({"detail": f"Event {idx}: do not include aircraft_pk for personnel events."}, status=400)
+            if not aircraft_pk:
+                return JsonResponse({"detail": f"Event {idx}: aircraft_pk is required."}, status=400)
 
             status = (ev.get("status") or "").strip()
             rtl = (ev.get("rtl") or "").strip()
@@ -1079,49 +1064,35 @@ def scenarios_api_list(request):
             date_down_raw = ev.get("date_down")
             date_down = None
             if date_down_raw:
-                # accept "YYYY-MM-DD" (frontend date input)
                 date_down = parse_date(str(date_down_raw))
                 if date_down is None:
                     return JsonResponse({"detail": f"Event {idx}: date_down must be YYYY-MM-DD."}, status=400)
 
-            # Must change at least one field
             if not status and not rtl and not remarks.strip() and not date_down:
                 return JsonResponse(
                     {"detail": f"Event {idx}: must set at least one of status, rtl, remarks, date_down."},
-                    status=400
+                    status=400,
                 )
 
-            # Resolve FK targets
-            aircraft_obj = None
-            soldier_obj = None
-
-            if target == "aircraft":
-                aircraft_obj = Aircraft.objects.filter(aircraft_pk=aircraft_pk).first()
-                if not aircraft_obj:
-                    return JsonResponse({"detail": f"Event {idx}: aircraft_pk {aircraft_pk} not found."}, status=404)
-
-            if target == "personnel":
-                soldier_obj = Soldier.objects.filter(user_id=user_id).first()
-                if not soldier_obj:
-                    return JsonResponse({"detail": f"Event {idx}: user_id {user_id} not found."}, status=404)
+            aircraft_obj = Aircraft.objects.filter(aircraft_pk=aircraft_pk).first()
+            if not aircraft_obj:
+                return JsonResponse({"detail": f"Event {idx}: aircraft_pk {aircraft_pk} not found."}, status=404)
 
             try:
                 se = ScenarioEvent.objects.create(
                     scenario=sc,
                     aircraft=aircraft_obj,
-                    soldier=soldier_obj,
+                    soldier=None,
                     status=status,
                     rtl=rtl,
                     remarks=remarks,
                     date_down=date_down,
                 )
             except IntegrityError:
-                # Your model has unique constraints per (scenario, aircraft) and (scenario, soldier)
-                return JsonResponse({"detail": f"Event {idx}: duplicate target in this scenario."}, status=409)
+                return JsonResponse({"detail": f"Event {idx}: duplicate aircraft in this scenario."}, status=409)
 
             created_event_ids.append(se.id)
 
-    # Return the created scenario (enough for frontend to refresh list)
     return JsonResponse(
         {
             "id": sc.id,
@@ -1134,7 +1105,6 @@ def scenarios_api_list(request):
         status=201,
         json_dumps_params={"indent": 2},
     )
-
 
 
 def scenario_list(request):
@@ -1227,3 +1197,101 @@ def scenario_run_logs_api(request, run_id: int):
         for log in logs
     ]
     return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+
+@require_http_methods(["POST"])
+def scenarios_api_randomize_preview(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    # Inputs
+    name = (payload.get("name") or "").strip()
+    description = (payload.get("description") or "").strip()
+    unit = (payload.get("unit") or "").strip()
+    seed = payload.get("seed", None)
+
+    try:
+        num_events = int(payload.get("num_events", 5))
+    except Exception:
+        return JsonResponse({"detail": "num_events must be an integer."}, status=400)
+    num_events = max(1, min(num_events, 50))
+
+    if not name:
+        return JsonResponse({"detail": "Scenario name is required."}, status=400)
+
+    rng = random.Random(seed)
+
+    # Candidate aircraft
+    qs = Aircraft.objects.all()
+    if unit:
+        qs = qs.filter(current_unit=unit)
+    aircraft_list = list(qs)
+
+    if not aircraft_list:
+        return JsonResponse({"detail": "No aircraft available for randomization."}, status=400)
+
+    if num_events > len(aircraft_list):
+        num_events = len(aircraft_list)
+
+    chosen = rng.sample(aircraft_list, k=num_events)
+
+    # Inject-style actions (aircraft-only)
+    STATUS_CHOICES = ["NMC"]     # tune later
+    RTL_CHOICES = ["NRTL"]       # tune later
+    REMARK_TEMPLATES = [
+        "Generated inject: maintenance issue",
+        "Generated inject: phase inspection required",
+        "Generated inject: system fault reported",
+    ]
+    today = timezone.localdate()
+
+    events = []
+    for ac in chosen:
+        # Pick some actions; guarantee at least one change
+        actions = []
+        if rng.random() < 0.70: actions.append("status")
+        if rng.random() < 0.50: actions.append("rtl")
+        if rng.random() < 0.40: actions.append("date_down")
+        if rng.random() < 0.40: actions.append("remarks")
+        if not actions: actions = ["status"]
+
+        ev = {
+            "target": "aircraft",
+            "aircraft_pk": str(ac.aircraft_pk),
+            "user_id": None,
+            "status": "",
+            "rtl": "",
+            "date_down": None,
+            "remarks": "",
+        }
+
+        if "status" in actions:
+            ev["status"] = rng.choice(STATUS_CHOICES)
+        if "rtl" in actions:
+            ev["rtl"] = rng.choice(RTL_CHOICES)
+        if "date_down" in actions:
+            ev["date_down"] = today.isoformat()
+        if "remarks" in actions:
+            # Must be non-empty for apply_scenario to apply it
+            ev["remarks"] = rng.choice(REMARK_TEMPLATES)
+
+        # Ensure it would pass your /api/scenarios/ validation:
+        if not ev["status"] and not ev["rtl"] and not (ev["remarks"] or "").strip() and not ev["date_down"]:
+            ev["status"] = "NMC"
+
+        events.append(ev)
+
+    return JsonResponse(
+        {
+            "name": name,
+            "description": description,
+            "events": events,
+            "meta": {
+                "seed": seed,
+                "unit": unit or None,
+                "num_events": num_events,
+            },
+        },
+        json_dumps_params={"indent": 2},
+    )
