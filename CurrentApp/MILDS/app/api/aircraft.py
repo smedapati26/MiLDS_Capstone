@@ -70,29 +70,27 @@ def inject_aircraft_change(request, serial: str, field: str, value: str):
     return {"message": f"Injection successful: {field} changed to {value}"}
 
 # --- 3. SCENARIO SPECIFIC INJECTS ---
-
 @router.post("/inject/nmc")
 def inject_nmc_status(request, serial: str):
-    print("QUERY PARAMS:", request.GET)
-    print("POST BODY:", request.body)
-    print("POST DATA:", request.POST)
-
-    return {"debug": "check terminal"}
-    
     """
     Scenario: Aircraft is Non-Mission Capable.
     """
     plane = get_object_or_404(Aircraft, serial=serial)
     client = GriffinClient()
-    
-    # HARDCODED LOGIC: Matching his "None" casualty logic
-    payload = {"status": "NMC"}
-    
+
+    payload = {
+        "status": "NMC",
+        "remarks": "EXERCISE: NMC Injection"
+    }
+
     result = client.inject_aircraft_update(plane.serial, payload)
-    
-    if result["success"]:
-        plane.status = "NMC"
-        plane.save()
-        return {"message": f"Aircraft {plane.serial} marked as NMC."}
-    
-    return {"error": "NMC Injection Failed", "details": result}
+
+    if not result.get("success"):
+        return {"error": "NMC Injection Failed", "details": result}
+
+    # Update Local MILDS System
+    plane.status = "NMC"
+    plane.remarks = "EXERCISE: NMC Injection"
+    plane.save(update_fields=["status", "remarks"])
+
+    return {"message": f"Aircraft {plane.serial} marked as NMC."}

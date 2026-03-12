@@ -354,10 +354,9 @@ export default function Assets() {
       
       alert(`Success! ${result.message}`);
       
-      // Update local UI immediately without full reload
-      setAircraftRows((prev) =>
-        prev.map((r) => (r.pk === row.pk ? { ...r, status: 'NMC', remarks: 'EXERCISE: NMC Injection' } : r))
-      );
+      // Fetch real updated data from backend
+      const fresh = await listAircraft();
+      setAircraftRows(fresh);
 
     } catch (e) {
       console.error(e);
@@ -689,12 +688,6 @@ export default function Assets() {
 
               <Button onClick={handleReceiveGriffin} disabled={griffinSyncing}>
                 {griffinSyncing ? 'Receiving…' : 'Receive Griffin'}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => alert("Update Griffin is not implemented yet.")}
-              >
-                Update Griffin
               </Button>
 
             </div>

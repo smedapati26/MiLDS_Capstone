@@ -732,6 +732,22 @@ def aircraft_detail(request, pk: int):
 
     ac.save(update_fields=list(set(update_fields)))
 
+    # ---- PUSH UPDATE TO GRIFFIN ----
+    try:
+        client = GriffinClient()
+
+        griffin_payload = {}
+
+        for field in update_fields:
+            griffin_payload[field] = getattr(ac, field)
+
+        result = client.inject_aircraft_update(ac.serial, griffin_payload)
+
+        print("GRIFFIN UPDATE RESULT:", result)
+
+    except Exception as e:
+        print("GRIFFIN UPDATE FAILED:", e)
+
     # Return updated object in a shape the frontend expects
     out = {
         "pk": ac.pk,
