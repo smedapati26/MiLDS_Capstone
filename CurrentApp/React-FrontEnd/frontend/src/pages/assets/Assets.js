@@ -1125,14 +1125,6 @@ export default function Assets() {
                             View log
                           </Button>
 
-                          {/* NOTE: This endpoint probably doesn't exist yet unless you added it */}
-                          <Button
-                            variant="secondary"
-                            style={{ marginLeft: 8 }}
-                            onClick={() => client.post(`/api/scenario-runs/${r.id}/revert/`)}
-                          >
-                            Revert this run
-                          </Button>
                         </td>
                       </tr>
                     ))
