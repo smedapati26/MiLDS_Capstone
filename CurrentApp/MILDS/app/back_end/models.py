@@ -47,7 +47,7 @@ class Aircraft(models.Model):
     last_update_time        = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.model_name} ({self.aircraft_pk})"
+        return f"{self.model_name} ({self.serial})"
 
 
 '''

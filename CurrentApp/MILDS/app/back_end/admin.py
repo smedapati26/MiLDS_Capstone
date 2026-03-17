@@ -4,6 +4,7 @@ from .models import (
     Scenario, ScenarioEvent,
     ScenarioRun, ScenarioRunLog
 )
+from app.api.griffin_client import GriffinClient
 
 # ---------- Aircraft ----------
 @admin.register(Aircraft)
@@ -13,6 +14,29 @@ class AircraftAdmin(admin.ModelAdmin):
     search_fields = ("serial", "model_name", "remarks")
     ordering      = ("serial",)
     readonly_fields = ("last_sync_time", "last_export_upload_time", "last_update_time")
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        # Push to Griffin after saving
+        try:
+            client = GriffinClient()
+
+            payload = {
+                "status": obj.status,
+                "rtl": obj.rtl,
+                "current_unit": obj.current_unit,
+                "hours_to_phase": obj.hours_to_phase,
+                "remarks": obj.remarks,
+                "date_down": obj.date_down.isoformat() if obj.date_down else None,
+            }
+
+            result = client.inject_aircraft_update(obj.serial, payload)
+
+            print("ADMIN → GRIFFIN RESULT:", result)
+
+        except Exception as e:
+            print("ADMIN → GRIFFIN FAILED:", e)
 
 # ---------- Soldier ----------
 @admin.register(Soldier)
