@@ -692,7 +692,7 @@ export default function Assets() {
 
             </div>
 
-            <div className="table-wrap">
+            <div className="table-wrap aircraft-table-wrap">
               <table>
                 <thead>
                   <tr>

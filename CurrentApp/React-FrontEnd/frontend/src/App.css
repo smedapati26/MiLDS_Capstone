@@ -23,7 +23,7 @@ body{
 }
 
 /* Layout utilities */
-.container{max-width:1100px;margin:0 auto;padding:24px}
+.container{max-width:1700px;margin:0 auto;padding:24px}
 .centered{display:grid;place-items:center}
 
 /* Card */
@@ -189,4 +189,10 @@ tbody tr:nth-child(odd){ background:#fafbfe }
   border-radius:10px;
   padding:12px 14px;
   color:#374151;
+}
+
+/* Aircraft tab only: reduce empty whitespace below short tables */
+.aircraft-table-wrap{
+  max-height: 420px;
+  overflow: auto;
 }
