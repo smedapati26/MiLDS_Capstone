@@ -155,6 +155,7 @@ class ScenarioEvent(models.Model):
     rtl      = models.CharField(max_length=10, blank=True)
     remarks  = models.TextField(blank=True)
     date_down = models.DateField(null=True, blank=True)
+    personnel_changes = models.JSONField(default=dict, blank=True)
 
     class Meta:
         constraints = [
@@ -171,13 +172,14 @@ class ScenarioEvent(models.Model):
 class ScenarioRun(models.Model):
     scenario = models.ForeignKey(Scenario, on_delete=models.PROTECT)
     started_at = models.DateTimeField(auto_now_add=True)
+    reverted_at = models.DateTimeField(null=True, blank=True)
     total_events = models.IntegerField(default=0)
     applied_events = models.IntegerField(default=0)
 
 class ScenarioRunLog(models.Model):
     run = models.ForeignKey(ScenarioRun, on_delete=models.CASCADE, related_name="logs")
-    aircraft_pk = models.IntegerField(null=True, blank=True, db_index=True)  # remove unique=True
-    user_id = models.IntegerField(null=True, blank=True, db_index=True) #fro m Soldier
+    aircraft_pk = models.CharField(max_length=32, null=True, blank=True, db_index=True)
+    user_id = models.CharField(max_length=32, null=True, blank=True, db_index=True)
     message = models.TextField()
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)

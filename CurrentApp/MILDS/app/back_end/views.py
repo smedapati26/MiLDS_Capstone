@@ -138,7 +138,7 @@ def revert_scenario_run(request, run_id: int):
                 continue
 
             try:
-                ac = Aircraft.objects.select_for_update().get(aircraft_pk=log.aircraft_pk)
+                ac = Aircraft.objects.select_for_update().get(serial=str(log.aircraft_pk))
             except Aircraft.DoesNotExist:
                 errors.append(f"Aircraft {log.aircraft_pk} missing; skipped.")
                 continue
@@ -859,125 +859,272 @@ def _snapshot(ac: Aircraft):
     }
 
 '''
+def _snapshot_soldier(s: Soldier):
+    return {
+        "rank": s.rank,
+        "first_name": s.first_name,
+        "last_name": s.last_name,
+        "primary_mos": s.primary_mos,
+        "current_unit": s.current_unit,
+        "is_maintainer": s.is_maintainer,
+        "simulated_casualty": s.simulated_casualty,
+    }
+
 def apply_scenario(scenario_id: int) -> ScenarioRun:
-    sc = (Scenario.objects
-          .prefetch_related("events__aircraft")
-          .get(pk=scenario_id))
+    sc = Scenario.objects.prefetch_related("events__aircraft", "events__soldier").get(pk=scenario_id)
     run = ScenarioRun.objects.create(scenario=sc, total_events=sc.events.count())
-
-    applied = 0
-    for ev in sc.events.all().order_by("id"):
-        ac = ev.aircraft
-        if not ac:
-            ScenarioRunLog.objects.create(
-                run=run,
-                aircraft_pk=ev.aircraft_pk_int,  # best effort context
-                message=f"SKIP: Event {ev.id} has no aircraft linked.",
-                before={}, after={}
-            )
-            continue
-
-        before = _snapshot(ac)
-        changed = []
-        if ev.status:    ac.status = ev.status;        changed.append("status")
-        if ev.rtl:       ac.rtl = ev.rtl;              changed.append("rtl")
-        if ev.remarks:   ac.remarks = ev.remarks;      changed.append("remarks")
-        if ev.date_down: ac.date_down = ev.date_down;  changed.append("date_down")
-        ac.save()
-        after = _snapshot(ac)
-
-        ScenarioRunLog.objects.create(
-            run=run,
-            aircraft_pk=ac.aircraft_pk,
-            message=f"Aircraft {ac.aircraft_pk}: " + (", ".join(changed) if changed else "no changes"),
-            before=before, after=after
-        )
-        applied += 1
-
-    run.applied_events = applied
-    run.save()
-    return run
-'''
-from django.db import transaction
-
-def apply_scenario(scenario_id: int) -> ScenarioRun:
-    sc = (
-        Scenario.objects
-        .prefetch_related("events__aircraft")
-        .get(pk=scenario_id)
-    )
-
-    run = ScenarioRun.objects.create(
-        scenario=sc,
-        total_events=sc.events.count()
-    )
-
     applied = 0
 
-    # keep this aligned with _snapshot()
-    SNAP_FIELDS = ("status", "rtl", "remarks", "date_down")
+    AIRCRAFT_FIELDS = ("status", "rtl", "remarks", "date_down")
+    SOLDIER_FIELDS = ("rank", "first_name", "last_name", "primary_mos", "current_unit", "is_maintainer", "simulated_casualty")
 
     def normalize_snapshot(snap: dict) -> dict:
-        """Normalize values so diffs are stable (None vs '', whitespace, etc.)."""
         out = dict(snap)
-        out["remarks"] = (out.get("remarks") or "").strip()
-        # date_down stored as iso or None already from _snapshot()
+        if "remarks" in out:
+            out["remarks"] = (out.get("remarks") or "").strip()
         return out
 
     with transaction.atomic():
         for ev in sc.events.all().order_by("id"):
-            ac = ev.aircraft
+            target = None
+            try:
+                target = "soldier" if ev.soldier_id else ("aircraft" if ev.aircraft_id else None)
+            except Exception:
+                target = None
 
-            if not ac:
+            if target == "aircraft":
+                try:
+                    ac = ev.aircraft
+                except Aircraft.DoesNotExist:
+                    ac = Aircraft.objects.filter(serial=str(ev.aircraft_id)).first()
+
+                if not ac:
+                    ScenarioRunLog.objects.create(
+                        run=run,
+                        aircraft_pk=str(ev.aircraft_id or "") or None,
+                        user_id=None,
+                        message=f"SKIP: Aircraft {ev.aircraft_id} not found for event {ev.id}.",
+                        before={},
+                        after={},
+                        changed={},
+                    )
+                    continue
+
+                before = normalize_snapshot(_snapshot(ac))
+
+                if ev.status not in (None, ""):
+                    ac.status = ev.status
+                if ev.rtl not in (None, ""):
+                    ac.rtl = ev.rtl
+                if ev.remarks is not None:
+                    ac.remarks = ev.remarks
+                if ev.date_down is not None:
+                    ac.date_down = ev.date_down
+
+                after_preview = normalize_snapshot(_snapshot(ac))
+                changed = {f: {"old": before.get(f), "new": after_preview.get(f)} for f in AIRCRAFT_FIELDS if before.get(f) != after_preview.get(f)}
+                if changed:
+                    ac.save()
+                    applied += 1
+                after = normalize_snapshot(_snapshot(ac))
+
                 ScenarioRunLog.objects.create(
                     run=run,
-                    serial=None,
+                    aircraft_pk=str(ac.serial),
                     user_id=None,
-                    message=f"SKIP: Event {ev.id} has no aircraft linked.",
-                    before={},
-                    after={},
-                    changed={},  # dict
+                    message=f"Aircraft {ac.serial}: " + (", ".join(changed.keys()) if changed else "no changes"),
+                    before=before,
+                    after=after,
+                    changed=changed,
                 )
                 continue
 
-            before = normalize_snapshot(_snapshot(ac))
+            if target == "soldier":
+                try:
+                    s = ev.soldier
+                except Soldier.DoesNotExist:
+                    s = Soldier.objects.filter(user_id=str(ev.soldier_id)).first()
 
-            # --- apply to a preview state on the same model instance ---
-            # Only set a field if the event actually provides a value.
-            if ev.status:
-                ac.status = ev.status
-            if ev.rtl:
-                ac.rtl = ev.rtl
-            # IMPORTANT: remarks could legitimately be intended to clear; if you want that,
-            # use a separate boolean or allow empty string events explicitly.
-            if ev.remarks is not None and ev.remarks != "":
-                ac.remarks = ev.remarks
-            if ev.date_down:
-                ac.date_down = ev.date_down
+                if not s:
+                    ScenarioRunLog.objects.create(
+                        run=run,
+                        aircraft_pk=None,
+                        user_id=str(ev.soldier_id or "") or None,
+                        message=f"SKIP: Soldier {ev.soldier_id} not found for event {ev.id}.",
+                        before={},
+                        after={},
+                        changed={},
+                    )
+                    continue
 
-            after_preview = normalize_snapshot(_snapshot(ac))
+                before = _snapshot_soldier(s)
+                personnel_changes = getattr(ev, "personnel_changes", None) or {}
+                for f in SOLDIER_FIELDS:
+                    if f in personnel_changes:
+                        setattr(s, f, personnel_changes.get(f))
+                after_preview = _snapshot_soldier(s)
+                changed = {f: {"old": before.get(f), "new": after_preview.get(f)} for f in SOLDIER_FIELDS if before.get(f) != after_preview.get(f)}
+                if changed:
+                    s.save()
+                    applied += 1
+                after = _snapshot_soldier(s)
 
-            # Compute diffs based on before vs after_preview
-            changed = {
-                f: {"old": before.get(f), "new": after_preview.get(f)}
-                for f in SNAP_FIELDS
-                if before.get(f) != after_preview.get(f)
-            }
-
-            if changed:
-                # Persist changes and re-snapshot to record actual stored after
-                ac.save()
-                applied += 1
-
-            after = normalize_snapshot(_snapshot(ac))
+                ScenarioRunLog.objects.create(
+                    run=run,
+                    aircraft_pk=None,
+                    user_id=str(s.user_id),
+                    message=f"Personnel {s.user_id}: " + (", ".join(changed.keys()) if changed else "no changes"),
+                    before=before,
+                    after=after,
+                    changed=changed,
+                )
+                continue
 
             ScenarioRunLog.objects.create(
                 run=run,
+                aircraft_pk=None,
                 user_id=None,
-                message=f"Aircraft {ac.serial}: " + (", ".join(changed.keys()) if changed else "no changes"),
-                before=before,
-                after=after,
-                changed=changed,   # dict of old/new
+                message=f"SKIP: Event {ev.id} has no linked target.",
+                before={},
+                after={},
+                changed={},
+            )
+
+    run.applied_events = applied
+    run.save(update_fields=["applied_events"])
+    return run
+'''
+from django.db import transaction
+
+def _snapshot_soldier(s: Soldier):
+    return {
+        "rank": s.rank,
+        "first_name": s.first_name,
+        "last_name": s.last_name,
+        "primary_mos": s.primary_mos,
+        "current_unit": s.current_unit,
+        "is_maintainer": s.is_maintainer,
+        "simulated_casualty": s.simulated_casualty,
+    }
+
+def apply_scenario(scenario_id: int) -> ScenarioRun:
+    sc = Scenario.objects.prefetch_related("events__aircraft", "events__soldier").get(pk=scenario_id)
+    run = ScenarioRun.objects.create(scenario=sc, total_events=sc.events.count())
+    applied = 0
+
+    AIRCRAFT_FIELDS = ("status", "rtl", "remarks", "date_down")
+    SOLDIER_FIELDS = ("rank", "first_name", "last_name", "primary_mos", "current_unit", "is_maintainer", "simulated_casualty")
+
+    def normalize_snapshot(snap: dict) -> dict:
+        out = dict(snap)
+        if "remarks" in out:
+            out["remarks"] = (out.get("remarks") or "").strip()
+        return out
+
+    with transaction.atomic():
+        for ev in sc.events.all().order_by("id"):
+            target = None
+            try:
+                target = "soldier" if ev.soldier_id else ("aircraft" if ev.aircraft_id else None)
+            except Exception:
+                target = None
+
+            if target == "aircraft":
+                try:
+                    ac = ev.aircraft
+                except Aircraft.DoesNotExist:
+                    ac = Aircraft.objects.filter(serial=str(ev.aircraft_id)).first()
+
+                if not ac:
+                    ScenarioRunLog.objects.create(
+                        run=run,
+                        aircraft_pk=str(ev.aircraft_id or "") or None,
+                        user_id=None,
+                        message=f"SKIP: Aircraft {ev.aircraft_id} not found for event {ev.id}.",
+                        before={},
+                        after={},
+                        changed={},
+                    )
+                    continue
+
+                before = normalize_snapshot(_snapshot(ac))
+
+                if ev.status not in (None, ""):
+                    ac.status = ev.status
+                if ev.rtl not in (None, ""):
+                    ac.rtl = ev.rtl
+                if ev.remarks is not None:
+                    ac.remarks = ev.remarks
+                if ev.date_down is not None:
+                    ac.date_down = ev.date_down
+
+                after_preview = normalize_snapshot(_snapshot(ac))
+                changed = {f: {"old": before.get(f), "new": after_preview.get(f)} for f in AIRCRAFT_FIELDS if before.get(f) != after_preview.get(f)}
+                if changed:
+                    ac.save()
+                    applied += 1
+                after = normalize_snapshot(_snapshot(ac))
+
+                ScenarioRunLog.objects.create(
+                    run=run,
+                    aircraft_pk=str(ac.serial),
+                    user_id=None,
+                    message=f"Aircraft {ac.serial}: " + (", ".join(changed.keys()) if changed else "no changes"),
+                    before=before,
+                    after=after,
+                    changed=changed,
+                )
+                continue
+
+            if target == "soldier":
+                try:
+                    s = ev.soldier
+                except Soldier.DoesNotExist:
+                    s = Soldier.objects.filter(user_id=str(ev.soldier_id)).first()
+
+                if not s:
+                    ScenarioRunLog.objects.create(
+                        run=run,
+                        aircraft_pk=None,
+                        user_id=str(ev.soldier_id or "") or None,
+                        message=f"SKIP: Soldier {ev.soldier_id} not found for event {ev.id}.",
+                        before={},
+                        after={},
+                        changed={},
+                    )
+                    continue
+
+                before = _snapshot_soldier(s)
+                personnel_changes = getattr(ev, "personnel_changes", None) or {}
+                for f in SOLDIER_FIELDS:
+                    if f in personnel_changes:
+                        setattr(s, f, personnel_changes.get(f))
+                after_preview = _snapshot_soldier(s)
+                changed = {f: {"old": before.get(f), "new": after_preview.get(f)} for f in SOLDIER_FIELDS if before.get(f) != after_preview.get(f)}
+                if changed:
+                    s.save()
+                    applied += 1
+                after = _snapshot_soldier(s)
+
+                ScenarioRunLog.objects.create(
+                    run=run,
+                    aircraft_pk=None,
+                    user_id=str(s.user_id),
+                    message=f"Personnel {s.user_id}: " + (", ".join(changed.keys()) if changed else "no changes"),
+                    before=before,
+                    after=after,
+                    changed=changed,
+                )
+                continue
+
+            ScenarioRunLog.objects.create(
+                run=run,
+                aircraft_pk=None,
+                user_id=None,
+                message=f"SKIP: Event {ev.id} has no linked target.",
+                before={},
+                after={},
+                changed={},
             )
 
     run.applied_events = applied
@@ -1024,7 +1171,7 @@ def scenarios_api_list(request):
         ]
         return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
 
-    # -------- POST: create aircraft-only scenario + events --------
+    # -------- POST: create scenario + events --------
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
@@ -1039,13 +1186,11 @@ def scenarios_api_list(request):
     if not isinstance(events, list) or len(events) == 0:
         return JsonResponse({"detail": "At least one event is required."}, status=400)
 
-    def _coerce_aircraft_pk(v):
-        if v is None or v == "":
+    def _coerce_str(v):
+        if v is None:
             return None
-        try:
-            return int(v)
-        except Exception:
-            return None
+        v = str(v).strip()
+        return v or None
 
     created_event_ids = []
 
@@ -1060,52 +1205,63 @@ def scenarios_api_list(request):
                 return JsonResponse({"detail": f"Event {idx} must be an object."}, status=400)
 
             target = (ev.get("target") or "aircraft").strip().lower()
-            if target != "aircraft":
-                return JsonResponse({"detail": f"Event {idx}: only aircraft events are supported."}, status=400)
 
-            if ev.get("user_id") not in (None, ""):
-                return JsonResponse({"detail": f"Event {idx}: user_id is not supported for scenarios."}, status=400)
+            if target == "aircraft":
+                serial = _coerce_str(ev.get("serial") or ev.get("aircraft_pk"))
+                if not serial:
+                    return JsonResponse({"detail": f"Event {idx}: serial is required for aircraft events."}, status=400)
 
-            aircraft_pk = _coerce_aircraft_pk(ev.get("aircraft_pk"))
-            if not aircraft_pk:
-                return JsonResponse({"detail": f"Event {idx}: aircraft_pk is required."}, status=400)
-
-            status = (ev.get("status") or "").strip()
-            rtl = (ev.get("rtl") or "").strip()
-            remarks = ev.get("remarks")
-            if remarks is None:
-                remarks = ""
-            remarks = str(remarks)
-
-            date_down_raw = ev.get("date_down")
-            date_down = None
-            if date_down_raw:
-                date_down = parse_date(str(date_down_raw))
-                if date_down is None:
+                status = (ev.get("status") or "").strip()
+                rtl = (ev.get("rtl") or "").strip()
+                remarks = "" if ev.get("remarks") is None else str(ev.get("remarks"))
+                date_down = parse_date(str(ev.get("date_down"))) if ev.get("date_down") else None
+                if ev.get("date_down") and date_down is None:
                     return JsonResponse({"detail": f"Event {idx}: date_down must be YYYY-MM-DD."}, status=400)
+                if not status and not rtl and not remarks.strip() and not date_down:
+                    return JsonResponse({"detail": f"Event {idx}: aircraft event must change at least one field."}, status=400)
 
-            if not status and not rtl and not remarks.strip() and not date_down:
-                return JsonResponse(
-                    {"detail": f"Event {idx}: must set at least one of status, rtl, remarks, date_down."},
-                    status=400,
-                )
+                aircraft_obj = Aircraft.objects.filter(serial=serial).first()
+                if not aircraft_obj:
+                    return JsonResponse({"detail": f"Event {idx}: aircraft serial {serial} not found."}, status=404)
 
-            aircraft_obj = Aircraft.objects.filter(aircraft_pk=aircraft_pk).first()
-            if not aircraft_obj:
-                return JsonResponse({"detail": f"Event {idx}: aircraft_pk {aircraft_pk} not found."}, status=404)
+                try:
+                    se = ScenarioEvent.objects.create(
+                        scenario=sc,
+                        aircraft=aircraft_obj,
+                        soldier=None,
+                        status=status,
+                        rtl=rtl,
+                        remarks=remarks,
+                        date_down=date_down,
+                    )
+                except IntegrityError:
+                    return JsonResponse({"detail": f"Event {idx}: duplicate aircraft in this scenario."}, status=409)
 
-            try:
-                se = ScenarioEvent.objects.create(
-                    scenario=sc,
-                    aircraft=aircraft_obj,
-                    soldier=None,
-                    status=status,
-                    rtl=rtl,
-                    remarks=remarks,
-                    date_down=date_down,
-                )
-            except IntegrityError:
-                return JsonResponse({"detail": f"Event {idx}: duplicate aircraft in this scenario."}, status=409)
+            elif target == "personnel":
+                user_id = _coerce_str(ev.get("user_id"))
+                if not user_id:
+                    return JsonResponse({"detail": f"Event {idx}: user_id is required for personnel events."}, status=400)
+                soldier_obj = Soldier.objects.filter(user_id=user_id).first()
+                if not soldier_obj:
+                    return JsonResponse({"detail": f"Event {idx}: personnel {user_id} not found."}, status=404)
+                personnel_changes = ev.get("personnel_changes") or {}
+                if not isinstance(personnel_changes, dict) or not personnel_changes:
+                    return JsonResponse({"detail": f"Event {idx}: personnel_changes must be a non-empty object."}, status=400)
+                try:
+                    se = ScenarioEvent.objects.create(
+                        scenario=sc,
+                        aircraft=None,
+                        soldier=soldier_obj,
+                        status="",
+                        rtl="",
+                        remarks="",
+                        date_down=None,
+                        personnel_changes=personnel_changes,
+                    )
+                except IntegrityError:
+                    return JsonResponse({"detail": f"Event {idx}: duplicate personnel in this scenario."}, status=409)
+            else:
+                return JsonResponse({"detail": f"Event {idx}: target must be 'aircraft' or 'personnel'."}, status=400)
 
             created_event_ids.append(se.id)
 
@@ -1204,6 +1360,7 @@ def scenario_run_logs_api(request, run_id: int):
         {
             "id": log.id,
             "aircraft_pk": log.aircraft_pk,
+            "user_id": log.user_id,
             "message": log.message,
             "created_at": log.created_at.isoformat() if log.created_at else None,
             "changed": log.changed or {},   # dict of field -> {old,new} :contentReference[oaicite:5]{index=5}
