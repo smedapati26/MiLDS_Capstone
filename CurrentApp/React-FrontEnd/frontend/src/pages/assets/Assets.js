@@ -24,6 +24,12 @@ export default function Assets() {
 
   const rtlCategory = (rtlVal) => (String(rtlVal || '').toUpperCase() === 'RTL' ? 'RTL' : 'NRTL');
 
+  const short = (s, n = 60) => {
+    if (!s) return '—';
+    const t = String(s);
+    return t.length > n ? t.slice(0, n) + '…' : t;
+  };
+
   const navigate = useNavigate();
 
   const [active, setActive] = useState('aircraft'); // 'aircraft' | 'personnel' | 'scenarios'
@@ -31,7 +37,6 @@ export default function Assets() {
   // Search state
   const [aircraftSearch, setAircraftSearch] = useState('');
   const [personnelQuery, setPersonnelQuery] = useState('');
-  const [expandedRemarks, setExpandedRemarks] = useState(null);
 
   const [runRows, setRunRows] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
@@ -223,7 +228,7 @@ export default function Assets() {
       role="tab"
       className={`tab ${active === id ? 'tab--active' : ''}`}
       onClick={() => setActive(id)}
-      aria-selected={active === id}
+      aria-pressed={active === id}
     >
       {label}
     </div>
@@ -255,6 +260,27 @@ export default function Assets() {
         {status}
         {toolbar}
       </div>
+    </div>
+  );
+
+  const TableShell = ({ columns }) => (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {columns.map((c) => (
+              <th key={c}>{c}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="empty" colSpan={columns.length}>
+              No data yet. Use the controls above to add or update entries.
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 
@@ -666,7 +692,7 @@ export default function Assets() {
 
             </div>
 
-            <div className="table-wrap aircraft-table-wrap">
+            <div className="table-wrap">
               <table>
                 <thead>
                   <tr>
@@ -782,31 +808,10 @@ export default function Assets() {
                             />
                           ) : (
                             <span
-                              onClick={() =>
-                                setExpandedRemarks(expandedRemarks === row.serial ? null : row.serial)
-                              }
-                              style={{
-                                cursor: 'pointer',
-                                display: 'block',
-                                whiteSpace: expandedRemarks === row.serial ? 'normal' : 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: expandedRemarks === row.serial ? 'clip' : 'ellipsis',
-                                maxWidth: 250,
-                              }}
-                              title={expandedRemarks === row.serial ? "Click to collapse" : "Click to expand"}
+                              className="remarks-clamp"
+                              title={row.remarks ?? ''}
                             >
-                              {expandedRemarks === row.serial ? (
-                                row.remarks ?? '—'
-                              ) : (
-                                <>
-                                  {row.remarks ?? '—'}
-                                  {row.remarks && row.remarks.length > 40 && (
-                                    <span style={{ fontSize: 10, color: '#6b7280', marginLeft: 6 }}>
-                                      (click to expand)
-                                    </span>
-                                  )}
-                                </>
-                              )}
+                              {row.remarks ?? '—'}
                             </span>
                           )}
                         </td>

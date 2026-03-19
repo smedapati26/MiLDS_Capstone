@@ -11,7 +11,7 @@ function makeId() {
 function makeEmptyEvent() {
   return {
     _id: makeId(),
-    aircraft_pk: '',
+    serial: '',
     status: '',
     rtl: '',
     remarks: '',
@@ -62,8 +62,8 @@ export default function NewScenario() {
   const aircraftOptions = useMemo(() => {
     return aircraftRows
       .map((a) => ({
-        value: String(a.aircraft_pk ?? a.pk ?? ''),
-        label: `${a.aircraft_pk ?? a.pk ?? '—'} · ${a.model_name ?? 'Unknown'} · ${a.current_unit ?? ''}`,
+        value: String(a.serial ?? a.aircraft_pk ?? a.pk ?? ''),
+        label: `${a.serial ?? a.aircraft_pk ?? a.pk ?? '—'} · ${a.model_name ?? 'Unknown'} · ${a.current_unit ?? ''}`,
       }))
       .filter((o) => o.value);
   }, [aircraftRows]);
@@ -87,7 +87,7 @@ export default function NewScenario() {
     const cleanedEvents = events.map((e) => {
       const base = {
         target: 'aircraft',
-        aircraft_pk: e.aircraft_pk || null,
+        serial: e.serial || e.aircraft_pk || null,
         status: e.status || '',
         rtl: e.rtl || '',
         remarks: e.remarks || '',
@@ -112,7 +112,7 @@ export default function NewScenario() {
     if (!name.trim()) return 'Scenario name is required.';
     if (events.length === 0) return 'Add at least one event.';
     for (const e of events) {
-      if (!e.aircraft_pk) return 'Each event must select an aircraft.';
+      if (!(e.serial || e.aircraft_pk)) return 'Each event must select an aircraft.';
       if (!e.status && !e.rtl && !e.remarks && !e.date_down) {
         return 'Each event must change at least one field (status, rtl, remarks, or date_down).';
       }
@@ -168,7 +168,7 @@ export default function NewScenario() {
     // Convert preview.events -> your local event state shape (adds _id)
     const nextEvents = (preview.events || []).map((ev) => ({
       _id: makeId(),
-      aircraft_pk: String(ev.aircraft_pk ?? ''),
+      serial: String(ev.serial ?? ev.aircraft_pk ?? ''),
       status: ev.status ?? '',
       rtl: ev.rtl ?? '',
       remarks: ev.remarks ?? '',
@@ -265,8 +265,8 @@ export default function NewScenario() {
                     <td>
                       <select
                         className="search-input"
-                        value={e.aircraft_pk}
-                        onChange={(evt) => updateEvent(e._id, { aircraft_pk: evt.target.value })}
+                        value={e.serial || ''}
+                        onChange={(evt) => updateEvent(e._id, { serial: evt.target.value })}
                       >
                         <option value="">Select aircraft…</option>
                         {aircraftOptions.map((o) => (
