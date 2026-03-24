@@ -1,0 +1,41 @@
+import { ISoldierFlagDTO } from '@store/amap_ai/soldier_flag/models';
+import { ISoldierFlagOptionsMapping, SOLDIERFLAGTYPES } from '@utils/enums';
+
+export const mockSoldierFlags: ISoldierFlagDTO[] = [
+  {
+    id: 1,
+    status: 'Active',
+    soldier_id: 1234567890,
+    soldier_name: 'Testest MeGeest',
+    flag_type: SOLDIERFLAGTYPES.ADMIN,
+    flag_info: ISoldierFlagOptionsMapping[SOLDIERFLAGTYPES.ADMIN].TDY,
+    mx_availability: 'Available',
+    flag_remarks: 'Flag Remarks',
+    unit_name: 'Test Unit',
+    unit_uic: 'TSTUNIT',
+    created_by_id: '1',
+    created_by_name: 'Testee MeGee',
+    last_modified_id: '2',
+    last_modified_name: 'Testeer MeGeer',
+    start_date: '01/01/2025',
+    end_date: '02/01/2025',
+  },
+  {
+    id: 2,
+    status: 'Active',
+    soldier_id: 1234567890,
+    soldier_name: 'Testest MeGeest',
+    flag_type: SOLDIERFLAGTYPES.UNITORPOS,
+    flag_info: ISoldierFlagOptionsMapping[SOLDIERFLAGTYPES.UNITORPOS].OTHER,
+    mx_availability: 'Unavailable',
+    flag_remarks: 'Flag Remarks 2',
+    unit_name: 'Test Unit 2',
+    unit_uic: 'TSTUNIT2',
+    created_by_id: '2',
+    created_by_name: 'Testeer MeGeer',
+    last_modified_id: '1',
+    last_modified_name: 'Testee MeGee',
+    start_date: '01/01/2024',
+    end_date: null,
+  },
+];

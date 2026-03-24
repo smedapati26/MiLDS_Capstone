@@ -1,0 +1,4 @@
+vitest/
+.vscode/
+docs/
+public/

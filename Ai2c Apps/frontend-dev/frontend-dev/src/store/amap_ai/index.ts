@@ -1,0 +1,17 @@
+export { counselingsApiSlice } from './counselings';
+export { designationApiSlice } from './designation';
+export { eventsApiSlice } from './events';
+export { faultsApiSlice } from './faults';
+export { mosCodeApiSlice } from './mos_code';
+export { readinessApiSlice } from './readiness';
+export { soldierApiSlice } from './soldier';
+export { soldierFlagApiSlice } from './soldier_flag';
+export { soldierManagerApiSlice } from './soldier_manager';
+export { supportingDocumentApiSlice } from './supporting_documents';
+export { tasksApiSlice } from './tasks';
+export { transferRequestsApiSlice } from './transfer_request';
+export { unitHealthApiSlice } from './unit_health';
+export { unitsApiSlice } from './units';
+export { userApiSlice } from './user';
+export { userRequestApiSlice } from './user_request';
+export { userRoleApiSlice } from './user_role';

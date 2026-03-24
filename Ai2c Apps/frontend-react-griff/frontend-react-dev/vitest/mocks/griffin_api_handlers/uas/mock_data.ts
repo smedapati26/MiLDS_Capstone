@@ -1,0 +1,96 @@
+import { IUasDto, IUasOut } from '@store/griffin_api/uas/models/IUAS';
+
+export const mockUasData: Array<IUasDto> = [
+  {
+    location_code: '',
+    location_name: '',
+    id: 0,
+    serial_number: '123',
+    model: 'UH-60',
+    status: 'FMC',
+    rtl: 'RTL',
+    current_unit: 'TEST_UIC',
+    total_airframe_hours: 50,
+    flight_hours: 100,
+    remarks: 'remarks',
+    date_down: '2025-11-18',
+    ecd: '2025-11-18',
+    last_sync_time: '2025-11-18T17:13:26.618Z',
+    last_update_time: '2025-11-18T17:13:26.618Z',
+    short_name: 'Company A',
+    should_sync: false,
+    field_sync_status: {
+      status: false,
+      date_down: true,
+      ecd: true,
+      location: false,
+      rtl: true,
+      remarks: true,
+      location_code: false,
+    },
+  },
+];
+
+export const mockUavData: Array<IUasDto> = [
+  {
+    location_code: '',
+    location_name: '',
+    id: 0,
+    serial_number: '1234',
+    model: 'Model 1',
+    status: 'UNK',
+    rtl: 'RTL',
+    current_unit: 'TEST_UIC',
+    total_airframe_hours: 50,
+    flight_hours: 100,
+    remarks: 'remarks',
+    date_down: '2025-11-18',
+    ecd: '2025-11-18',
+    last_sync_time: '2025-11-18T17:13:26.618Z',
+    last_update_time: '2025-11-18T17:13:26.618Z',
+    short_name: 'Company B',
+    should_sync: false,
+    field_sync_status: {
+      status: false,
+      date_down: true,
+      ecd: true,
+      location: false,
+      rtl: true,
+      remarks: true,
+      location_code: false,
+    },
+  },
+];
+
+export const mockUacData: Array<IUasDto> = [
+  {
+    location_code: '',
+    location_name: '',
+    id: 0,
+    serial_number: '1235',
+    model: 'Model 2',
+    status: 'UNK',
+    rtl: 'RTL',
+    current_unit: 'TEST_UIC',
+    total_airframe_hours: 50,
+    flight_hours: 100,
+    remarks: 'remarks',
+    date_down: '2025-11-18',
+    ecd: '2025-11-18',
+    last_sync_time: '2025-11-18T17:13:26.618Z',
+    last_update_time: '2025-11-18T17:13:26.618Z',
+    short_name: 'Company C',
+    should_sync: false,
+    field_sync_status: {
+      status: false,
+      date_down: true,
+      ecd: true,
+      location: false,
+      rtl: true,
+      remarks: true,
+      location_code: false,
+    },
+  },
+];
+
+export const mockIUasOut: IUasOut = { success: true, message: 'UAV Updated' };

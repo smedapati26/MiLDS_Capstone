@@ -1,0 +1,6 @@
+node_modules
+.vscode
+vitest
+package-lock.json
+.env.development.local
+coverage

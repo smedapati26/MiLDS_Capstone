@@ -1,0 +1,59 @@
+deployment_level: 'PRODUCTION' # DEVELOPMENT, STAGING, PRODUCTION
+security_group: 'ai2c' # dami_im, up, test_security_group... full list at: cdso/cdso/catalog/security_groups
+organization: 'ai2c' # Set to your organization name
+sdd_project_id: 3630 # uncomment and set if the sdd is in a different project
+
+.semgrep:tags:
+  tags: [cdso-large]
+
+frontend:
+  version: 0.0.1
+  project_type: 'container'
+  dockerfile_folder: '.'
+  container_lifespan: 'EPHEMERAL'
+  connection_context: 'INTERNAL'
+  semgrep:
+    exclusions:
+      - 'app.rules.community.typescript.react.portability.i18next.jsx-not-internationalized'
+      - 'app.rules.community.typescript.react.portability.i18next.jsx-label-not-i18n'
+      - 'app.rules.community.typescript.react.best-practice.react-props-spreading'
+      - 'app.rules.community.generic.nginx.security.dynamic-proxy-host'
+      # The host for this proxy URL is dynamically determined. This can be dangerous if the host can be
+      # injected by an attacker because it may forcibly alter destination of the proxy. Consider hardcoding
+      # acceptable destinations and retrieving them with 'map' or something similar.
+      # The Proxy host in the nginx config is hard coded to specific values in this configuration.
+      - 'app.rules.community.generic.nginx.security.missing-internal'
+      # This location block contains a 'proxy_pass' directive but does not contain the 'internal' directive.
+      # The 'internal' directive restricts access to this location to internal requests. Without 'internal',
+      # an attacker could use your server for server-side request forgeries (SSRF). Include the 'internal'  
+      # directive in this block to limit exposure.
+      # The proxy pass is designed to allow the react application to call our backend services.  As the CORS headers are not
+      # set by the Keycloak SSO, we are unable to call the backend services from React without the proxy.
+    ignore:
+      - 'vitest/'
+      - '.vscode/'
+      - 'docs/'
+      - 'public/'
+      - 'coverage/'
+  mitigations:
+    - CVE-2026-27171: "DESCRIPTION: zlib before 1.3.2 allows CPU consumption via crc32_combine64 and crc32_combine_gen64 because
+        x2nmodp can do right shifts within a loop that has no termination condition.
+        MITIGATION: This is a false positive.  Alpine linux is using the latest version of zlib and our application does not use
+        the zlib library on the OS."
+  trufflehog:
+    excluded_files:
+      - "vitest/*"
+      - "coverage/*"
+      - "src/pmx-mui/icons/AmapIcon.tsx"
+      - ".vscode/*"
+      - "public/*"
+      - "docs/*"
+  zap:
+    mitigations:
+      ZAP_10096: 'Skipping ZAP alert (10096) - Timestamp Disclosure - False positive for a timestamp found.'
+      ZAP_10109: 'Skipping ZAP alert (10109) - Modern Web Application - Based on the Alert Info, this is not a finding.'
+      ZAP_10015: 'Skipping ZAP alert (10015) - The cache-control header has not been set properly or is missing, allowing the browser and proxies to cache content. - Based on the Alert Info, this is not a finding.'
+      ZAP_10104: 'Skipping ZAP alert (10104) - User Agent Fuzzer - Based on the Alert Info, this is not a finding.'
+      ZAP_10027: 'Skipping ZAP alert (10027) - Information Disclosure - Suspicious Comments - Comment found was not provided in our code but included module.'
+      ZAP_10055_6: 'Skipping ZAP alert (10055-6) - Content Security Policy (CSP): The presence of inline styles in our application does not present a security risk, as these styles are static and do not involve any user-supplied content or executable code that could lead to injection attacks. Therefore, this alert is considered a low risk and will be skipped'
+      ZAP_40035: 'Skipping ZAP alert (40035) - Hidden File Found - False Positive.  With SPA apps, if a file is not found it redirects to an error page.  Thus zap says it found hidden file while there are none.'

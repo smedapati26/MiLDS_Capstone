@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vitest/globals", "vitest/jsdom"],
+    "baseUrl": "./",
+
+    /* Paths */
+    "paths": {
+      "@components/*": ["src/components/*"],
+      "@context/*": ["src/context/*"],
+      "@features/*": ["src/features/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@loaders/*": ["src/loaders/*"],
+      "@models/*": ["src/models/*"],
+      "@pages/*": ["src/pages/*"],
+      "@store/*": ["src/store/*"],
+      "@theme/*": ["src/theme/*"],
+      "@utils/*": ["src/utils/*"],
+      "@ai2c/pmx-mui": ["src/pmx-mui/index.ts"],
+      "@ai2c/pmx-mui/*": ["src/pmx-mui/*"],
+      "@pmx-mui-components/*": ["src/pmx-mui/components/*"],
+      "@constants/*": ["src/pmx-mui/constants/*"],
+      "@helpers/*": ["src/pmx-mui/helpers/*"],
+      "@icons/*": ["src/pmx-mui/icons/*"],
+      "@pmx-mui-models/*": ["src/pmx-mui/models/*"],
+      "@pmx-mui-theme/*": ["src/pmx-mui/theme/*"],
+      "@mui/styled-engine": ["./node_modules/@mui/styled-engine-sc"]
+    }
+  },
+  "include": ["src", "vitest", "src/theme/palette.d.ts"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

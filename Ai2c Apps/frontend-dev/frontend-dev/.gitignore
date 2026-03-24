@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+coverage
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+.npmrc
+*.tgz
+tsconfig.node.tsbuildinfo
+createNexus.pem
+
+# Auto-generated build files
+tsconfig.build.tsbuildinfo
+tsconfig.tsbuildinfo
+vite.config.d.ts
+vite.config.js
+bash.exe.stackdump
+
+# Test results
+junit-report.xml
+TestFile.pdf
+
+# Local Semgrep
+*venv
