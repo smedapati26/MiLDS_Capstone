@@ -1,6 +1,8 @@
 # app/back_end/tests/test_scenarios.py
 from django.test import TestCase
 from django.urls import reverse
+from app.back_end.models import Aircraft, Soldier, Scenario, ScenarioEvent
+import json
 
 from app.back_end.models import (
     Aircraft,
@@ -137,9 +139,7 @@ class ScenarioRevertTests(TestCase):
         
     from django.test import TestCase
     
-from django.urls import reverse
-from app.back_end.models import Aircraft, Soldier, Scenario, ScenarioEvent
-import json
+
 
 class ScenarioCreateApiTests(TestCase):
     def setUp(self):
