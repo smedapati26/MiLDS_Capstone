@@ -58,17 +58,19 @@ body{
 .input::placeholder{ color:#9aa3b2 }
 
 /* Top-left app badge */
-.app-badge{
-  position:fixed; top:12px; left:12px; z-index:1000;
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:10px; padding:6px 10px;
-  font-weight:800; letter-spacing:.5px;
-  color:var(--ink);
-  box-shadow: var(--elev1);
-  user-select:none;
+.app-badge {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
 }
 
+.app-badge-logo {
+  height: 62px;
+  width: auto;
+  display: block;
+}
 /* Tabs */
 .tabs{
   display:flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; background: var(--surface-alt);
