@@ -1,0 +1,9 @@
+{
+    "exclude": [
+        "**/*.d.*",
+        "**/node_modules/**/*",
+        "**/vitest/**/*"
+    ],
+    "out": "../public",
+    "name": "Griffin React App Docs"
+}

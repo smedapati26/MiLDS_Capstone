@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../backend",
+    },
+  ],
+  "settings": {
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+    },
+    "prettier.configPath": ".prettierrc.json",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "typescript.tsdk": "node_modules/typescript",
+    "emmet.includeLanguages": {
+      "javascript": "javascriptreact",
+    },
+    "liveServer.settings.multiRootWorkspaceName": "frontend-react",
+    "cSpell.words": ["deadlining", "Deadlining"],
+  },
+}

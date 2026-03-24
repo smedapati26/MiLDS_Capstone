@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vitest/globals", "vitest/jsdom", "vite-plugin-svgr/client"],
+    "baseUrl": "./",
+
+    /* Paths */
+    "paths": {
+      "@components/*": ["src/components/*"],
+      "@features/*": ["src/features/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@loaders/*": ["src/loaders/*"],
+      "@models/*": ["src/models/*"],
+      "@pages/*": ["src/pages/*"],
+      "@static": ["src/static/*"],
+      "@store/*": ["src/store/*"],
+      "@theme/*": ["src/theme/*"],
+      "@utils/*": ["src/utils/*"],
+      "@vitest/*": ["vitest/*"],
+      /* PMx-MUI */
+      "@ai2c/pmx-mui": ["src/pmx-mui"],
+      "@ai2c/pmx-mui/*": ["src/pmx-mui/*"]
+    }
+  },
+  "include": ["src", "vitest"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

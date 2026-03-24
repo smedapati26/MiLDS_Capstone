@@ -1,0 +1,66 @@
+import { titlecase } from '../helpers';
+import { EnumOption } from './EnumOption';
+
+export enum Rank {
+  PRIVATE = 'PVT',
+  PRIVATE_FIRST_CLASS = 'PFC',
+  SPECIALIST = 'SPC',
+  CORPORAL = 'CPL',
+  SERGEANT = 'SGT',
+  STAFF_SERGEANT = 'SSG',
+  SERGEANT_FIRST_CLASS = 'SFC',
+  MASTER_SERGEANT = 'MSG',
+  FIRST_SERGEANT = '1SG',
+  SERGEANT_MAJOR = 'SGM',
+  COMMAND_SERGEANT_MAJOR = 'CSM',
+  WARRANT_OFFICER_1 = 'WO1',
+  WARRANT_OFFICER_2 = 'CW2',
+  WARRANT_OFFICER_3 = 'CW3',
+  WARRANT_OFFICER_4 = 'CW4',
+  WARRANT_OFFICER_5 = 'CW5',
+  SECOND_LIEUTENANT = '2LT',
+  FIRST_LIEUTENANT = '1LT',
+  CAPTAIN = 'CPT',
+  MAJOR = 'MAJ',
+  LIEUTENANT_COLONEL = 'LTC',
+  COLONEL = 'COL',
+  BRIGADE_GENERAL = 'BG',
+  MAJOR_GENERAL = 'MG',
+  LIEUTENANT_GENERAL = 'LTG',
+  GENERAL = 'GEN',
+  GENERAL_OF_THE_ARMY = 'GA',
+  SENIOR_EXECUTIVE_SERVICE_1 = 'SES1',
+  SENIOR_EXECUTIVE_SERVICE_2 = 'SES2',
+  SENIOR_EXECUTIVE_SERVICE_3 = 'SES3',
+  SENIOR_EXECUTIVE_SERVICE_4 = 'SES4',
+  GENERAL_SCHEDULE_1 = 'GS1',
+  GENERAL_SCHEDULE_2 = 'GS2',
+  GENERAL_SCHEDULE_3 = 'GS3',
+  GENERAL_SCHEDULE_4 = 'GS4',
+  GENERAL_SCHEDULE_5 = 'GS5',
+  GENERAL_SCHEDULE_6 = 'GS6',
+  GENERAL_SCHEDULE_7 = 'GS7',
+  GENERAL_SCHEDULE_8 = 'GS8',
+  GENERAL_SCHEDULE_9 = 'GS9',
+  GENERAL_SCHEDULE_10 = 'GS10',
+  GENERAL_SCHEDULE_11 = 'GS11',
+  GENERAL_SCHEDULE_12 = 'GS12',
+  GENERAL_SCHEDULE_13 = 'GS13',
+  GENERAL_SCHEDULE_14 = 'GS14',
+  GENERAL_SCHEDULE_15 = 'GS15',
+  CONTRACTOR = 'CTR',
+  UNKNOWN = 'UNK',
+}
+
+/**
+ * Get Rank options
+ *
+ * @returns { Array<EnumOption> } Array of EnumOption's
+ */
+export const getRankOptions = (): Array<EnumOption> =>
+  Object.entries(Rank).map(
+    ([label, value]): EnumOption => ({
+      label: titlecase(label),
+      value,
+    }),
+  );

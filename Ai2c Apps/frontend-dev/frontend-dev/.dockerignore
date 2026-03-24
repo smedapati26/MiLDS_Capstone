@@ -1,0 +1,8 @@
+ node_modules
+.vscode
+.husky
+.sonarlint
+vitest
+package-lock.json
+.env.development.local
+
