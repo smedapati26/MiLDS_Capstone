@@ -374,6 +374,7 @@ export default function Assets() {
     const nextMos = (personnelDraft.primary_mos ?? '').trim();
     const nextUnit = (personnelDraft.current_unit ?? '').trim();
     const nextMaint = !!personnelDraft.is_maintainer;
+    const nextRemarks = (personnelDraft.remarks ?? '').trim();
 
     if ((row.rank ?? '') !== nextRank) changes.push({ field: 'rank', value: nextRank });
     if ((row.primary_mos ?? '') !== nextMos) changes.push({ field: 'primary_mos', value: nextMos });
@@ -423,6 +424,7 @@ export default function Assets() {
           primary_mos: nextMos,
           current_unit: nextUnit,
           is_maintainer: nextMaint,
+          remarks: nextRemarks,
         };
         const updated = await updatePersonnel(id, payload);
         setPersonnelRows((prev) =>
@@ -478,6 +480,7 @@ export default function Assets() {
       primary_mos: row.primary_mos ?? '',
       current_unit: row.current_unit ?? '',
       is_maintainer: !!row.is_maintainer,
+      remarks: row.remarks ?? "",
     });
   };
 
@@ -904,13 +907,14 @@ export default function Assets() {
                     <th>MOS</th>
                     <th>Unit</th>
                     <th>Role</th>
+                    <th>Remarks</th>
                     <th style={{ width: 160 }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredPersonnel.length === 0 ? (
                     <tr>
-                      <td className="empty" colSpan={6}>
+                      <td className="empty" colSpan={8}>
                         {personnelRows.length === 0
                           ? 'No personnel found.'
                           : 'No personnel match your search.'}
@@ -1003,6 +1007,26 @@ export default function Assets() {
                               </label>
                             ) : (
                               row.is_maintainer ? 'Maintainer' : 'Other'
+                            )}
+                          </td>
+                          {/* Remarks (editable) */}
+                          <td>
+                            {isEditing ? (
+                              <input
+                                className="search-input"
+                                value={personnelDraft.remarks ?? ''}
+                                onChange={(e) =>
+                                  setPersonnelDraft((d) => ({
+                                    ...d,
+                                    remarks: e.target.value,
+                                  }))
+                                }
+                                placeholder="Optional remarks"
+                              />
+                            ) : (
+                              <span title={row.remarks ?? ''}>
+                                {row.remarks?.trim() ? row.remarks : '—'}
+                              </span>
                             )}
                           </td>
 
