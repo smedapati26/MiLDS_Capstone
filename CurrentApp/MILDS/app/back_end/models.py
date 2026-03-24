@@ -50,23 +50,7 @@ class Aircraft(models.Model):
         return f"{self.model_name} ({self.serial})"
 
 
-'''
-# Create your models here.
-class Aircraft(models.Model):
-    # Note: You may set pk as the primary key automatically.
-    # Use models.AutoField or define your own field if needed.
-    aircraft_pk = models.IntegerField(unique=True) #need
-    model_name = models.CharField(max_length=100, default="Unknown Model") #need
-    status = models.CharField(max_length=50, default="NMCM") #need
-    rtl = models.CharField(max_length=50, default="NRTL") #need
-    current_unit = models.CharField(max_length=50, default="WDDRA0") #need
-    remarks = models.TextField(blank=True) #need
-    date_down = models.DateField(null=True) # need
-   
 
-    def __str__(self):
-        return f"{self.aircraft_pk} - {self.model_name}"
-'''
 class Soldier(models.Model):
     user_id = models.CharField("EDIPI Number", max_length=12, primary_key=True) #from Soldier
     rank = models.CharField("Rank", max_length=5, null=True, blank=True) #from Soldier
