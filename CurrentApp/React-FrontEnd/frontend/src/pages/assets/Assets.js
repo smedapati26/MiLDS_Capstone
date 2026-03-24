@@ -35,7 +35,15 @@ export default function Assets() {
   const [active, setActive] = useState('aircraft'); // 'aircraft' | 'personnel' | 'scenarios'
 
   // Search state
-  const [aircraftSearch, setAircraftSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterUnit, setFilterUnit] = useState('');
+  const [filterRTL, setFilterRTL] = useState('');
+  const [filterSerial, setFilterSerial] = useState('');
+  const [filterModel, setFilterModel] = useState('');
+  const [filterDateDown, setFilterDateDown] = useState('');
+  const [filterDaysDown, setFilterDaysDown] = useState('');
+  const [filterRemarks, setFilterRemarks] = useState('');
+  const [filterHours, setFilterHours] = useState('');
   const [personnelQuery, setPersonnelQuery] = useState('');
 
   const [runRows, setRunRows] = useState([]);
@@ -509,30 +517,63 @@ export default function Assets() {
   );
 
   // ---- Client-side search filters ----
+  const filteredAircraft = aircraftRows.filter((row) => {
+    const serial = String(row.serial ?? '').toLowerCase();
+    const model = (row.model_name ?? '').toLowerCase();
+    const unit = (row.current_unit ?? '').toLowerCase();
+    const status = (row.status ?? '').toLowerCase();
+    const category = rtlCategory(row.rtl).toLowerCase(); // RTL / NRTL
+    const remarks = (row.remarks ?? '').toLowerCase();
+    const dateDown = String(row.date_down ?? '').toLowerCase();
+    const days = String(daysDown(row.date_down) ?? '').toLowerCase();
+    const hours = String(row.hours_to_phase ?? '').toLowerCase();
 
-  const normalizedSearch = aircraftSearch.trim().toLowerCase();
+    // ---- FIELD-SPECIFIC MATCHING ----
 
-  const filteredAircraft = normalizedSearch
-    ? aircraftRows.filter((row) => {
-        const serial = String(row.serial ?? '').toLowerCase();
-        const model = (row.model_name ?? '').toLowerCase();
-        const unit = (row.current_unit ?? '').toLowerCase();
-        const status = (row.status ?? '').toLowerCase();
-        const category = rtlCategory(row.rtl).toLowerCase();
-        const remarks = (row.remarks ?? '').toLowerCase();
-        const dateDown = String(row.date_down ?? '').toLowerCase();
+    // Exact match fields (no partials)
+    const matchesStatus =
+      !filterStatus || status === filterStatus.toLowerCase();
 
-        return (
-        serial.includes(normalizedSearch) ||
-        model.includes(normalizedSearch) ||
-        unit.includes(normalizedSearch) ||
-        status.includes(normalizedSearch) ||
-        category.includes(normalizedSearch) ||
-        remarks.includes(normalizedSearch) ||
-        dateDown.includes(normalizedSearch)
-        );
-      })
-    : aircraftRows;
+    const matchesRTL =
+      !filterRTL || category === filterRTL.toLowerCase();
+
+    const matchesUnit =
+      !filterUnit || unit === filterUnit.toLowerCase();
+
+    // Partial match fields (free text)
+    const matchesSerial =
+      !filterSerial || serial.includes(filterSerial.toLowerCase());
+
+    const matchesModel =
+      !filterModel || model.includes(filterModel.toLowerCase());
+
+    const matchesRemarks =
+      !filterRemarks || remarks.includes(filterRemarks.toLowerCase());
+
+    // Date (string match is fine)
+    const matchesDateDown =
+      !filterDateDown || dateDown.includes(filterDateDown.toLowerCase());
+
+    // Numeric (optional improvement)
+    const matchesHours =
+      !filterHours || hours === filterHours.toLowerCase();
+
+    const matchesDays =
+      !filterDaysDown || days === filterDaysDown.toLowerCase();
+
+    // ---- FINAL AND LOGIC ----
+    return (
+      matchesSerial &&
+      matchesModel &&
+      matchesStatus &&
+      matchesRTL &&
+      matchesUnit &&
+      matchesDateDown &&
+      matchesDays &&
+      matchesRemarks &&
+      matchesHours
+    );
+  });
 
   const normalizedPersonnelSearch = personnelQuery.trim().toLowerCase();
 
@@ -680,19 +721,90 @@ export default function Assets() {
             />
 
             <div className="toolbar" style={{ marginBottom: 8, gap: 8, display: 'flex' }}>
+              {/* SERIAL */}
               <input
-                type="search"
-                placeholder="Search serial, model, unit, status, remarks..."
-                className="search-input"
-                value={aircraftSearch}
-                onChange={(e) => setAircraftSearch(e.target.value)}
-                style={{ flex: 1 }} // Add flex: 1 so it takes available space
+                type="text"
+                placeholder="Serial"
+                value={filterSerial}
+                onChange={(e) => setFilterSerial(e.target.value)}
+                style={{ width: 90 }}
+              />
+
+              {/* MODEL */}
+              <input
+                type="text"
+                placeholder="Model"
+                value={filterModel}
+                onChange={(e) => setFilterModel(e.target.value)}
+                style={{ width: 100 }}
+              />
+
+              {/* STATUS */}
+              <input
+                type="text"
+                placeholder="Status"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                style={{ width: 90 }}
+              />
+
+              {/* RTL */}
+              <input
+                type="text"
+                placeholder="RTL"
+                value={filterRTL}
+                onChange={(e) => setFilterRTL(e.target.value)}
+                style={{ width: 80 }}
+              />
+
+              {/* UNIT */}
+              <input
+                type="text"
+                placeholder="Unit"
+                value={filterUnit}
+                onChange={(e) => setFilterUnit(e.target.value)}
+                style={{ width: 100 }}
+              />
+
+              {/* DATE DOWN */}
+              <input
+                type="text"
+                placeholder="Date Down"
+                value={filterDateDown}
+                onChange={(e) => setFilterDateDown(e.target.value)}
+                style={{ width: 110 }}
+              />
+
+              {/* DAYS DOWN */}
+              <input
+                type="text"
+                placeholder="Days Down"
+                value={filterDaysDown}
+                onChange={(e) => setFilterDaysDown(e.target.value)}
+                style={{ width: 100 }}
+              />
+
+              {/* REMARKS */}
+              <input
+                type="text"
+                placeholder="Remarks"
+                value={filterRemarks}
+                onChange={(e) => setFilterRemarks(e.target.value)}
+                style={{ width: 120 }}
+              />
+
+              {/* HOURS TO PHASE */}
+              <input
+                type="text"
+                placeholder="Hours"
+                value={filterHours}
+                onChange={(e) => setFilterHours(e.target.value)}
+                style={{ width: 90 }}
               />
 
               <Button onClick={handleReceiveGriffin} disabled={griffinSyncing}>
                 {griffinSyncing ? 'Receiving…' : 'Pull From Griffin'}
               </Button>
-
             </div>
 
             <div className="table-wrap">
@@ -1202,4 +1314,5 @@ export default function Assets() {
       </div>
     </main>
   );
+
 }
