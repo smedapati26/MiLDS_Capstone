@@ -9,9 +9,9 @@ urlpatterns = [
     path("api/csrf/", views.csrf_bootstrap, name="csrf-bootstrap"),
 
     # JSON API
-    path("api/aircraft/", views.aircraft_list, name="aircraft-list"),
-    path("api/aircraft/<int:pk>/", views.aircraft_detail, name="aircraft-detail"),
-    path("api/personnel/", views.personnel_list, name="personnel-list"),
+    path("api/aircraft/", views.aircraft_api_list, name="aircraft-list"),
+    path("api/aircraft/<str:pk>/", views.aircraft_detail, name="aircraft-detail"),
+    path("api/personnel/", views.personnel_list_api, name="personnel-list"),
     path("api/personnel/<str:pk>/", views.personnel_detail, name="personnel-detail"),
 
     # Aircraft HTML
