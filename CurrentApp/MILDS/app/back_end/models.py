@@ -83,6 +83,7 @@ class Soldier(models.Model):
         null=True,
         blank=True
     )
+    remarks = models.TextField(blank=True, default="")
 
 class SoldierFlag(models.Model):
     """
@@ -156,6 +157,7 @@ class ScenarioEvent(models.Model):
     remarks  = models.TextField(blank=True)
     date_down = models.DateField(null=True, blank=True)
     personnel_changes = models.JSONField(default=dict, blank=True)
+    
 
     class Meta:
         constraints = [
@@ -175,17 +177,18 @@ class ScenarioRun(models.Model):
     reverted_at = models.DateTimeField(null=True, blank=True)
     total_events = models.IntegerField(default=0)
     applied_events = models.IntegerField(default=0)
-
+    
 class ScenarioRunLog(models.Model):
+    
     run = models.ForeignKey(ScenarioRun, on_delete=models.CASCADE, related_name="logs")
-    aircraft_pk = models.CharField(max_length=32, null=True, blank=True, db_index=True)
-    user_id = models.CharField(max_length=32, null=True, blank=True, db_index=True)
+    aircraft_pk = models.CharField(max_length=64, null=True, blank=True, db_index=True)
+    user_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)
     message = models.TextField()
     before = models.JSONField(default=dict)
     after = models.JSONField(default=dict)
-    changed = models.JSONField(default=list)  # <- NEW: fields altered in this run, e.g. ["status","rtl"]
+    changed = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         indexes = [
             models.Index(fields=['run']),

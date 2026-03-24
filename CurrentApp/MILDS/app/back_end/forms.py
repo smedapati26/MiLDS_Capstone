@@ -35,4 +35,8 @@ class SoldierForm(forms.ModelForm):
             "primary_mos",
             "current_unit",
             "is_maintainer",
+            "remarks",
         ]
+        widgets = {
+            "remarks": forms.Textarea(attrs={"rows": 3}),
+        }
