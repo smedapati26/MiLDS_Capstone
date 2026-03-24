@@ -1,77 +1,922 @@
 # MILDS/app/back_end/views.py
 
-# Standard library
 import json
 import random
 from datetime import datetime, timedelta
 
-# Django core
-from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db import IntegrityError, models, transaction
 from django.http import (
-    JsonResponse,
-    HttpResponse,
-    HttpResponseBadRequest,
     Http404,
     HttpRequest,
+    HttpResponse,
+    HttpResponseBadRequest,
+    JsonResponse,
 )
-from django.views.decorators.http import require_http_methods, require_POST
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from django.db import transaction, models, IntegrityError
-from django.core.paginator import Paginator
-from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-# Local app imports
 from .forms import AircraftForm, SoldierForm
 from .models import (
     Aircraft,
-    Soldier,
     Scenario,
     ScenarioEvent,
     ScenarioRun,
     ScenarioRunLog,
+    Soldier,
 )
 
-# Griffin client (from your HEAD side)
 from app.api.griffin_client import GriffinClient
 
-# --- PATCHABLE fields we want editable from React ---
-AIRCRAFT_PATCHABLE = {"status", "rtl", "remarks", "date_down", "current_unit", "hours_to_phase"}
-PERSONNEL_PATCHABLE = {"rank", "primary_mos", "current_unit", "is_maintainer", "simulated_casualty", "remarks"}
+
+AIRCRAFT_PATCHABLE = {
+    "status",
+    "rtl",
+    "remarks",
+    "date_down",
+    "current_unit",
+    "hours_to_phase",
+}
+
+PERSONNEL_PATCHABLE = {
+    "rank",
+    "primary_mos",
+    "current_unit",
+    "is_maintainer",
+    "simulated_casualty",
+    "remarks",
+}
+
+PERSONNEL_SCENARIO_FIELDS = {
+    "rank",
+    "primary_mos",
+    "current_unit",
+    "is_maintainer",
+    "simulated_casualty",
+    "remarks",
+}
+
+
+Fixture_Path_Gr = "Griffin-backend/griffin-dev/griffin_ai/fixtures/Aircraft_data.json"
+Fixture_Path_Am = "Amap-backend/backend-dev/fixtures/personnel_data.json"
+
+
+# ---------------------------------------------------------------------
+# BASIC / CSRF
+# ---------------------------------------------------------------------
 
 @ensure_csrf_cookie
 def csrf_bootstrap(request):
     return JsonResponse({"ok": True})
 
-def aircraft_list(request):
-    data = [{"id": 1, "tail": "A123", "type": "UH-60"}]
-    return JsonResponse(data, safe=False)
+
+def home(request):
+    return HttpResponse("MILDS is running successfully.")
+
+
+# ---------------------------------------------------------------------
+# HTML VIEWS - AIRCRAFT
+# ---------------------------------------------------------------------
+
+def list_aircraft(request):
+    qs = Aircraft.objects.all().order_by("serial")
+
+    model_name = request.GET.get("model_name", "").strip()
+    status = request.GET.get("status", "").strip()
+    rtl = request.GET.get("rtl", "").strip()
+    unit = request.GET.get("unit", "").strip()
+    search = request.GET.get("q", "").strip()
+    min_hours = request.GET.get("min_hours", "").strip()
+    max_hours = request.GET.get("max_hours", "").strip()
+
+    if model_name:
+        qs = qs.filter(model_name__iexact=model_name)
+    if status:
+        qs = qs.filter(status__iexact=status)
+    if rtl:
+        qs = qs.filter(rtl__iexact=rtl)
+    if unit:
+        qs = qs.filter(current_unit__iexact=unit)
+    if search:
+        qs = qs.filter(
+            models.Q(serial__icontains=search)
+            | models.Q(remarks__icontains=search)
+            | models.Q(model_name__icontains=search)
+            | models.Q(rtl__icontains=search)
+            | models.Q(status__icontains=search)
+        )
+    if min_hours:
+        try:
+            qs = qs.filter(total_airframe_hours__gte=float(min_hours))
+        except ValueError:
+            pass
+    if max_hours:
+        try:
+            qs = qs.filter(total_airframe_hours__lte=float(max_hours))
+        except ValueError:
+            pass
+
+    model_names = Aircraft.objects.order_by().values_list("model_name", flat=True).distinct()
+    statuses = Aircraft.objects.order_by().values_list("status", flat=True).distinct()
+    rtls = Aircraft.objects.order_by().values_list("rtl", flat=True).distinct()
+    units = Aircraft.objects.order_by().values_list("current_unit", flat=True).distinct()
+
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    ctx = {
+        "page_obj": page_obj,
+        "filters": {
+            "model_name": model_name,
+            "status": status,
+            "rtl": rtl,
+            "unit": unit,
+            "q": search,
+            "min_hours": min_hours,
+            "max_hours": max_hours,
+        },
+        "model_names": model_names,
+        "statuses": statuses,
+        "rtls": rtls,
+        "units": units,
+    }
+    return render(request, "aircraft_list.html", ctx)
+
+
+def create_aircraft(request):
+    if request.method == "POST":
+        form = AircraftForm(request.POST)
+        if form.is_valid():
+            aircraft = form.save(commit=False)
+            if not aircraft.current_unit:
+                aircraft.current_unit = "WDDRA0"
+            aircraft.save()
+            return redirect("list_aircraft")
+    else:
+        form = AircraftForm()
+
+    return render(request, "aircraft_form.html", {"form": form})
+
+
+def update_aircraft(request, pk):
+    aircraft = get_object_or_404(Aircraft, pk=pk)
+
+    if request.method == "POST":
+        form = AircraftForm(request.POST, instance=aircraft)
+        if form.is_valid():
+            form.save()
+            return redirect("list_aircraft")
+    else:
+        form = AircraftForm(instance=aircraft)
+
+    return render(request, "aircraft_form.html", {"form": form})
+
+
+def delete_aircraft(request, pk):
+    aircraft = get_object_or_404(Aircraft, pk=pk)
+
+    if request.method == "POST":
+        aircraft.delete()
+        return redirect("list_aircraft")
+
+    return render(request, "aircraft_delete.html", {"aircraft": aircraft})
+
+
+# ---------------------------------------------------------------------
+# HTML VIEWS - PERSONNEL
+# ---------------------------------------------------------------------
+
+def list_personnel(request):
+    qs = Soldier.objects.all().order_by("last_name", "first_name", "user_id")
+
+    q = request.GET.get("q", "").strip()
+    rank = request.GET.get("rank", "").strip()
+    mos = request.GET.get("mos", "").strip()
+    unit = request.GET.get("unit", "").strip()
+    maint = request.GET.get("maint", "").strip()
+
+    if q:
+        qs = qs.filter(
+            models.Q(first_name__icontains=q)
+            | models.Q(last_name__icontains=q)
+            | models.Q(user_id__icontains=q)
+            | models.Q(remarks__icontains=q)
+        )
+    if rank:
+        qs = qs.filter(rank__iexact=rank)
+    if mos:
+        qs = qs.filter(primary_mos__iexact=mos)
+    if unit:
+        qs = qs.filter(current_unit__iexact=unit)
+    if maint == "yes":
+        qs = qs.filter(is_maintainer=True)
+    elif maint == "no":
+        qs = qs.filter(is_maintainer=False)
+
+    ranks = Soldier.objects.order_by().values_list("rank", flat=True).distinct()
+    moss = Soldier.objects.order_by().values_list("primary_mos", flat=True).distinct()
+    units = Soldier.objects.order_by().values_list("current_unit", flat=True).distinct()
+
+    paginator = Paginator(qs, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    ctx = {
+        "page_obj": page_obj,
+        "filters": {
+            "q": q,
+            "rank": rank,
+            "mos": mos,
+            "unit": unit,
+            "maint": maint,
+        },
+        "ranks": ranks,
+        "moss": moss,
+        "units": units,
+    }
+    return render(request, "personnel_list.html", ctx)
+
+
+def create_personnel(request):
+    if request.method == "POST":
+        form = SoldierForm(request.POST)
+        if form.is_valid():
+            soldier = form.save(commit=False)
+            if not soldier.current_unit:
+                soldier.current_unit = "WDDRA0"
+            soldier.save()
+            return redirect("list_personnel")
+    else:
+        form = SoldierForm()
+
+    return render(request, "personnel_form.html", {"form": form})
+
+
+def update_personnel(request, pk):
+    soldier = get_object_or_404(Soldier, pk=pk)
+
+    if request.method == "POST":
+        form = SoldierForm(request.POST, instance=soldier)
+        if form.is_valid():
+            form.save()
+            return redirect("list_personnel")
+    else:
+        form = SoldierForm(instance=soldier)
+
+    return render(request, "personnel_form.html", {"form": form})
+
+
+def delete_personnel(request, pk):
+    soldier = get_object_or_404(Soldier, pk=pk)
+
+    if request.method == "POST":
+        soldier.delete()
+        return redirect("list_personnel")
+
+    return render(request, "personnel_delete.html", {"soldier": soldier})
+
+
+def recent_pushes(request):
+    ten_days_ago = timezone.now() - timedelta(days=10)
+    recent_aircrafts = Aircraft.objects.filter(last_sync_time__gte=ten_days_ago)
+    return render(request, "Milds_App/recent_pushes.html", {"aircrafts": recent_aircrafts})
+
+
+# ---------------------------------------------------------------------
+# FIXTURE SYNC
+# ---------------------------------------------------------------------
+
+def api_get_aircraft(request: HttpRequest):
+    if request.method != "GET":
+        return HttpResponseBadRequest("Only GET is allowed here")
+
+    try:
+        with open(Fixture_Path_Gr, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except FileNotFoundError:
+        return HttpResponseBadRequest(f"Fixture not found at {Fixture_Path_Gr}")
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Invalid JSON in aircraft fixture file")
+
+    created = 0
+    updated = 0
+
+    for rec in raw:
+        if rec.get("model") != "aircraft.Aircraft":
+            continue
+
+        pk = rec.get("pk")
+        if pk in (None, ""):
+            continue
+
+        fields = rec.get("fields", {})
+
+        defaults = {
+            "model_name": fields.get("model", fields.get("model_name", "Unknown Model")),
+            "status": fields.get("status", "NMC"),
+            "rtl": fields.get("rtl", "NRTL"),
+            "current_unit": fields.get("current_unit", "WDDRA0"),
+            "total_airframe_hours": fields.get("total_airframe_hours"),
+            "flight_hours": fields.get("flight_hours"),
+            "hours_to_phase": fields.get("hours_to_phase"),
+            "location": fields.get("location"),
+            "remarks": fields.get("remarks") or "",
+            "date_down": parse_date(fields.get("date_down")) if fields.get("date_down") else None,
+            "ecd": parse_date(fields.get("ecd")) if fields.get("ecd") else None,
+        }
+
+        _, created_flag = Aircraft.objects.update_or_create(
+            serial=str(pk),
+            defaults=defaults,
+        )
+
+        if created_flag:
+            created += 1
+        else:
+            updated += 1
+
+    return JsonResponse(
+        {"created": created, "updated": updated, "total": created + updated},
+        json_dumps_params={"indent": 2},
+    )
+
+
+@require_http_methods(["POST"])
+def api_push_aircraft(request: HttpRequest):
+    try:
+        with open(Fixture_Path_Gr, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        return HttpResponseBadRequest(f"Could not read aircraft fixture: {e}")
+
+    db_map = {str(ac.serial): ac for ac in Aircraft.objects.all()}
+    updated = 0
+
+    for rec in data:
+        if rec.get("model") != "aircraft.Aircraft":
+            continue
+
+        pk = str(rec.get("pk"))
+        if pk not in db_map:
+            continue
+
+        ac = db_map[pk]
+        fields = rec.setdefault("fields", {})
+
+        fields["model"] = ac.model_name
+        fields["model_name"] = ac.model_name
+        fields["status"] = ac.status
+        fields["rtl"] = ac.rtl
+        fields["current_unit"] = ac.current_unit
+        fields["total_airframe_hours"] = ac.total_airframe_hours
+        fields["flight_hours"] = ac.flight_hours
+        fields["hours_to_phase"] = ac.hours_to_phase
+        fields["location"] = ac.location
+        fields["remarks"] = ac.remarks or ""
+        fields["date_down"] = ac.date_down.isoformat() if ac.date_down else None
+        fields["ecd"] = ac.ecd.isoformat() if ac.ecd else None
+
+        updated += 1
+
+    try:
+        with open(Fixture_Path_Gr, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        return HttpResponseBadRequest(f"Could not write aircraft fixture: {e}")
+
+    return JsonResponse(
+        {"status": "pushed", "updated": updated},
+        json_dumps_params={"indent": 2},
+    )
+
+
+def api_get_personnel(request: HttpRequest):
+    if request.method != "GET":
+        return HttpResponseBadRequest("Only GET is allowed here")
+
+    try:
+        with open(Fixture_Path_Am, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except FileNotFoundError:
+        return HttpResponseBadRequest(f"Fixture not found at {Fixture_Path_Am}")
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Invalid JSON in personnel fixture file")
+
+    created = 0
+    updated = 0
+
+    for rec in raw:
+        if rec.get("model") != "personnel.Soldier":
+            continue
+
+        pk = rec.get("pk")
+        if not pk:
+            continue
+
+        fields = rec.get("fields", {})
+        defaults = {
+            "rank": fields.get("rank", ""),
+            "first_name": fields.get("first_name", ""),
+            "last_name": fields.get("last_name", ""),
+            "primary_mos": fields.get("primary_mos", ""),
+            "current_unit": fields.get("current_unit") or "WDDRA0",
+            "is_maintainer": fields.get("is_maintainer", True),
+            "simulated_casualty": fields.get("simulated_casualty"),
+            "remarks": fields.get("remarks") or "",
+        }
+
+        _, created_flag = Soldier.objects.update_or_create(
+            user_id=str(pk),
+            defaults=defaults,
+        )
+
+        if created_flag:
+            created += 1
+        else:
+            updated += 1
+
+    return JsonResponse(
+        {"created": created, "updated": updated, "total": created + updated},
+        json_dumps_params={"indent": 2},
+    )
+
+
+@require_http_methods(["POST"])
+def api_push_personnel(request: HttpRequest):
+    try:
+        with open(Fixture_Path_Am, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        return HttpResponseBadRequest(f"Could not read personnel fixture: {e}")
+
+    db_map = {str(s.user_id): s for s in Soldier.objects.all()}
+    updated = 0
+
+    for rec in data:
+        if rec.get("model") != "personnel.Soldier":
+            continue
+
+        user_id = str(rec.get("pk"))
+        if user_id not in db_map:
+            continue
+
+        soldier = db_map[user_id]
+        fields = rec.setdefault("fields", {})
+
+        fields["rank"] = soldier.rank
+        fields["first_name"] = soldier.first_name
+        fields["last_name"] = soldier.last_name
+        fields["primary_mos"] = soldier.primary_mos
+        fields["current_unit"] = soldier.current_unit
+        fields["is_maintainer"] = soldier.is_maintainer
+        fields["simulated_casualty"] = soldier.simulated_casualty
+        fields["remarks"] = soldier.remarks or ""
+
+        updated += 1
+
+    try:
+        with open(Fixture_Path_Am, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        return HttpResponseBadRequest(f"Could not write personnel fixture: {e}")
+
+    return JsonResponse(
+        {"status": "pushed", "updated": updated},
+        json_dumps_params={"indent": 2},
+    )
+
+
+# ---------------------------------------------------------------------
+# JSON API - LISTS
+# ---------------------------------------------------------------------
+
+@require_GET
+def aircraft_api_list(_request):
+    data = list(
+        Aircraft.objects.order_by("serial").values(
+            "serial",
+            "model_name",
+            "status",
+            "rtl",
+            "current_unit",
+            "total_airframe_hours",
+            "flight_hours",
+            "hours_to_phase",
+            "remarks",
+            "date_down",
+            "ecd",
+            "last_update_time",
+        )
+    )
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+
+
+@require_GET
+def personnel_list_api(_request):
+    data = list(
+        Soldier.objects.order_by("last_name", "first_name", "user_id").values(
+            "user_id",
+            "rank",
+            "first_name",
+            "last_name",
+            "primary_mos",
+            "current_unit",
+            "is_maintainer",
+            "simulated_casualty",
+            "remarks",
+        )
+    )
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+
+
+# ---------------------------------------------------------------------
+# JSON API - DETAIL / PATCH
+# ---------------------------------------------------------------------
+
+@csrf_exempt
+@require_http_methods(["GET", "PATCH"])
+def aircraft_detail(request, pk: str):
+    try:
+        ac = Aircraft.objects.get(pk=pk)  # pk == serial
+    except Aircraft.DoesNotExist:
+        raise Http404("Aircraft not found")
+
+    def serialize_aircraft(obj: Aircraft):
+        return {
+            "pk": obj.serial,
+            "serial": obj.serial,
+            "model_name": obj.model_name,
+            "status": obj.status,
+            "rtl": obj.rtl,
+            "current_unit": obj.current_unit,
+            "total_airframe_hours": obj.total_airframe_hours,
+            "flight_hours": obj.flight_hours,
+            "hours_to_phase": obj.hours_to_phase,
+            "remarks": obj.remarks or "",
+            "date_down": obj.date_down.isoformat() if obj.date_down else None,
+            "ecd": obj.ecd.isoformat() if obj.ecd else None,
+            "last_update_time": obj.last_update_time.isoformat() if obj.last_update_time else None,
+        }
+
+    if request.method == "GET":
+        return JsonResponse(serialize_aircraft(ac), json_dumps_params={"indent": 2})
+
+    try:
+        patch = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    if not isinstance(patch, dict):
+        return JsonResponse({"detail": "PATCH body must be an object"}, status=400)
+
+    update_fields = set()
+
+    for field, value in patch.items():
+        if field not in AIRCRAFT_PATCHABLE:
+            continue
+
+        if field == "date_down":
+            if value in (None, ""):
+                ac.date_down = None
+            else:
+                d = parse_date(str(value))
+                if d is None:
+                    return JsonResponse({"detail": "date_down must be YYYY-MM-DD"}, status=400)
+                ac.date_down = d
+            update_fields.add("date_down")
+
+        elif field == "hours_to_phase":
+            if value in (None, ""):
+                ac.hours_to_phase = None
+            else:
+                try:
+                    ac.hours_to_phase = float(value)
+                except Exception:
+                    return JsonResponse({"detail": "hours_to_phase must be a number"}, status=400)
+            update_fields.add("hours_to_phase")
+
+        elif field == "remarks":
+            ac.remarks = "" if value is None else str(value)
+            update_fields.add("remarks")
+
+        else:
+            setattr(ac, field, "" if value is None else str(value))
+            update_fields.add(field)
+
+    if not update_fields:
+        return JsonResponse({"detail": "No valid fields to update"}, status=400)
+
+    ac.last_update_time = timezone.now()
+    update_fields.add("last_update_time")
+    ac.save(update_fields=list(update_fields))
+
+    try:
+        client = GriffinClient()
+        griffin_payload = {}
+        for field in update_fields:
+            val = getattr(ac, field)
+            if hasattr(val, "isoformat"):
+                griffin_payload[field] = val.isoformat() if val else None
+            else:
+                griffin_payload[field] = val
+        client.inject_aircraft_update(ac.serial, griffin_payload)
+    except Exception as e:
+        print("GRIFFIN UPDATE FAILED:", e)
+
+    return JsonResponse(serialize_aircraft(ac), json_dumps_params={"indent": 2})
+
+
+@csrf_exempt
+@require_http_methods(["GET", "PATCH"])
+def personnel_detail(request, pk: str):
+    try:
+        s = Soldier.objects.get(pk=pk)
+    except Soldier.DoesNotExist:
+        raise Http404("Soldier not found")
+
+    def serialize(obj: Soldier):
+        return {
+            "user_id": obj.user_id,
+            "rank": obj.rank,
+            "first_name": obj.first_name,
+            "last_name": obj.last_name,
+            "primary_mos": obj.primary_mos,
+            "current_unit": obj.current_unit,
+            "is_maintainer": obj.is_maintainer,
+            "simulated_casualty": obj.simulated_casualty,
+            "remarks": obj.remarks or "",
+        }
+
+    if request.method == "GET":
+        return JsonResponse(serialize(s), json_dumps_params={"indent": 2})
+
+    try:
+        patch = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
+
+    if not isinstance(patch, dict):
+        return JsonResponse({"detail": "PATCH body must be an object"}, status=400)
+
+    update_fields = set()
+
+    for field, value in patch.items():
+        if field not in PERSONNEL_PATCHABLE:
+            continue
+
+        if field == "is_maintainer":
+            if isinstance(value, bool):
+                s.is_maintainer = value
+            else:
+                s.is_maintainer = str(value).strip().lower() in {
+                    "1",
+                    "true",
+                    "yes",
+                    "y",
+                    "on",
+                }
+            update_fields.add("is_maintainer")
+
+        elif field == "simulated_casualty":
+            s.simulated_casualty = None if value in (None, "") else str(value)
+            update_fields.add("simulated_casualty")
+
+        elif field == "remarks":
+            s.remarks = "" if value is None else str(value)
+            update_fields.add("remarks")
+
+        else:
+            setattr(s, field, "" if value is None else str(value))
+            update_fields.add(field)
+
+    if not update_fields:
+        return JsonResponse({"detail": "No valid fields to update"}, status=400)
+
+    s.save(update_fields=list(update_fields))
+    return JsonResponse(serialize(s), json_dumps_params={"indent": 2})
+
+
+# ---------------------------------------------------------------------
+# SCENARIO HELPERS
+# ---------------------------------------------------------------------
+
+def _snapshot_aircraft(ac: Aircraft):
+    return {
+        "status": ac.status,
+        "rtl": ac.rtl,
+        "remarks": ac.remarks or "",
+        "date_down": ac.date_down.isoformat() if ac.date_down else None,
+        "current_unit": ac.current_unit,
+        "hours_to_phase": ac.hours_to_phase,
+    }
+
+
+def _snapshot_soldier(s: Soldier):
+    return {
+        "rank": s.rank,
+        "first_name": s.first_name,
+        "last_name": s.last_name,
+        "primary_mos": s.primary_mos,
+        "current_unit": s.current_unit,
+        "is_maintainer": s.is_maintainer,
+        "simulated_casualty": s.simulated_casualty,
+        "remarks": s.remarks or "",
+    }
+
+
+def _coerce_bool(value):
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _normalize_personnel_changes(raw: dict):
+    changes = {}
+    if not isinstance(raw, dict):
+        return changes
+
+    for field in PERSONNEL_SCENARIO_FIELDS:
+        if field not in raw:
+            continue
+
+        value = raw.get(field)
+
+        if field == "is_maintainer":
+            if value in ("", None):
+                continue
+            changes[field] = _coerce_bool(value)
+
+        elif field == "simulated_casualty":
+            changes[field] = None if value in ("", None) else str(value)
+
+        elif field == "remarks":
+            changes[field] = "" if value is None else str(value)
+
+        else:
+            if value in ("", None):
+                continue
+            changes[field] = str(value)
+
+    return changes
+
+
+def _apply_aircraft_event(ac: Aircraft, ev: ScenarioEvent):
+    if ev.status:
+        ac.status = ev.status
+    if ev.rtl:
+        ac.rtl = ev.rtl
+    if ev.remarks is not None:
+        ac.remarks = ev.remarks
+    if ev.date_down is not None:
+        ac.date_down = ev.date_down
+
+
+def apply_scenario(scenario_id: int) -> ScenarioRun:
+    sc = (
+        Scenario.objects
+        .prefetch_related("events__aircraft", "events__soldier")
+        .get(pk=scenario_id)
+    )
+
+    run = ScenarioRun.objects.create(
+        scenario=sc,
+        total_events=sc.events.count(),
+    )
+
+    applied = 0
+
+    with transaction.atomic():
+        for ev in sc.events.all().order_by("id"):
+            if ev.soldier_id:
+                try:
+                    s = Soldier.objects.select_for_update().get(user_id=ev.soldier_id)
+                except Soldier.DoesNotExist:
+                    ScenarioRunLog.objects.create(
+                        run=run,
+                        aircraft_pk=None,
+                        user_id=str(ev.soldier_id),
+                        message=f"SKIP: Soldier {ev.soldier_id} missing.",
+                        before={},
+                        after={},
+                        changed={},
+                    )
+                    continue
+
+                before = _snapshot_soldier(s)
+                changes = _normalize_personnel_changes(ev.personnel_changes or {})
+
+                for field, value in changes.items():
+                    setattr(s, field, value)
+
+                after_preview = _snapshot_soldier(s)
+                changed = {
+                    f: {"old": before.get(f), "new": after_preview.get(f)}
+                    for f in after_preview.keys()
+                    if before.get(f) != after_preview.get(f)
+                }
+
+                if changed:
+                    s.save(update_fields=list(changed.keys()))
+                    applied += 1
+
+                ScenarioRunLog.objects.create(
+                    run=run,
+                    aircraft_pk=None,
+                    user_id=s.user_id,
+                    message=f"Personnel {s.user_id}: " + (", ".join(changed.keys()) if changed else "no changes"),
+                    before=before,
+                    after=_snapshot_soldier(s),
+                    changed=changed,
+                )
+                continue
+
+            if ev.aircraft_id:
+                try:
+                    ac = Aircraft.objects.select_for_update().get(serial=ev.aircraft_id)
+                except Aircraft.DoesNotExist:
+                    ScenarioRunLog.objects.create(
+                        run=run,
+                        aircraft_pk=str(ev.aircraft_id),
+                        user_id=None,
+                        message=f"SKIP: Aircraft {ev.aircraft_id} missing.",
+                        before={},
+                        after={},
+                        changed={},
+                    )
+                    continue
+
+                before = _snapshot_aircraft(ac)
+                _apply_aircraft_event(ac, ev)
+                after_preview = _snapshot_aircraft(ac)
+
+                changed = {
+                    f: {"old": before.get(f), "new": after_preview.get(f)}
+                    for f in after_preview.keys()
+                    if before.get(f) != after_preview.get(f)
+                }
+
+                if changed:
+                    ac.last_update_time = timezone.now()
+                    save_fields = set(changed.keys())
+                    save_fields.add("last_update_time")
+                    ac.save(update_fields=list(save_fields))
+                    applied += 1
+
+                ScenarioRunLog.objects.create(
+                    run=run,
+                    aircraft_pk=ac.serial,
+                    user_id=None,
+                    message=f"Aircraft {ac.serial}: " + (", ".join(changed.keys()) if changed else "no changes"),
+                    before=before,
+                    after=_snapshot_aircraft(ac),
+                    changed=changed,
+                )
+                continue
+
+            ScenarioRunLog.objects.create(
+                run=run,
+                aircraft_pk=None,
+                user_id=None,
+                message=f"SKIP: Event {ev.id} has no target.",
+                before={},
+                after={},
+                changed={},
+            )
+
+    run.applied_events = applied
+    run.save(update_fields=["applied_events"])
+    return run
+
+
+# ---------------------------------------------------------------------
+# SCENARIO REVERT
+# ---------------------------------------------------------------------
 
 @csrf_exempt
 @require_POST
 def revert_last_scenario(request):
-    """
-    Revert the most recent ScenarioRun that actually changed something.
-    This handles the case where users click Apply multiple times creating no-op runs.
-    """
-    # look at recent runs; pick the first with at least one non-empty changed log
     recent = list(ScenarioRun.objects.order_by("-started_at", "-id")[:50])
 
     run = None
     for cand in recent:
-        # changed is a dict now; non-empty dict means something changed
         if cand.logs.exclude(changed={}).exists():
             run = cand
             break
 
     if not run:
         return JsonResponse(
-            {"ok": True, "restored": 0, "errors": [], "message": "No scenario runs with changes to revert."},
+            {
+                "ok": True,
+                "restored": 0,
+                "errors": [],
+                "message": "No scenario runs with changes to revert.",
+            },
             json_dumps_params={"indent": 2},
         )
 
-    # call the by-id version directly
     return revert_scenario_run(request, run.pk)
 
 
@@ -117,9 +962,10 @@ def revert_scenario_run(request, run_id: int):
                 if update_fields:
                     s.save(update_fields=list(set(update_fields)))
                     restored += 1
+
                 continue
 
-            if log.aircraft_pk:
+            if log.aircraft_pk is not None:
                 try:
                     ac = Aircraft.objects.select_for_update().get(serial=log.aircraft_pk)
                 except Aircraft.DoesNotExist:
@@ -130,11 +976,11 @@ def revert_scenario_run(request, run_id: int):
                 update_fields = []
 
                 if "status" in fields:
-                    ac.status = before.get("status", ac.status)
+                    ac.status = before.get("status", "")
                     update_fields.append("status")
 
                 if "rtl" in fields:
-                    ac.rtl = before.get("rtl", ac.rtl)
+                    ac.rtl = before.get("rtl", "")
                     update_fields.append("rtl")
 
                 if "remarks" in fields:
@@ -155,9 +1001,20 @@ def revert_scenario_run(request, run_id: int):
                         ac.date_down = None
                     update_fields.append("date_down")
 
+                if "current_unit" in fields:
+                    ac.current_unit = before.get("current_unit", "")
+                    update_fields.append("current_unit")
+
+                if "hours_to_phase" in fields:
+                    ac.hours_to_phase = before.get("hours_to_phase")
+                    update_fields.append("hours_to_phase")
+
                 if update_fields:
+                    ac.last_update_time = timezone.now()
+                    update_fields.append("last_update_time")
                     ac.save(update_fields=list(set(update_fields)))
                     restored += 1
+
                 continue
 
         run.reverted_at = timezone.now()
@@ -174,841 +1031,16 @@ def revert_scenario_run(request, run_id: int):
         },
         json_dumps_params={"indent": 2},
     )
-"""
-def personnel_list(request):
-    data = [{"user_id": 1, "rank": "CPT", "first_name": "Beat", "last_name": "Navy",
-             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
-            {"user_id": 2, "rank": "LT", "first_name": "Beat", "last_name": "AF",
-             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
-            {"user_id": 3, "rank": "LTC", "first_name": "Beat", "last_name": "TEMPLE",
-             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
-            {"user_id": 4, "rank": "LTG", "first_name": "Beat", "last_name": "UTSA",
-             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False},
-            {"user_id": 5, "rank": "MG", "first_name": "Beat", "last_name": "TULSA",
-             "primary_mos": "17A", "current_unit": "75 RR", "is_maintainer": False}]
-    return JsonResponse(data, safe=False)
-"""
 
-def personnel_list(_request):
-    data = list(
-        Soldier.objects.order_by("last_name", "first_name").values(
-            "user_id",       # EDIPI / ID
-            "rank",
-            "first_name",
-            "last_name",
-            "primary_mos",
-            "current_unit",
-            "is_maintainer",
-            "simulated_casualty",
-            "remarks",
-        )
-    )
-    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
 
-NEEDED_FIELDS = [
-    "aircraft_pk",
-    "model_name",
-    "status",
-    "rtl",
-    "current_unit",
-    "remarks",
-    "date_down",
-]
+# ---------------------------------------------------------------------
+# SCENARIO API
+# ---------------------------------------------------------------------
 
-PATCHABLE = ("status", "rtl", "remarks", "date_down")
-
-
-def home(request):
-    return HttpResponse("MILDS is running successfully.")
-
-
-def delete_aircraft(request, pk):
-    # Retrieve the specific aircraft object or return a 404 error if not found.
-    aircraft = get_object_or_404(Aircraft, pk=pk)
-    
-    if request.method == "POST":
-        # The aircraft will be deleted when the form is submitted.
-        aircraft.delete()
-        return redirect('list_aircraft')  # Redirect to a listing page or another appropriate page.
-    
-    # Render a confirmation page when the request method is GET.
-    return render(request, "aircraft_delete.html", {"aircraft": aircraft})
-
-
-def create_aircraft(request):
-    if request.method == "POST":
-        form = AircraftForm(request.POST)
-        if form.is_valid():
-            aircraft = form.save(commit=False)
-            aircraft.current_unit = "WDDRA0"  # force value similar to your CLI app
-            # Update timestamps if needed:
-            aircraft.save()
-            return redirect('list_aircraft')
-    else:
-        form = AircraftForm()
-    return render(request, "aircraft_form.html", {"form": form})
-
-#If Aircraft already exists 
-def update_aircraft(request, pk):
-    aircraft = get_object_or_404(Aircraft, pk=pk)
-    if request.method == "POST":
-        form = AircraftForm(request.POST, instance=aircraft)
-        if form.is_valid():
-            aircraft = form.save(commit=False)
-            aircraft.save()
-            return redirect('list_aircraft', pk=aircraft.pk)
-    else:
-        form = AircraftForm(instance=aircraft)
-    return render(request, "aircraft_form.html", {"form": form})
-
-
-def list_aircraft(request):
-    qs = Aircraft.objects.all().order_by("aircraft_pk")
-
-    # --- filters from querystring ---
-    model_name = request.GET.get("model_name", "").strip()
-    status     = request.GET.get("status", "").strip()
-    rtl        = request.GET.get("rtl", "").strip()
-    unit       = request.GET.get("unit", "").strip()
-    search     = request.GET.get("q", "").strip()      # free-text search
-    min_hours  = request.GET.get("min_hours", "").strip()
-    max_hours  = request.GET.get("max_hours", "").strip()
-
-    if model_name:
-        qs = qs.filter(model_name__iexact=model_name)
-    if status:
-        qs = qs.filter(status__iexact=status)
-    if rtl:
-        qs = qs.filter(rtl__iexact=rtl)
-    if unit:
-        qs = qs.filter(current_unit__iexact=unit)
-    if search:
-        qs = qs.filter(
-            # tweak fields as useful for quick search
-            models.Q(remarks__icontains=search) |
-            models.Q(model_name__icontains=search) |
-            models.Q(rtl__icontains=search) |
-            models.Q(status__icontains=search)
-        )
-    if min_hours.isdigit():
-        qs = qs.filter(total_airframe_hours__gte=float(min_hours))
-    if max_hours.isdigit():
-        qs = qs.filter(total_airframe_hours__lte=float(max_hours))
-
-    # --- dropdown option sources (distinct values) ---
-    model_names = Aircraft.objects.order_by().values_list("model_name", flat=True).distinct()
-    statuses    = Aircraft.objects.order_by().values_list("status", flat=True).distinct()
-    rtls        = Aircraft.objects.order_by().values_list("rtl", flat=True).distinct()
-    units       = Aircraft.objects.order_by().values_list("current_unit", flat=True).distinct()
-
-    # --- pagination ---
-    paginator = Paginator(qs, 10)  # 10 per page
-    page_obj = paginator.get_page(request.GET.get("page"))
-
-    ctx = {
-        "page_obj": page_obj,
-        "filters": {
-            "model_name": model_name,
-            "status": status,
-            "rtl": rtl,
-            "unit": unit,
-            "q": search,
-            "min_hours": min_hours,
-            "max_hours": max_hours,
-        },
-        "model_names": model_names,
-        "statuses": statuses,
-        "rtls": rtls,
-        "units": units,
-    }
-    return render(request, "aircraft_list.html", ctx)
-
-
-#Personnel Management 
-def list_personnel(request):
-    qs = Soldier.objects.all().order_by("last_name", "first_name")
-
-    # --- filters from querystring ---
-    q       = request.GET.get("q", "").strip()             # name/EDIPI search
-    rank    = request.GET.get("rank", "").strip()
-    mos     = request.GET.get("mos", "").strip()
-    unit    = request.GET.get("unit", "").strip()
-    maint   = request.GET.get("maint", "").strip()         # "yes" | "no" | ""
-
-    if q:
-        qs = qs.filter(
-            models.Q(first_name__icontains=q) |
-            models.Q(last_name__icontains=q)  |
-            models.Q(user_id__icontains=q)
-        )
-    if rank:
-        qs = qs.filter(rank__iexact=rank)
-    if mos:
-        qs = qs.filter(primary_mos__iexact=mos)
-    if unit:
-        qs = qs.filter(current_unit__iexact=unit)
-    if maint == "yes":
-        qs = qs.filter(is_maintainer=True)
-    elif maint == "no":
-        qs = qs.filter(is_maintainer=False)
-
-    # dropdown sources
-    ranks = Soldier.objects.order_by().values_list("rank", flat=True).distinct()
-    moss  = Soldier.objects.order_by().values_list("primary_mos", flat=True).distinct()
-    units = Soldier.objects.order_by().values_list("current_unit", flat=True).distinct()
-
-    # pagination
-    paginator = Paginator(qs, 10)
-    page_obj = paginator.get_page(request.GET.get("page"))
-
-    ctx = {
-        "page_obj": page_obj,
-        "filters": {"q": q, "rank": rank, "mos": mos, "unit": unit, "maint": maint},
-        "ranks": ranks, "moss": moss, "units": units,
-    }
-    return render(request, "personnel_list.html", ctx)
-
-def create_personnel(request):
-    if request.method == 'POST':
-        form = SoldierForm(request.POST)
-        if form.is_valid():
-            soldier = form.save(commit=False)
-            # you can set any defaults here, e.g. soldier.current_unit = "WDDRA0"
-            soldier.save()
-            return redirect('list_personnel')
-    else:
-        form = SoldierForm()
-
-    return render(request, "personnel_form.html", {"form": form})
-
-def update_personnel(request, pk):
-    soldier = get_object_or_404(Soldier, pk=pk)
-    if request.method == 'POST':
-        form = SoldierForm(request.POST, instance=soldier)
-        if form.is_valid():
-            soldier = form.save(commit=False)
-            # update any fields/timestamps here if needed
-            soldier.save()
-            return redirect('list_personnel')
-    else:
-        form = SoldierForm(instance=soldier)
-
-    return render(request, "personnel_form.html", {"form": form})
-
-def delete_personnel(request, pk):
-    # Retrieve the specific aircraft object or return a 404 error if not found.
-    soldier = get_object_or_404(Soldier, pk=pk)
-    
-    if request.method == "POST":
-        # The aircraft will be deleted when the form is submitted.
-        soldier.delete()
-        return redirect('list_personnel')  # Redirect to a listing page or another appropriate page.
-    
-    # Render a confirmation page when the request method is GET.
-    return render(request, "personnel_delete.html", {"soldier": soldier})
-
-
-def recent_pushes(request):
-    ten_days_ago = timezone.now() - timedelta(days=10)
-    recent_aircrafts = Aircraft.objects.filter(last_sync_time__gte=ten_days_ago)
-    return render(request, 'Milds_App/recent_pushes.html', {'aircrafts': recent_aircrafts})
-
-Fixture_Path_Gr= "Griffin-backend/griffin-dev/griffin_ai/fixtures/Aircraft_data.json"
-Fixture_Path_Am= "Amap-backend/backend-dev/fixtures/personnel_data.json"
-    
-
-def api_get_aircraft(request: HttpRequest):
-   if request.method != "GET":
-       return HttpResponseBadRequest("Only GET is allowed here")
-   # 1) Load the dumpdata JSON
-   try:
-       with open(Fixture_Path_Gr, "r", encoding="utf-8") as f:
-           raw = json.load(f)
-   except FileNotFoundError:
-       return HttpResponseBadRequest(f"Fixture not found at {Fixture_Path_Gr}")
-   except json.JSONDecodeError:
-       return HttpResponseBadRequest("Invalid JSON in fixture file")
-   # 2) Walk each record, pick out only your fields, upsert by aircraft_pk
-   created = updated = 0
-   for rec in raw:
-       # skip non‑Aircraft entries
-       if rec.get("model") != "aircraft.Aircraft":
-           continue
-       pk = rec.get("pk")
-       if pk is None:
-           continue
-       fields = rec.get("fields", {})
-       defaults = {
-           "model_name":   fields.get("model", ""),
-           "status":       fields.get("status", ""),
-           "rtl":          fields.get("rtl", ""),
-           "current_unit": fields.get("current_unit", ""),
-           "remarks":      fields.get("remarks") or "",
-           "date_down":    parse_date(fields.get("date_down"))
-                           if fields.get("date_down") else None,
-       }
-       obj, created_flag = Aircraft.objects.update_or_create(
-           aircraft_pk=pk,
-           defaults=defaults
-       )
-       if created_flag:
-           created += 1
-       else:
-           updated += 1
-   # 3) Return just a success summary; your JS will reload the list view
-   return JsonResponse({
-       "created": created,
-       "updated": updated,
-       "total":   created + updated,
-    })
-@require_http_methods(["POST"])
-def api_push_aircraft(request: HttpRequest):
-    # 1) Load the current JSON
-    try:
-        with open(Fixture_Path_Gr, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except Exception as e:
-        return HttpResponseBadRequest(f"Could not read fixture: {e}")
-
-    # 2) Build a lookup of your DB objects by aircraft_pk
-    db_map = {
-        ac.aircraft_pk: ac
-        for ac in Aircraft.objects.all()
-    }
-
-    updated = 0
-    # 3) Walk the JSON and patch only matching records
-    for rec in data:
-        if rec.get("model") != "aircraft.Aircraft":
-            continue
-
-        pk = rec.get("pk")
-        if pk not in db_map:
-            continue
-
-        ac = db_map[pk]
-        fields = rec.setdefault("fields", {})
-
-        # Only overwrite the fields you care about
-        for key in ("status", "rtl", "remarks", "date_down"):
-            val = getattr(ac, key)
-            # date_down is a date, so convert to ISO if not None
-            if key == "date_down":
-                fields[key] = val.isoformat() if val else None
-            else:
-                fields[key] = val
-
-        updated += 1
-
-    # 4) Write the patched JSON back (preserving everything else)
-    try:
-        with open(Fixture_Path_Gr, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-    except Exception as e:
-        return HttpResponseBadRequest(f"Could not write fixture: {e}")
-
-    return JsonResponse({"status": "pushed", "updated": updated})
-
-
-def api_get_personnel(request: HttpRequest):
-   if request.method != "GET":
-       return HttpResponseBadRequest("Only GET is allowed here")
-   # 1) Load the dumpdata JSON
-   try:
-       with open(Fixture_Path_Am, "r", encoding="utf-8") as f:
-           raw = json.load(f)
-   except FileNotFoundError:
-       return HttpResponseBadRequest(f"Fixture not found at {Fixture_Path_Am}")
-   except json.JSONDecodeError:
-       return HttpResponseBadRequest("Invalid JSON in fixture file")
-   # 2) Walk each record, pick out only your fields, upsert by aircraft_pk
-   created = updated = 0
-   for rec in raw:
-       # skip non‑Aircraft entries
-       if rec.get("model") != "personnel.Soldier":
-           continue
-       pk = rec.get("pk")
-       if not pk:
-           continue
-       fields = rec.get("fields", {})
-       defaults = {
-           "rank":   fields.get("rank", ""),
-           "first_name":       fields.get("first_name", ""),
-           "last_name":          fields.get("last_name", ""),
-           "primary_mos": fields.get("primary_mos", ""),
-           "current_unit":      fields.get("current_unit") or "",
-           "is_maintainer":    fields.get("is_maintainer"), 
-       }
-       obj, created_flag = Soldier.objects.update_or_create(
-           user_id=pk,
-           defaults=defaults
-       )
-       if created_flag:
-           created += 1
-       else:
-           updated += 1
-   # 3) Return just a success summary; your JS will reload the list view
-   return JsonResponse({
-       "created": created,
-       "updated": updated,
-       "total":   created + updated,
-    })
-@require_http_methods(["POST"])
-def api_push_personnel(request: HttpRequest):
-    # 1) Load the current JSON
-    try:
-        with open(Fixture_Path_Am, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except Exception as e:
-        return HttpResponseBadRequest(f"Could not read fixture: {e}")
-
-    # 2) Build a lookup of your DB objects by user_id (EDIPI)
-    db_map = {s.user_id: s for s in Soldier.objects.all()}
-
-    updated = 0
-    # 3) Walk the JSON and patch only matching Soldier records
-    for rec in data:
-        if rec.get("model") != "personnel.Soldier":
-            continue
-
-        edipi = rec.get("pk")
-        if edipi not in db_map:
-            continue
-
-        soldier = db_map[edipi]
-        fields = rec.setdefault("fields", {})
-
-        # Overwrite only the fields you care about
-        fields["rank"]          = soldier.rank
-        fields["first_name"]    = soldier.first_name
-        fields["last_name"]     = soldier.last_name
-        fields["primary_mos"]   = soldier.primary_mos
-        fields["current_unit"]  = soldier.current_unit
-        fields["is_maintainer"] = soldier.is_maintainer
-        # if you have any date‐of‐rating fields, serialize them:
-        updated += 1
-
-    # 4) Write the patched JSON back (preserving everything else)
-    try:
-        with open(Fixture_Path_Am, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-    except Exception as e:
-        return HttpResponseBadRequest(f"Could not write fixture: {e}")
-
-    return JsonResponse({
-        "status":  "pushed",
-        "updated": updated,
-    })
-
-# --- JSON API for Aircraft (list + detail) ---
-
-from django.http import JsonResponse, Http404
-
-def aircraft_list(_request):
-    """
-    JSON list of aircraft for /api/aircraft/
-    """
-    data = list(
-        Aircraft.objects.order_by("pk").values(
-            "serial",              # <-- ADD THIS
-            "model_name",
-            "status",
-            "rtl",
-            "current_unit",
-            "hours_to_phase",
-            "remarks",
-            "date_down",
-            "last_update_time",
-        )
-    )
-    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
-
-@csrf_exempt
-@require_http_methods(["GET", "PATCH"])
-def aircraft_detail(request, pk: int):
-    """
-    GET  /api/aircraft/<pk>/   -> returns aircraft detail JSON
-    PATCH /api/aircraft/<pk>/  -> updates allowed fields and returns updated JSON
-    """
-    try:
-        ac = Aircraft.objects.get(pk=pk)  # pk is aircraft_pk (your PK) :contentReference[oaicite:8]{index=8}
-    except Aircraft.DoesNotExist:
-        raise Http404("Aircraft not found")
-
-    if request.method == "GET":
-        data = {
-            "pk": ac.pk,
-            "serial": ac.serial,
-            "model_name": ac.model_name,
-            "status": ac.status,
-            "rtl": ac.rtl,
-            "current_unit": ac.current_unit,
-            "total_airframe_hours": ac.total_airframe_hours,
-            "flight_hours": ac.flight_hours,
-            "hours_to_phase": ac.hours_to_phase,
-            "remarks": ac.remarks,
-            "date_down": ac.date_down.isoformat() if ac.date_down else None,
-            "ecd": ac.ecd.isoformat() if ac.ecd else None,
-            "last_update_time": ac.last_update_time.isoformat() if ac.last_update_time else None,
-        }
-        return JsonResponse(data, json_dumps_params={"indent": 2})
-
-    # ---- PATCH ----
-    try:
-        patch = json.loads(request.body.decode("utf-8") or "{}")
-    except Exception:
-        return JsonResponse({"detail": "Invalid JSON"}, status=400)
-
-    if not isinstance(patch, dict):
-        return JsonResponse({"detail": "PATCH body must be an object"}, status=400)
-
-    update_fields = []
-
-    for field, value in patch.items():
-        if field not in AIRCRAFT_PATCHABLE:
-            continue
-
-        if field == "date_down":
-            if value in (None, ""):
-                ac.date_down = None
-            else:
-                d = parse_date(str(value))
-                if d is None:
-                    return JsonResponse({"detail": "date_down must be YYYY-MM-DD"}, status=400)
-                ac.date_down = d
-            update_fields.append("date_down")
-
-        elif field == "hours_to_phase":
-            if value in (None, ""):
-                ac.hours_to_phase = None
-            else:
-                try:
-                    ac.hours_to_phase = float(value)
-                except Exception:
-                    return JsonResponse({"detail": "hours_to_phase must be a number"}, status=400)
-            update_fields.append("hours_to_phase")
-
-        elif field == "remarks":
-            ac.remarks = "" if value is None else str(value)
-            update_fields.append("remarks")
-
-        else:
-            # status / rtl / current_unit
-            setattr(ac, field, "" if value is None else str(value))
-            update_fields.append(field)
-
-    if not update_fields:
-        return JsonResponse({"detail": "No valid fields to update"}, status=400)
-
-    ac.save(update_fields=list(set(update_fields)))
-
-    # ---- PUSH UPDATE TO GRIFFIN ----
-    try:
-        client = GriffinClient()
-
-        griffin_payload = {}
-
-        for field in update_fields:
-            griffin_payload[field] = getattr(ac, field)
-
-        result = client.inject_aircraft_update(ac.serial, griffin_payload)
-
-        print("GRIFFIN UPDATE RESULT:", result)
-
-    except Exception as e:
-        print("GRIFFIN UPDATE FAILED:", e)
-
-    # Return updated object in a shape the frontend expects
-    out = {
-        "pk": ac.pk,
-        "serial": ac.serial,
-        "model_name": ac.model_name,
-        "status": ac.status,
-        "rtl": ac.rtl,
-        "current_unit": ac.current_unit,
-        "hours_to_phase": ac.hours_to_phase,
-        "remarks": ac.remarks,
-        "date_down": ac.date_down.isoformat() if ac.date_down else None,
-    }
-    return JsonResponse(out, json_dumps_params={"indent": 2})
-    
-    
-    """
-    JSON detail for /api/aircraft/<pk>/
-    
-    try:
-        a = Aircraft.objects.values(
-            "pk",
-            "model_name",
-            "status",
-            "rtl",
-            "current_unit",
-            "total_airframe_hours",
-            "flight_hours",
-            "hours_to_phase",
-            "remarks",
-            "date_down",
-            "ecd",
-            "last_update_time",
-        ).get(pk=pk)
-    except Aircraft.DoesNotExist:
-        raise Http404("Aircraft not found")
-    return JsonResponse(a, safe=False, json_dumps_params={"indent": 2})
-    """
-@csrf_exempt
-@require_http_methods(["GET", "PATCH"])
-def personnel_detail(request, pk: str):
-    try:
-        s = Soldier.objects.get(pk=pk)
-    except Soldier.DoesNotExist:
-        raise Http404("Soldier not found")
-
-    def serialize(obj):
-        return {
-            "user_id": obj.user_id,
-            "rank": obj.rank,
-            "first_name": obj.first_name,
-            "last_name": obj.last_name,
-            "primary_mos": obj.primary_mos,
-            "current_unit": obj.current_unit,
-            "is_maintainer": obj.is_maintainer,
-            "simulated_casualty": obj.simulated_casualty,
-            "remarks": obj.remarks,
-        }
-
-    if request.method == "GET":
-        return JsonResponse(serialize(s), json_dumps_params={"indent": 2})
-
-    try:
-        patch = json.loads(request.body.decode("utf-8") or "{}")
-    except Exception:
-        return JsonResponse({"detail": "Invalid JSON"}, status=400)
-
-    if not isinstance(patch, dict):
-        return JsonResponse({"detail": "PATCH body must be an object"}, status=400)
-
-    update_fields = set()
-
-    for field, value in patch.items():
-        if field not in PERSONNEL_PATCHABLE:
-            continue
-
-        if field == "is_maintainer":
-            if isinstance(value, bool):
-                s.is_maintainer = value
-            else:
-                s.is_maintainer = str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
-            update_fields.add("is_maintainer")
-
-        elif field == "remarks":
-            s.remarks = "" if value is None else str(value)
-            update_fields.add("remarks")
-
-        else:
-            setattr(s, field, "" if value is None else str(value))
-            update_fields.add(field)
-
-    if not update_fields:
-        return JsonResponse({"detail": "No valid fields to update"}, status=400)
-
-    s.save(update_fields=list(update_fields))
-    return JsonResponse(serialize(s), json_dumps_params={"indent": 2})
-# Scenarios
-
-def _snapshot(ac: Aircraft):
-    return {
-        "status": ac.status,
-        "rtl": ac.rtl,
-        "remarks": ac.remarks or "",
-        "date_down": ac.date_down.isoformat() if ac.date_down else None,
-    }
-
-from django.db import transaction
-
-def _snapshot_soldier(s: Soldier):
-    return {
-        "rank": s.rank,
-        "first_name": s.first_name,
-        "last_name": s.last_name,
-        "primary_mos": s.primary_mos,
-        "current_unit": s.current_unit,
-        "is_maintainer": s.is_maintainer,
-        "simulated_casualty": s.simulated_casualty,
-    }
-
-def apply_scenario(scenario_id: int) -> ScenarioRun:
-    sc = (
-        Scenario.objects
-        .prefetch_related("events__aircraft", "events__soldier")
-        .get(pk=scenario_id)
-    )
-
-    run = ScenarioRun.objects.create(
-        scenario=sc,
-        total_events=sc.events.count()
-    )
-
-    applied = 0
-
-    def snapshot_aircraft(ac):
-        return {
-            "status": ac.status,
-            "rtl": ac.rtl,
-            "remarks": ac.remarks or "",
-            "date_down": ac.date_down.isoformat() if ac.date_down else None,
-        }
-
-    def snapshot_soldier(s):
-        return {
-            "rank": s.rank,
-            "first_name": s.first_name,
-            "last_name": s.last_name,
-            "primary_mos": s.primary_mos,
-            "current_unit": s.current_unit,
-            "is_maintainer": s.is_maintainer,
-            "simulated_casualty": s.simulated_casualty,
-            "remarks": s.remarks or "",
-        }
-
-    with transaction.atomic():
-        for ev in sc.events.all().order_by("id"):
-            if ev.soldier_id:
-                try:
-                    s = Soldier.objects.select_for_update().get(user_id=ev.soldier_id)
-                except Soldier.DoesNotExist:
-                    ScenarioRunLog.objects.create(
-                        run=run,
-                        aircraft_pk=None,
-                        user_id=str(ev.soldier_id),
-                        message=f"SKIP: Soldier {ev.soldier_id} missing.",
-                        before={},
-                        after={},
-                        changed={},
-                    )
-                    continue
-
-                before = snapshot_soldier(s)
-                changes = ev.personnel_changes or {}
-
-                for field, value in changes.items():
-                    setattr(s, field, value)
-
-                after_preview = snapshot_soldier(s)
-                changed = {
-                    f: {"old": before.get(f), "new": after_preview.get(f)}
-                    for f in after_preview.keys()
-                    if before.get(f) != after_preview.get(f)
-                }
-
-                if changed:
-                    s.save(update_fields=list(changed.keys()))
-                    applied += 1
-
-                after = snapshot_soldier(s)
-
-                ScenarioRunLog.objects.create(
-                    run=run,
-                    aircraft_pk=None,
-                    user_id=s.user_id,
-                    message=f"Personnel {s.user_id}: " + (", ".join(changed.keys()) if changed else "no changes"),
-                    before=before,
-                    after=after,
-                    changed=changed,
-                )
-                continue
-
-            if ev.aircraft_id:
-                try:
-                    ac = Aircraft.objects.select_for_update().get(serial=ev.aircraft_id)
-                except Aircraft.DoesNotExist:
-                    ScenarioRunLog.objects.create(
-                        run=run,
-                        aircraft_pk=str(ev.aircraft_id),
-                        user_id=None,
-                        message=f"SKIP: Aircraft {ev.aircraft_id} missing.",
-                        before={},
-                        after={},
-                        changed={},
-                    )
-                    continue
-
-                before = snapshot_aircraft(ac)
-
-                if ev.status:
-                    ac.status = ev.status
-                if ev.rtl:
-                    ac.rtl = ev.rtl
-                if ev.remarks is not None:
-                    ac.remarks = ev.remarks
-                if ev.date_down:
-                    ac.date_down = ev.date_down
-
-                after_preview = snapshot_aircraft(ac)
-                changed = {
-                    f: {"old": before.get(f), "new": after_preview.get(f)}
-                    for f in after_preview.keys()
-                    if before.get(f) != after_preview.get(f)
-                }
-
-                if changed:
-                    ac.save(update_fields=list(changed.keys()))
-                    applied += 1
-
-                after = snapshot_aircraft(ac)
-
-                ScenarioRunLog.objects.create(
-                    run=run,
-                    aircraft_pk=ac.serial,
-                    user_id=None,
-                    message=f"Aircraft {ac.serial}: " + (", ".join(changed.keys()) if changed else "no changes"),
-                    before=before,
-                    after=after,
-                    changed=changed,
-                )
-                continue
-
-            ScenarioRunLog.objects.create(
-                run=run,
-                aircraft_pk=None,
-                user_id=None,
-                message=f"SKIP: Event {ev.id} has no target.",
-                before={},
-                after={},
-                changed={},
-            )
-
-    run.applied_events = applied
-    run.save(update_fields=["applied_events"])
-    return run
-
-'''
-def scenarios_api_list(_request):
-    qs = (
-        Scenario.objects
-        .annotate(event_count=models.Count("events"))
-        .order_by("-created_at")
-    )
-    data = [
-        {
-            "id": sc.id,
-            "name": sc.name,
-            "description": sc.description,
-            "created_at": sc.created_at.isoformat(),
-            "event_count": sc.event_count,
-        }
-        for sc in qs
-    ]
-    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
-'''
 @require_http_methods(["GET", "POST"])
 def scenarios_api_list(request):
-    # -------- GET: list scenarios (existing behavior) --------
     if request.method == "GET":
-        qs = (
-            Scenario.objects
-            .annotate(event_count=models.Count("events"))
-            .order_by("-created_at")
-        )
+        qs = Scenario.objects.annotate(event_count=models.Count("events")).order_by("-created_at")
         data = [
             {
                 "id": sc.id,
@@ -1021,7 +1053,6 @@ def scenarios_api_list(request):
         ]
         return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
 
-    # -------- POST: create scenario + events --------
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except Exception:
@@ -1033,7 +1064,7 @@ def scenarios_api_list(request):
 
     if not name:
         return JsonResponse({"detail": "Scenario name is required."}, status=400)
-    if not isinstance(events, list) or len(events) == 0:
+    if not isinstance(events, list) or not events:
         return JsonResponse({"detail": "At least one event is required."}, status=400)
 
     def _coerce_str(v):
@@ -1059,20 +1090,34 @@ def scenarios_api_list(request):
             if target == "aircraft":
                 serial = _coerce_str(ev.get("serial") or ev.get("aircraft_pk"))
                 if not serial:
-                    return JsonResponse({"detail": f"Event {idx}: serial is required for aircraft events."}, status=400)
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: aircraft_pk is required for aircraft events."},
+                        status=400,
+                    )
 
                 status = (ev.get("status") or "").strip()
                 rtl = (ev.get("rtl") or "").strip()
                 remarks = "" if ev.get("remarks") is None else str(ev.get("remarks"))
                 date_down = parse_date(str(ev.get("date_down"))) if ev.get("date_down") else None
+
                 if ev.get("date_down") and date_down is None:
-                    return JsonResponse({"detail": f"Event {idx}: date_down must be YYYY-MM-DD."}, status=400)
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: date_down must be YYYY-MM-DD."},
+                        status=400,
+                    )
+
                 if not status and not rtl and not remarks.strip() and not date_down:
-                    return JsonResponse({"detail": f"Event {idx}: aircraft event must change at least one field."}, status=400)
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: aircraft event must change at least one field."},
+                        status=400,
+                    )
 
                 aircraft_obj = Aircraft.objects.filter(serial=serial).first()
                 if not aircraft_obj:
-                    return JsonResponse({"detail": f"Event {idx}: aircraft serial {serial} not found."}, status=404)
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: aircraft serial {serial} not found."},
+                        status=404,
+                    )
 
                 try:
                     se = ScenarioEvent.objects.create(
@@ -1085,18 +1130,55 @@ def scenarios_api_list(request):
                         date_down=date_down,
                     )
                 except IntegrityError:
-                    return JsonResponse({"detail": f"Event {idx}: duplicate aircraft in this scenario."}, status=409)
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: duplicate aircraft in this scenario."},
+                        status=409,
+                    )
 
             elif target == "personnel":
                 user_id = _coerce_str(ev.get("user_id"))
                 if not user_id:
-                    return JsonResponse({"detail": f"Event {idx}: user_id is required for personnel events."}, status=400)
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: user_id is required for personnel events."},
+                        status=400,
+                    )
+
                 soldier_obj = Soldier.objects.filter(user_id=user_id).first()
                 if not soldier_obj:
-                    return JsonResponse({"detail": f"Event {idx}: personnel {user_id} not found."}, status=404)
-                personnel_changes = ev.get("personnel_changes") or {}
-                if not isinstance(personnel_changes, dict) or not personnel_changes:
-                    return JsonResponse({"detail": f"Event {idx}: personnel_changes must be a non-empty object."}, status=400)
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: personnel {user_id} not found."},
+                        status=404,
+                    )
+
+                personnel_changes = {}
+                for field in PERSONNEL_SCENARIO_FIELDS:
+                    if field not in ev:
+                        continue
+
+                    value = ev.get(field)
+
+                    if field == "is_maintainer":
+                        if value in ("", None):
+                            continue
+                        personnel_changes["is_maintainer"] = _coerce_bool(value)
+
+                    elif field == "simulated_casualty":
+                        personnel_changes["simulated_casualty"] = None if value in ("", None) else str(value)
+
+                    elif field == "remarks":
+                        personnel_changes["remarks"] = "" if value is None else str(value)
+
+                    else:
+                        if value in ("", None):
+                            continue
+                        personnel_changes[field] = str(value)
+
+                if not personnel_changes:
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: personnel event must change at least one field."},
+                        status=400,
+                    )
+
                 try:
                     se = ScenarioEvent.objects.create(
                         scenario=sc,
@@ -1108,10 +1190,18 @@ def scenarios_api_list(request):
                         date_down=None,
                         personnel_changes=personnel_changes,
                     )
-                except IntegrityError:
-                    return JsonResponse({"detail": f"Event {idx}: duplicate personnel in this scenario."}, status=409)
+                except IntegrityError as e:
+                    print("PERSONNEL SCENARIO ERROR:", repr(e))
+                    return JsonResponse(
+                        {"detail": f"Event {idx}: DB error -> {e}"},
+                        status=409,
+                    )
+
             else:
-                return JsonResponse({"detail": f"Event {idx}: target must be 'aircraft' or 'personnel'."}, status=400)
+                return JsonResponse(
+                    {"detail": f"Event {idx}: target must be 'aircraft' or 'personnel'."},
+                    status=400,
+                )
 
             created_event_ids.append(se.id)
 
@@ -1129,84 +1219,6 @@ def scenarios_api_list(request):
     )
 
 
-def scenario_list(request):
-    return render(request, "scenario_list.html", {
-        "scenarios": Scenario.objects.all().order_by("-created_at")
-    })
-
-def scenario_run(request, pk):  #controller
-    sc = get_object_or_404(Scenario, pk=pk)
-    run = apply_scenario(pk)
-    messages.success(request, f"Ran scenario '{sc.name}': {run.applied_events}/{run.total_events} applied.")
-    return redirect("scenario_run_detail", pk=run.pk)
-
-def scenario_run_detail(request, pk):
-    run = get_object_or_404(ScenarioRun.objects.select_related("scenario"), pk=pk)
-    logs = run.logs.order_by("id")
-    return render(request, "scenario_run_detail.html", {"run": run, "logs": logs})
-
-@require_http_methods(["GET"])
-def scenario_runs_api_list(request):
-    """
-    Returns recent scenario runs so frontend can display history.
-    GET /api/scenario-runs/?limit=50
-    """
-    try:
-        limit = int(request.GET.get("limit", 50))
-    except ValueError:
-        limit = 50
-    limit = max(1, min(limit, 200))
-
-    runs = (
-        ScenarioRun.objects
-        .select_related("scenario")
-        .order_by("-started_at", "-id")[:limit]
-    )
-
-    data = [
-        {
-            "id": r.id,
-            "scenario_id": r.scenario_id,
-            "scenario_name": r.scenario.name if r.scenario_id else None,
-            "started_at": r.started_at.isoformat() if r.started_at else None,
-            "applied_events": r.applied_events,
-            "total_events": r.total_events,
-            "reverted_at": r.reverted_at.isoformat() if r.reverted_at else None,
-        }
-        for r in runs
-    ]
-    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
-
-
-@require_http_methods(["GET"])
-def scenario_run_logs_api(request, run_id: int):
-    """
-    Returns the logs for a specific run.
-    GET /api/scenario-runs/<run_id>/logs/
-    """
-    logs = (
-        ScenarioRunLog.objects
-        .filter(run_id=run_id)
-        .order_by("id")
-    )
-
-    data = [
-        {
-            
-            "id": log.id,
-            "aircraft_pk": log.aircraft_pk,
-            "user_id": log.user_id,
-            "message": log.message,
-            "before": log.before,
-            "after": log.after,
-            "changed": log.changed,
-            "created_at": log.created_at.isoformat() if log.created_at else None,
-            
-        }
-        for log in logs
-    ]
-    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
-
 @require_http_methods(["POST"])
 def scenarios_api_randomize_preview(request):
     try:
@@ -1214,7 +1226,6 @@ def scenarios_api_randomize_preview(request):
     except Exception:
         return JsonResponse({"detail": "Invalid JSON"}, status=400)
 
-    # Inputs
     name = (payload.get("name") or "").strip()
     description = (payload.get("description") or "").strip()
     unit = (payload.get("unit") or "").strip()
@@ -1224,6 +1235,7 @@ def scenarios_api_randomize_preview(request):
         num_events = int(payload.get("num_events", 5))
     except Exception:
         return JsonResponse({"detail": "num_events must be an integer."}, status=400)
+
     num_events = max(1, min(num_events, 50))
 
     if not name:
@@ -1231,24 +1243,22 @@ def scenarios_api_randomize_preview(request):
 
     rng = random.Random(seed)
 
-    # Candidate aircraft
     qs = Aircraft.objects.all()
     if unit:
         qs = qs.filter(current_unit=unit)
-    aircraft_list = list(qs)
 
-    if not aircraft_list:
+    aircraft_candidates = list(qs.order_by("serial"))
+    if not aircraft_candidates:
         return JsonResponse({"detail": "No aircraft available for randomization."}, status=400)
 
-    if num_events > len(aircraft_list):
-        num_events = len(aircraft_list)
+    if num_events > len(aircraft_candidates):
+        num_events = len(aircraft_candidates)
 
-    chosen = rng.sample(aircraft_list, k=num_events)
+    chosen = rng.sample(aircraft_candidates, k=num_events)
 
-    # Inject-style actions (aircraft-only)
-    STATUS_CHOICES = ["NMC"]     # tune later
-    RTL_CHOICES = ["NRTL"]       # tune later
-    REMARK_TEMPLATES = [
+    status_choices = ["NMC"]
+    rtl_choices = ["NRTL"]
+    remark_templates = [
         "Generated inject: maintenance issue",
         "Generated inject: phase inspection required",
         "Generated inject: system fault reported",
@@ -1257,18 +1267,21 @@ def scenarios_api_randomize_preview(request):
 
     events = []
     for ac in chosen:
-        # Pick some actions; guarantee at least one change
         actions = []
-        if rng.random() < 0.70: actions.append("status")
-        if rng.random() < 0.50: actions.append("rtl")
-        if rng.random() < 0.40: actions.append("date_down")
-        if rng.random() < 0.40: actions.append("remarks")
-        if not actions: actions = ["status"]
+        if rng.random() < 0.70:
+            actions.append("status")
+        if rng.random() < 0.50:
+            actions.append("rtl")
+        if rng.random() < 0.40:
+            actions.append("date_down")
+        if rng.random() < 0.40:
+            actions.append("remarks")
+        if not actions:
+            actions = ["status"]
 
         ev = {
             "target": "aircraft",
-            "aircraft_pk": str(ac.aircraft_pk),
-            "user_id": None,
+            "aircraft_pk": str(ac.serial),
             "status": "",
             "rtl": "",
             "date_down": None,
@@ -1276,16 +1289,14 @@ def scenarios_api_randomize_preview(request):
         }
 
         if "status" in actions:
-            ev["status"] = rng.choice(STATUS_CHOICES)
+            ev["status"] = rng.choice(status_choices)
         if "rtl" in actions:
-            ev["rtl"] = rng.choice(RTL_CHOICES)
+            ev["rtl"] = rng.choice(rtl_choices)
         if "date_down" in actions:
             ev["date_down"] = today.isoformat()
         if "remarks" in actions:
-            # Must be non-empty for apply_scenario to apply it
-            ev["remarks"] = rng.choice(REMARK_TEMPLATES)
+            ev["remarks"] = rng.choice(remark_templates)
 
-        # Ensure it would pass your /api/scenarios/ validation:
         if not ev["status"] and not ev["rtl"] and not (ev["remarks"] or "").strip() and not ev["date_down"]:
             ev["status"] = "NMC"
 
@@ -1304,3 +1315,80 @@ def scenarios_api_randomize_preview(request):
         },
         json_dumps_params={"indent": 2},
     )
+
+
+# ---------------------------------------------------------------------
+# SCENARIO HTML / RUNS
+# ---------------------------------------------------------------------
+
+def scenario_list(request):
+    return render(
+        request,
+        "scenario_list.html",
+        {"scenarios": Scenario.objects.all().order_by("-created_at")},
+    )
+
+
+def scenario_run(request, pk):
+    sc = get_object_or_404(Scenario, pk=pk)
+    run = apply_scenario(pk)
+    messages.success(
+        request,
+        f"Ran scenario '{sc.name}': {run.applied_events}/{run.total_events} applied.",
+    )
+    return redirect("scenario_run_detail", pk=run.pk)
+
+
+def scenario_run_detail(request, pk):
+    run = get_object_or_404(
+        ScenarioRun.objects.select_related("scenario"),
+        pk=pk,
+    )
+    logs = run.logs.order_by("id")
+    return render(request, "scenario_run_detail.html", {"run": run, "logs": logs})
+
+
+@require_http_methods(["GET"])
+def scenario_runs_api_list(request):
+    try:
+        limit = int(request.GET.get("limit", 50))
+    except ValueError:
+        limit = 50
+
+    limit = max(1, min(limit, 200))
+
+    runs = ScenarioRun.objects.select_related("scenario").order_by("-started_at", "-id")[:limit]
+
+    data = [
+        {
+            "id": r.id,
+            "scenario_id": r.scenario_id,
+            "scenario_name": r.scenario.name if r.scenario_id else None,
+            "started_at": r.started_at.isoformat() if r.started_at else None,
+            "applied_events": r.applied_events,
+            "total_events": r.total_events,
+            "reverted_at": r.reverted_at.isoformat() if r.reverted_at else None,
+        }
+        for r in runs
+    ]
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
+
+
+@require_http_methods(["GET"])
+def scenario_run_logs_api(request, run_id: int):
+    logs = ScenarioRunLog.objects.filter(run_id=run_id).order_by("id")
+
+    data = [
+        {
+            "id": log.id,
+            "aircraft_pk": log.aircraft_pk,
+            "user_id": log.user_id,
+            "message": log.message,
+            "before": log.before,
+            "after": log.after,
+            "changed": log.changed,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+        }
+        for log in logs
+    ]
+    return JsonResponse(data, safe=False, json_dumps_params={"indent": 2})
