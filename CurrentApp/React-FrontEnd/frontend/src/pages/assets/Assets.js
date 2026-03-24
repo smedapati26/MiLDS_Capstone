@@ -690,7 +690,7 @@ export default function Assets() {
               />
 
               <Button onClick={handleReceiveGriffin} disabled={griffinSyncing}>
-                {griffinSyncing ? 'Receiving…' : 'Receive Griffin'}
+                {griffinSyncing ? 'Receiving…' : 'Pull From Griffin'}
               </Button>
 
             </div>
@@ -885,7 +885,7 @@ export default function Assets() {
             >
               <input
                 type="search"
-                placeholder="Search name, rank, MOS, unit..."
+                placeholder="Search name, rank, MOS, unit."
                 className="search-input"
                 value={personnelQuery}
                 onChange={(e) => setPersonnelQuery(e.target.value)}
@@ -894,7 +894,6 @@ export default function Assets() {
               <Button onClick={handleReceiveAMAP} disabled={amapSyncing}>
                 {amapSyncing ? 'Receiving…' : 'Pull From AMAP'}
               </Button>
-              <Button variant="secondary">Update AMAP</Button>
             </div>
 
             <div className="table-wrap">
