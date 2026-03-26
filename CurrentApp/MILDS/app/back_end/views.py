@@ -1272,7 +1272,7 @@ def scenarios_api_list(request):
     except WriteLockBusy as e:
         return JsonResponse({"detail": str(e)}, status=409)
 
-
+'''
 @require_http_methods(["POST"])
 def scenarios_api_randomize_preview(request):
     try:
@@ -1369,7 +1369,131 @@ def scenarios_api_randomize_preview(request):
         },
         json_dumps_params={"indent": 2},
     )
+'''
+@require_http_methods(["POST"])
+def scenarios_api_randomize_preview(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except Exception:
+        return JsonResponse({"detail": "Invalid JSON"}, status=400)
 
+    name = (payload.get("name") or "").strip()
+    description = (payload.get("description") or "").strip()
+    unit = (payload.get("unit") or "").strip()
+    seed = payload.get("seed", None)
+
+    try:
+        num_events = int(payload.get("num_events", 5))
+    except Exception:
+        return JsonResponse({"detail": "num_events must be an integer."}, status=400)
+
+    num_events = max(1, min(num_events, 50))
+
+    if not name:
+        return JsonResponse({"detail": "Scenario name is required."}, status=400)
+
+    rng = random.Random(seed)
+    today = timezone.localdate()
+    events = []
+
+    # ---------------- Aircraft ----------------
+    aircraft_qs = Aircraft.objects.all()
+    if unit:
+        aircraft_qs = aircraft_qs.filter(current_unit=unit)
+
+    aircraft_candidates = list(aircraft_qs.order_by("serial"))
+    aircraft_k = min(num_events, len(aircraft_candidates))
+
+    status_choices = ["NMC"]
+    rtl_choices = ["NRTL"]
+    aircraft_remark_templates = [
+        "Generated inject: maintenance issue",
+        "Generated inject: phase inspection required",
+        "Generated inject: system fault reported",
+    ]
+
+    if aircraft_k > 0:
+        chosen_aircraft = rng.sample(aircraft_candidates, k=aircraft_k)
+
+        for ac in chosen_aircraft:
+            actions = []
+            if rng.random() < 0.70:
+                actions.append("status")
+            if rng.random() < 0.50:
+                actions.append("rtl")
+            if rng.random() < 0.40:
+                actions.append("date_down")
+            if rng.random() < 0.40:
+                actions.append("remarks")
+            if not actions:
+                actions = ["status"]
+
+            ev = {
+                "target": "aircraft",
+                "aircraft_pk": str(ac.serial),
+                "status": "",
+                "rtl": "",
+                "date_down": None,
+                "remarks": "",
+            }
+
+            if "status" in actions:
+                ev["status"] = rng.choice(status_choices)
+            if "rtl" in actions:
+                ev["rtl"] = rng.choice(rtl_choices)
+            if "date_down" in actions:
+                ev["date_down"] = today.isoformat()
+            if "remarks" in actions:
+                ev["remarks"] = rng.choice(aircraft_remark_templates)
+
+            if not ev["status"] and not ev["rtl"] and not (ev["remarks"] or "").strip() and not ev["date_down"]:
+                ev["status"] = "NMC"
+
+            events.append(ev)
+
+    # ---------------- Personnel ----------------
+    # ---------------- Personnel ----------------
+    personnel_qs = Soldier.objects.all()
+    if unit:
+        personnel_qs = personnel_qs.filter(current_unit=unit)
+
+    personnel_candidates = list(personnel_qs.order_by("last_name", "first_name", "user_id"))
+    personnel_k = min(num_events, len(personnel_candidates))
+
+    casualty_choices = ["SimulatedInjury", "SimulatedKIA"]
+
+    if personnel_k > 0:
+        chosen_personnel = rng.sample(personnel_candidates, k=personnel_k)
+
+        for soldier in chosen_personnel:
+            ev = {
+                "target": "personnel",
+                "user_id": str(soldier.user_id),
+                "simulated_casualty": rng.choice(casualty_choices),
+            }
+            events.append(ev)
+
+    if not events:
+        return JsonResponse(
+            {"detail": "No aircraft or personnel available for randomization."},
+            status=400,
+        )
+
+    return JsonResponse(
+        {
+            "name": name,
+            "description": description,
+            "events": events,
+            "meta": {
+                "seed": seed,
+                "unit": unit or None,
+                "num_events": num_events,
+                "aircraft_generated": aircraft_k,
+                "personnel_generated": personnel_k,
+            },
+        },
+        json_dumps_params={"indent": 2},
+    )
 
 # ---------------------------------------------------------------------
 # SCENARIO HTML / RUNS
