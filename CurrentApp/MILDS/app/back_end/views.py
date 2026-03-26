@@ -938,7 +938,7 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
 # ---------------------------------------------------------------------
 # SCENARIO REVERT
 # ---------------------------------------------------------------------
-
+'''
 @csrf_exempt
 @require_POST
 def revert_last_scenario(request):
@@ -966,11 +966,54 @@ def revert_last_scenario(request):
             return _revert_scenario_run_locked(request, run.pk)
     except WriteLockBusy as e:
         return JsonResponse({"detail": str(e)}, status=409)
+'''
+@csrf_exempt
+@require_POST
+def revert_last_scenario(request):
+    recent = list(
+        ScenarioRun.objects
+        .filter(reverted_at__isnull=True)
+        .order_by("-started_at", "-id")[:50]
+    )
 
+    run = None
+    for cand in recent:
+        if cand.logs.exclude(changed={}).exists():
+            run = cand
+            break
+
+    if not run:
+        return JsonResponse(
+            {
+                "ok": True,
+                "restored": 0,
+                "errors": [],
+                "message": "No unreverted scenario runs with changes to revert.",
+            },
+            json_dumps_params={"indent": 2},
+        )
+
+    return revert_scenario_run(request, run.pk)
 
 @csrf_exempt
 @require_POST
 def revert_scenario_run(request, run_id: int):
+    run = get_object_or_404(ScenarioRun, pk=run_id)
+
+    if run.reverted_at:
+        return JsonResponse(
+            {
+                "ok": True,
+                "run_id": run.pk,
+                "restored": 0,
+                "errors": [],
+                "reverted_at": run.reverted_at.isoformat(),
+                "message": "Run was already reverted.",
+            },
+            json_dumps_params={"indent": 2},
+        )
+
+    logs = list(run.logs.order_by("-id"))
     try:
         with global_write_lock():
             return _revert_scenario_run_locked(request, run_id)
