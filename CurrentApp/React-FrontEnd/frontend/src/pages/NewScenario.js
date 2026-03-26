@@ -47,8 +47,8 @@ export default function NewScenario() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
-  const [numEvents, setNumEvents] = useState(5);
-  const [seed, setSeed] = useState('');
+  //const [numEvents, setNumEvents] = useState(5);
+  //const [seed, setSeed] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -253,7 +253,21 @@ export default function NewScenario() {
           date_down: ev.date_down ?? '',
         }));
 
+      const nextPersonnelEvents = (preview.events || [])
+        .filter((ev) => ev.target === 'personnel')
+        .map((ev) => ({
+          _id: makeId(),
+          user_id: String(ev.user_id ?? ''),
+          rank: '',
+          primary_mos: '',
+          current_unit: '',
+          is_maintainer: '',
+          simulated_casualty: ev.simulated_casualty ?? '',
+        }));
+
+      
       setEvents(nextAircraftEvents);
+      setPersonnelEvents(nextPersonnelEvents);
     } catch (e) {
       console.error(e);
       const msg =

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 // ✅ add this import
 import heroBg from '../assets/helicopter.png';
 
+
 export default function Home() {
   const navigate = useNavigate();
 
