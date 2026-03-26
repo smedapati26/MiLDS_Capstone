@@ -47,8 +47,8 @@ export default function NewScenario() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
-  //const [numEvents, setNumEvents] = useState(5);
-  //const [seed, setSeed] = useState('');
+  const [numEvents] = useState(5);
+  const [seed] = useState('');
 
   useEffect(() => {
     let mounted = true;

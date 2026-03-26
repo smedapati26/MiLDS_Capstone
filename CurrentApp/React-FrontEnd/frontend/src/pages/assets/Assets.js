@@ -647,10 +647,10 @@ export default function Assets() {
 
       await client.post('/api/scenarios/revert-last/');
 
-      // After revert, refresh aircraft + personnel
-      const [a, p] = await Promise.allSettled([
+      const [a, p, runs] = await Promise.allSettled([
         listAircraft(),
         listPersonnel(),
+        listScenarioRuns(50),
       ]);
 
       if (a.status === 'fulfilled') {
@@ -666,14 +666,21 @@ export default function Assets() {
         setPersonnelRows(items);
         setPersonnelCount(items.length);
       }
+
+      if (runs.status === 'fulfilled') {
+        setRunRows(Array.isArray(runs.value) ? runs.value : []);
+      }
     } catch (e) {
       console.error(e);
-      setApiError('Failed to revert last scenario');
+      setApiError(
+        e?.response?.data?.detail ||
+        e?.response?.data?.message ||
+        'Failed to revert last scenario'
+      );
     } finally {
       setReverting(false);
     }
   };
-
   // Scenarios toolbar component with Revert button
   const ScenariosToolbar = (
     <>
