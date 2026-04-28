@@ -59,13 +59,12 @@ body{
 
 /* Top-left app badge */
 .app-badge {
-  position: fixed;
-  top: 16px;
+  position: absolute;
+  top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1000;
+  z-index: 10;
 }
-
 .app-badge-logo {
   height: 62px;
   width: auto;

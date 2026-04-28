@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import client from '../../api/client';
 import { listAircraft, updateAircraft, syncAircraft, injectAircraftNMC } from '../../api/aircraft';
-import { listPersonnel, updatePersonnel, syncPersonnel, injectPersonnelUpdate } from '../../api/personnel';
+import { listPersonnel, updatePersonnel, syncPersonnel, injectPersonnelUpdate, injectCasualtyBundle } from '../../api/personnel';
 import { listScenarios, listScenarioRuns, getScenarioRunLogs } from '../../api/scenarios';
 import { useNavigate } from 'react-router-dom';
 
@@ -375,24 +375,21 @@ export default function Assets() {
   const savePersonnel = async (row) => {
     const id = row.user_id; // Soldier PK
 
-    // compute diffs (only push what changed)
     const changes = [];
-
-    const nextRank = (personnelDraft.rank ?? '').trim();
-    const nextMos = (personnelDraft.primary_mos ?? '').trim();
-    const nextUnit = (personnelDraft.current_unit ?? '').trim();
-    const nextMaint = !!personnelDraft.is_maintainer;
+    
+    // 1. Only track the two fields that are actually editable
+    const nextCasualty = (personnelDraft.simulated_casualty ?? '').trim();
     const nextRemarks = (personnelDraft.remarks ?? '').trim();
 
-    if ((row.rank ?? '') !== nextRank) changes.push({ field: 'rank', value: nextRank });
-    if ((row.primary_mos ?? '') !== nextMos) changes.push({ field: 'primary_mos', value: nextMos });
-    if ((row.current_unit ?? '') !== nextUnit) changes.push({ field: 'current_unit', value: nextUnit });
-
-    // backend endpoint expects value as string; send "true"/"false"
-    if (!!row.is_maintainer !== nextMaint) changes.push({ field: 'is_maintainer', value: String(nextMaint) });
+    // 2. Check for differences and push to changes array
+    if ((row.simulated_casualty ?? '') !== nextCasualty) {
+      changes.push({ field: 'simulated_casualty', value: nextCasualty });
+    }
+    if ((row.remarks ?? '') !== nextRemarks) {
+      changes.push({ field: 'remarks', value: nextRemarks }); // (This was missing in your original snippet!)
+    }
 
     if (changes.length === 0) {
-      // nothing changed; just exit edit mode
       setEditingPersonnelId(null);
       setPersonnelDraft({});
       return;
@@ -400,41 +397,39 @@ export default function Assets() {
 
     try {
       setApiError(null);
-
-      // keep your CSRF bootstrap pattern consistent (you already do this elsewhere)
       await client.get('/api/csrf/');
 
-      // 1) Push to AMAP via your Ninja endpoint (also updates local Soldier in that view)
-      // POST /api/personnel/inject/update?user_id=...&field=...&value=...
-      await Promise.all(
-        changes.map((c) => injectPersonnelUpdate(id, c.field, c.value))
-      );
+      // 3. Attempt AMAP Broadcast (Bundled!)
+      if (nextCasualty) {
+        // Send BOTH casualty and remarks in one single shot to AMAP
+        await injectCasualtyBundle(id, nextCasualty, nextRemarks);
+      } else {
+        // If there's no casualty flag, AMAP schema doesn't accept remarks. 
+        // Save it locally to MILDS instead so it still shows up on your UI!
+        await updatePersonnel(id, { remarks: nextRemarks, simulated_casualty: nextCasualty });
+      }
 
-      // 2) Refresh table from local DB after inject(s)
+      // Refresh table 
       const p = await listPersonnel();
       const items = Array.isArray(p) ? p : p?.results ?? [];
       setPersonnelRows(items);
       setPersonnelCount(items.length);
 
-      // exit edit mode
       setEditingPersonnelId(null);
       setPersonnelDraft({});
     } catch (e) {
       console.error(e);
-
-      // If AMAP fails, still save locally so the user does not lose work.
-      // If that local save succeeds, exit edit mode and do NOT leave the UI in an error state.
       let savedLocally = false;
 
       try {
+        // 4. FALLBACK: Create a safe, partial payload for MILDS
         const payload = {
-          rank: nextRank,
-          primary_mos: nextMos,
-          current_unit: nextUnit,
-          is_maintainer: nextMaint,
+          simulated_casualty: nextCasualty,
           remarks: nextRemarks,
         };
+        
         const updated = await updatePersonnel(id, payload);
+        
         setPersonnelRows((prev) =>
           prev.map((r) => (r.user_id === id ? { ...r, ...updated } : r))
         );
@@ -449,29 +444,14 @@ export default function Assets() {
         );
       } catch (e2) {
         console.error(e2);
-        setApiError(
-          e2?.response?.data?.detail ||
-          e2?.response?.data?.error ||
-          e?.response?.data?.details?.error ||
-          e?.response?.data?.error ||
-          e?.response?.data?.detail ||
-          e?.message ||
-          'Failed to save personnel changes'
-        );
+        setApiError('Failed to save personnel changes locally');
       }
 
       if (!savedLocally) {
-        setApiError(
-          e?.response?.data?.details?.error ||
-          e?.response?.data?.error ||
-          e?.response?.data?.detail ||
-          e?.message ||
-          'AMAP update failed'
-        );
+        setApiError('AMAP update failed and local save failed.');
       }
     }
   };
-
 
 
 
@@ -488,6 +468,7 @@ export default function Assets() {
       primary_mos: row.primary_mos ?? '',
       current_unit: row.current_unit ?? '',
       is_maintainer: !!row.is_maintainer,
+      simulated_casualty: row.simulated_casualty ?? '', 
       remarks: row.remarks ?? "",
     });
   };
@@ -882,37 +863,11 @@ export default function Assets() {
                           )}
                         </td>
 
-                        {/* Unit */}
-                        <td>
-                          {isEditing ? (
-                            <input
-                              className="search-input"
-                              value={aircraftDraft.current_unit ?? ''}
-                              onChange={(e) =>
-                                setAircraftDraft((d) => ({ ...d, current_unit: e.target.value }))
-                              }
-                            />
-                          ) : (
-                            row.current_unit ?? '—'
-                          )}
-                        </td>
+                        {/* Unit (read-only) */}
+                        <td>{row.current_unit ?? '—'}</td>
 
-                        {/* Date Down */}
-                        <td>
-                          {isEditing ? (
-                            <input
-                              className="search-input"
-                              type="date"
-                              value={aircraftDraft.date_down ?? ''}
-                              onChange={(e) =>
-                                setAircraftDraft((d) => ({ ...d, date_down: e.target.value }))
-                              }
-                            />
-                          ) : (
-                            formatDate(row.date_down)
-                          )}
-                        </td>
-
+                        {/* Date Down (read-only) */}
+                        <td>{formatDate(row.date_down)}</td>
 
                         {/* Days Down */}
                         <td>{daysDown(row.date_down)}</td>
@@ -938,21 +893,8 @@ export default function Assets() {
                           )}
                         </td>
 
-                        {/* Hours to Phase */}
-                        <td className="col-hours">
-                          {isEditing ? (
-                            <input
-                              className="search-input"
-                              type="number"
-                              value={aircraftDraft.hours_to_phase ?? ''}
-                              onChange={(e) =>
-                                setAircraftDraft((d) => ({ ...d, hours_to_phase: e.target.value }))
-                              }
-                            />
-                          ) : (
-                            row.hours_to_phase ?? '—'
-                          )}
-                        </td>
+                        {/* Hours to Phase (read-only) */}
+                        <td className="col-hours">{row.hours_to_phase ?? '—'}</td>
 
                         {/* Actions */}
                         <td>
@@ -1025,6 +967,7 @@ export default function Assets() {
                     <th>MOS</th>
                     <th>Unit</th>
                     <th>Role</th>
+                    <th>Casualty</th>
                     <th>Remarks</th>
                     <th style={{ width: 160 }}>Actions</th>
                   </tr>
@@ -1051,80 +994,40 @@ export default function Assets() {
                             {row.last_name}, {row.first_name}
                           </td>
 
-                          {/* Rank (editable) */}
-                          <td>
-                            {isEditing ? (
-                              <input
-                                className="search-input"
-                                value={personnelDraft.rank ?? ''}
-                                onChange={(e) =>
-                                  setPersonnelDraft((d) => ({ ...d, rank: e.target.value }))
-                                }
-                                placeholder="e.g., CPT"
-                              />
-                            ) : (
-                              row.rank
-                            )}
-                          </td>
+                          {/* Rank (read) */}
+                          <td>{row.rank ?? '-'}</td>
 
-                          {/* MOS (editable) */}
-                          <td>
-                            {isEditing ? (
-                              <input
-                                className="search-input"
-                                value={personnelDraft.primary_mos ?? ''}
-                                onChange={(e) =>
-                                  setPersonnelDraft((d) => ({
-                                    ...d,
-                                    primary_mos: e.target.value,
-                                  }))
-                                }
-                                placeholder="e.g., 15A"
-                              />
-                            ) : (
-                              row.primary_mos
-                            )}
-                          </td>
+                          {/* MOS (read) */}
+                          <td>{row.rank ?? '-'}</td>
 
-                          {/* Unit (editable) */}
-                          <td>
-                            {isEditing ? (
-                              <input
-                                className="search-input"
-                                value={personnelDraft.current_unit ?? ''}
-                                onChange={(e) =>
-                                  setPersonnelDraft((d) => ({
-                                    ...d,
-                                    current_unit: e.target.value,
-                                  }))
-                                }
-                                placeholder="e.g., 2-101 CAB"
-                              />
-                            ) : (
-                              row.current_unit
-                            )}
-                          </td>
+                          {/* Unit (read) */}
+                          <td>{row.rank ?? '-'}</td>
 
                           {/* Role / is_maintainer (editable checkbox) */}
+                          <td>{row.is_maintainer ? 'Maintainer' : 'Other'}</td>
+                          
+                          
+                          {/* Casualty (editable dropdown) */}
                           <td>
                             {isEditing ? (
-                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                                <input
-                                  type="checkbox"
-                                  checked={!!personnelDraft.is_maintainer}
-                                  onChange={(e) =>
-                                    setPersonnelDraft((d) => ({
-                                      ...d,
-                                      is_maintainer: e.target.checked,
-                                    }))
-                                  }
-                                />
-                                <span style={{ fontWeight: 700 }}>
-                                  {personnelDraft.is_maintainer ? 'Maintainer' : 'Other'}
-                                </span>
-                              </label>
+                              <select
+                                className="search-input"
+                                value={personnelDraft.simulated_casualty ?? ''}
+                                onChange={(e) =>
+                                  setPersonnelDraft((d) => ({
+                                    ...d,
+                                    simulated_casualty: e.target.value,
+                                  }))
+                                }
+                              >
+                                <option value="">None</option>
+                                <option value="SimulatedInjury">Simulated Injury</option>
+                                <option value="SimulatedKIA">Simulated KIA</option>
+                              </select>
                             ) : (
-                              row.is_maintainer ? 'Maintainer' : 'Other'
+                              <span style={{ fontWeight: row.simulated_casualty ? 800 : 400, color: row.simulated_casualty ? '#991B1B' : 'inherit' }}>
+                                {row.simulated_casualty || '—'}
+                              </span>
                             )}
                           </td>
                           {/* Remarks (editable) */}

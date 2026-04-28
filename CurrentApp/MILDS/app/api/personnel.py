@@ -117,7 +117,7 @@ def inject_personnel_change(request, user_id: str, field: str, value: str):
 
 
 @router.post("/inject/casualty/{user_id}", response={200: dict, 400: dict, 404: dict, 409: dict, 500: dict})
-def inject_casualty_status(request, user_id: str, casualty_type: str):
+def inject_casualty_status(request, user_id: str, casualty_type: str, remarks: str = ""): # <--- Added remarks here
     try:
         with global_write_lock():
             if not SimCasualtyFlagOptions.has_value(casualty_type):
@@ -125,7 +125,8 @@ def inject_casualty_status(request, user_id: str, casualty_type: str):
                 return 400, {"error": f"Invalid casualty type. Choose from: {valid_options}"}
 
             client = AmapClient()
-            amap_result = client.inject_casualty_flag(user_id, casualty_type)
+            # Pass remarks to AMAP!
+            amap_result = client.inject_casualty_flag(user_id, casualty_type, remarks=remarks) 
 
             if not amap_result.get("success"):
                 return 500, {"error": "Failed to flag soldier in AMAP.", "details": amap_result.get("error")}
@@ -134,22 +135,23 @@ def inject_casualty_status(request, user_id: str, casualty_type: str):
             if not local_soldier:
                 return 404, {"error": "Flag created in AMAP, but soldier not found locally in MILDS."}
 
+            # Save BOTH fields locally to MILDS
             local_soldier.simulated_casualty = casualty_type
-            local_soldier.save(update_fields=["simulated_casualty"])
+            local_soldier.remarks = remarks 
+            local_soldier.save(update_fields=["simulated_casualty", "remarks"])
 
             SoldierFlag.objects.create(
                 soldier=local_soldier,
                 start_date=date.today(),
-                flag_remarks=f"SIMULATION EVENT: {casualty_type}",
+                flag_remarks=remarks if remarks else f"SIMULATION EVENT: {casualty_type}",
             )
 
             return 200, {
-                "message": f"Casualty successfully injected. {local_soldier.last_name} flagged in AMAP and marked as {casualty_type} in MILDS.",
+                "message": f"Casualty successfully injected. Soldier flagged in AMAP.",
                 "amap_data": amap_result.get("data"),
             }
     except WriteLockBusy as e:
         return 409, {"error": str(e)}
-
 
 @router.post("/inject/revoke_quals", response={200: dict, 409: dict})
 def inject_revoke_qualifications(request, user_id: str):

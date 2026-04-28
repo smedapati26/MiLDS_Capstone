@@ -34,6 +34,7 @@ from .models import (
 )
 
 from app.api.griffin_client import GriffinClient
+from app.api.amap_client import AmapClient
 
 
 AIRCRAFT_PATCHABLE = {
@@ -532,6 +533,7 @@ def api_push_personnel(request: HttpRequest):
 def aircraft_api_list(_request):
     data = list(
         Aircraft.objects.order_by("serial").values(
+            "pk",
             "serial",
             "model_name",
             "status",
@@ -834,6 +836,10 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
 
     with transaction.atomic():
         for ev in sc.events.all().order_by("id"):
+            
+            # --------------------------------------------------
+            # 1. PERSONNEL EVENTS
+            # --------------------------------------------------
             if ev.soldier_id:
                 try:
                     s = Soldier.objects.select_for_update().get(user_id=ev.soldier_id)
@@ -850,6 +856,7 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
                     continue
 
                 before = _snapshot_soldier(s)
+                print(f"RAW SCENARIO PAYLOAD: {ev.personnel_changes}")
                 changes = _normalize_personnel_changes(ev.personnel_changes or {})
 
                 for field, value in changes.items():
@@ -861,11 +868,39 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
                     for f in after_preview.keys()
                     if before.get(f) != after_preview.get(f)
                 }
+                print(f"--- SCENARIO DEBUG FOR SOLDIER {s.user_id} ---")
+                print(f"Detected Changes: {changed}")
+                
+                # We changed this line so it runs if the DB changes OR if an inject exists!
+                if changed or changes.get("simulated_casualty"):
+                    
+                    # 1. STRICTLY PERSONNEL SAVE (Updates MILDS local database)
+                    # We wrap this in a check so it doesn't crash if only an inject was sent
+                    if changed:
+                        s.save(update_fields=list(changed.keys()))
+                        applied += 1
 
-                if changed:
-                    s.save(update_fields=list(changed.keys()))
-                    applied += 1
+                    # 2. AMAP INJECT SUIT BROADCAST 
+                    try:
+                        from app.api.amap_client import AmapClient
+                        amap_client = AmapClient()
 
+                        # Grab the exact keyword NewScenario.js is sending!
+                        flag_type = changes.get("simulated_casualty") 
+                        
+                        # ---> NEW: Grab the custom remarks from the scenario payload!
+                        scenario_remarks = changes.get("remarks", "")
+                        
+                        if flag_type:
+                            print(f"--> Sending casualty flag '{flag_type}' to AMAP for Soldier {s.user_id}")
+                            
+                            # ---> NEW: Pass the remarks argument to the AMAP client!
+                            result = amap_client.inject_casualty_flag(s.user_id, flag_type, remarks=scenario_remarks)
+                            
+                            print("AMAP FLAG RESULT:", result)
+
+                    except Exception as e:
+                        print(f"AMAP SCENARIO UPDATE FAILED for Soldier {s.user_id}:", e)
                 ScenarioRunLog.objects.create(
                     run=run,
                     aircraft_pk=None,
@@ -877,6 +912,9 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
                 )
                 continue
 
+            # --------------------------------------------------
+            # 2. AIRCRAFT EVENTS
+            # --------------------------------------------------
             if ev.aircraft_id:
                 try:
                     ac = Aircraft.objects.select_for_update().get(serial=ev.aircraft_id)
@@ -903,11 +941,29 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
                 }
 
                 if changed:
+                    # 1. Save locally to MILDS
                     ac.last_update_time = timezone.now()
                     save_fields = set(changed.keys())
                     save_fields.add("last_update_time")
                     ac.save(update_fields=list(save_fields))
                     applied += 1
+
+                    # 2. EXACT copy of aircraft_detail Griffin push (Now in the correct block!)
+                    try:
+                        from app.api.griffin_client import GriffinClient 
+                        client = GriffinClient() 
+                        griffin_payload = {}
+                        
+                        for field in save_fields: 
+                            val = getattr(ac, field)
+                            if hasattr(val, "isoformat"):
+                                griffin_payload[field] = val.isoformat() if val else None
+                            else:
+                                griffin_payload[field] = val
+                                
+                        client.inject_aircraft_update(ac.serial, griffin_payload)
+                    except Exception as e:
+                        print(f"GRIFFIN SCENARIO UPDATE FAILED for Aircraft {ac.serial}:", e)
 
                 ScenarioRunLog.objects.create(
                     run=run,
@@ -920,6 +976,9 @@ def apply_scenario(scenario_id: int) -> ScenarioRun:
                 )
                 continue
 
+            # --------------------------------------------------
+            # 3. NO TARGET FALLBACK
+            # --------------------------------------------------
             ScenarioRunLog.objects.create(
                 run=run,
                 aircraft_pk=None,
@@ -1136,7 +1195,7 @@ def _revert_scenario_run_locked(request, run_id: int):
 # ---------------------------------------------------------------------
 # SCENARIO API
 # ---------------------------------------------------------------------
-
+@csrf_exempt
 @require_http_methods(["GET", "POST"])
 def scenarios_api_list(request):
     if request.method == "GET":

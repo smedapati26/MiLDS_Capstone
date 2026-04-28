@@ -43,7 +43,12 @@ class AmapClient:
             with httpx.Client(base_url=self.base_url, headers=self.headers, timeout=5.0) as client:
                 # The log shows the name is 'update_soldier_info', usually accepts POST or PATCH
                 response = client.patch(endpoint, json=updates)
-                
+
+                print("\n=== AMAP DEBUG ===")
+                print(f"1. PAYLOAD SENT TO AMAP: {updates}")
+                print(f"2. AMAP STATUS CODE: {response.status_code}")
+                print(f"3. AMAP REJECTION TEXT: {response.text}")
+                print("===================\n")
                 if response.status_code != 200:
                     return {
                         "success": False, 
@@ -56,8 +61,11 @@ class AmapClient:
         except httpx.RequestError as e:
             return {"success": False, "error": f"Could not connect to AMAP: {str(e)}"}
     # Inside your AmapClient class:
-    def inject_casualty_flag(self, user_id: str, casualty_type: str):
+    def inject_casualty_flag(self, user_id: str, casualty_type: str, remarks: str = ""):
         endpoint = "/personnel/flags/create"
+        
+        # Use the provided remarks, or fallback to the default simulation text if none exist
+        final_remarks = remarks if remarks else f"SIMULATION EVENT: {casualty_type}"
         
         # We now have the perfect combination of keys and allowed values!
         payload = {
@@ -65,7 +73,7 @@ class AmapClient:
             "start_date": str(date.today()),
             "flag_type": casualty_type,  
             "mx_availability": "Unavailable",  # <--- Updated to match the exact AMAP choice!
-            "flag_remarks": f"SIMULATION EVENT: {casualty_type}"
+            "flag_remarks": final_remarks      # <--- Now dynamically populated!
         }
 
         custom_headers = self.headers.copy()

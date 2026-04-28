@@ -41,3 +41,14 @@ export async function injectPersonnelUpdate(user_id, field, value) {
   const res = await client.post('/api/personnel/inject/update', null, { params });
   return res.data;
 }
+
+//Bundled casualty and remarks injection
+export async function injectCasualtyBundle(user_id, casualty_type, remarks) {
+  const params = {
+    casualty_type: String(casualty_type || '').trim(),
+    remarks: String(remarks || '').trim(),
+  };
+
+  const res = await client.post(`/api/personnel/inject/casualty/${user_id}`, null, { params });
+  return res.data;
+}

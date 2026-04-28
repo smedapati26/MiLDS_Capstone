@@ -29,6 +29,7 @@ function makeEmptyPersonnelEvent() {
     current_unit: '',
     is_maintainer: '',
     simulated_casualty: '',
+    remarks: '',
   };
 }
 
@@ -150,6 +151,7 @@ export default function NewScenario() {
         primary_mos: e.primary_mos || '',
         current_unit: e.current_unit || '',
         simulated_casualty: e.simulated_casualty || '',
+        remarks: e.remarks || '', 
       };
 
       if (e.is_maintainer !== '') {
@@ -436,6 +438,7 @@ export default function NewScenario() {
                   <th>Unit</th>
                   <th>Role</th>
                   <th>Casualty</th>
+                  <th>Remarks</th> 
                   <th style={{ width: 110 }}>Actions</th>
                 </tr>
               </thead>
@@ -507,6 +510,16 @@ export default function NewScenario() {
                         <option value="SimulatedInjury">Simulated Injury</option>
                         <option value="SimulatedKIA">Simulated KIA</option>
                       </select>
+                    </td>
+                    
+                    {/* Remarks Input */}
+                    <td>
+                      <input
+                        className="search-input"
+                        value={e.remarks}
+                        onChange={(evt) => updatePersonnelEvent(e._id, { remarks: evt.target.value })}
+                        placeholder="Optional remarks"
+                      />
                     </td>
 
                     <td>

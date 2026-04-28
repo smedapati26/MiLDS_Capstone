@@ -20,8 +20,8 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- AMAP Settings (Partner's Side) ---
-AMAP_API_URL = "http://localhost:8001"
-MILDS_SYSTEM_USER_ID = "1234567890"
+AMAP_API_URL = "http://localhost:8002"
+MILDS_SYSTEM_USER_ID = "0187654321"
 AMAP_API_KEY = "local-dev-key"
 
 # --- Griffin Settings (Your Side) ---
@@ -140,11 +140,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://10.211.125.246:3000",
+    "http://10.211.125.246:5173",
+    "http://localhost:8000",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://10.211.125.246:3000",
+    "http://10.211.125.246:5173",
+
 ]
 CORS_ALLOW_CREDENTIALS = True
 
