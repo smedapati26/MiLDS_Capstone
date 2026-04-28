@@ -82,25 +82,26 @@ Updates are bi-directional across all systems.
 ## Repository Structure (view from code tab in GitHub)
 
 ```
-CurrentApp/MILDS/
-  app/
-    back_end/
-      models.py
-      views.py
+CurrentApp/
+  MILDS/
+    app/
+      back_end/
+        models.py
+        views.py
+        urls.py
+        forms.py
+        migrations/
+      template/
+        base.html
+        aircraft_*.html
+        personnel_*.html
+      api.py
+      settings.py
       urls.py
-      forms.py
-      migrations/
-    template/
-      base.html
-      aircraft_*.html
-      personnel_*.html
-    api.py
-    settings.py
-    urls.py
-  fixtures/
-    aircraft_data.json
-  manage.py
-CurrentApp/React-FrontEnd
+    fixtures/
+      aircraft_data.json
+    manage.py
+  React-FrontEnd/
 ```
 
 ## Terminology
